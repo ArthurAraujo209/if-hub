@@ -15,7 +15,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
-        <!-- Adicione antes do seu style.css -->
+    <!-- Adicione antes do seu style.css -->
     <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
@@ -284,27 +284,28 @@
 
         <!-- MAPA SECTION -->
         <section id="mapa-section" class="content-section">
-            <!-- Painel de Busca de Salas (existente, mas com autocomplete) -->
+            <!-- Painel de Busca de Salas com Autocomplete Inteligente -->
             <div class="ios-panel" style="margin-bottom: 24px;">
                 <div class="panel-header">
-                    <div class="panel-title"><i class="fas fa-search-location"></i> Localizar Sala</div>
+                    <div class="panel-title"><i class="fas fa-search-location"></i> Localizar Sala ou Bloco</div>
                 </div>
                 <div class="map-search-box">
-                    <div class="autocomplete-container" style="flex: 1;">
+                    <div class="autocomplete-container" style="flex: 1; position: relative;">
                         <input type="text" class="ios-input" id="room-search"
-                            placeholder="Digite o nome ou número da sala..." oninput="handleSearchInput()"
-                            onkeypress="if(event.key==='Enter') searchRoom()">
+                            placeholder="Digite: bibli, lab, sala 101, bloco A, cantina..."
+                            oninput="handleSearchInput()" onkeypress="if(event.key==='Enter') performSmartSearch()"
+                            autocomplete="off">
                         <div class="autocomplete-suggestions" id="autocomplete-suggestions"></div>
                     </div>
-                    <button class="ios-btn" onclick="searchRoom()" style="padding: 16px 24px;">
+                    <button class="ios-btn" onclick="performSmartSearch()" style="padding: 16px 24px;">
                         <i class="fas fa-search"></i>
                     </button>
                 </div>
 
-                <!-- Resultado da busca -->
-                <div class="room-result" id="room-result">
-                    <div class="room-title" id="room-title"></div>
-                    <div class="room-details" id="room-details"></div>
+                <!-- Container de Resultados da Pesquisa (aparece aqui, não mais em popup) -->
+                <div class="search-result-container" id="search-result-container">
+                    <div class="search-result-title" id="search-result-title"></div>
+                    <div class="search-result-content" id="search-result-content"></div>
                 </div>
             </div>
 
@@ -447,22 +448,6 @@
                         <div class="building-face front" style="width: 100%;"></div>
                         <div class="building-label">Piscina</div>
                     </div>
-
-                    <!-- NOVO PAINEL INFERIOR (substitui o antigo painel lateral) -->
-                    <div class="map-info-panel-bottom" id="info-panel-bottom">
-                        <div class="info-panel-header-bottom" onclick="closeBottomPanel()">
-                            <div class="info-panel-title-bottom" id="panel-title-bottom">
-                                <i class="fas fa-building"></i>
-                                <span>Selecione um bloco</span>
-                            </div>
-                            <i class="fas fa-chevron-down" style="color: var(--ios-text-secondary);"></i>
-                        </div>
-                        <div class="info-panel-content-bottom" id="panel-content-bottom">
-                            <p style="color: var(--ios-text-secondary); text-align: center; padding: 20px;">
-                                Clique em um bloco no mapa para ver detalhes
-                            </p>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -491,21 +476,6 @@
                         <span class="info-label"><i class="fas fa-envelope"
                                 style="margin-right: 8px; color: var(--ios-accent-orange);"></i>Email</span>
                         <span class="info-value">gabinete.santacruz@ifrn.edu.br</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- AVALIAÇÕES SECTION -->
-        <section id="avaliacoes-section" class="content-section">
-            <div class="ios-panel">
-                <div class="panel-header">
-                    <div class="panel-title"><i class="fas fa-clipboard-list"></i> Calendário de Avaliações</div>
-                </div>
-                <div class="ios-timeline" id="avaliacoes-timeline">
-                    <div class="empty-state">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <p>Carregando avaliações...</p>
                     </div>
                 </div>
             </div>
