@@ -1,4 +1,4 @@
-const CACHE_NAME = 'if-smart-v3'; // Mude a versão quando atualizar os arquivos
+const CACHE_NAME = 'if-smart-v4'; // Mude a versão quando atualizar os arquivos
 const urlsToCache = [
   '/',
   '/index.html',
