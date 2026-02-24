@@ -849,6 +849,7 @@ body {
     font-size: 1rem;
     outline: none;
     transition: all 0.3s;
+    width: 100%;
 }
 
 .ios-input:focus {
@@ -2460,13 +2461,6 @@ body {
 /* Melhorar visualização em mobile */
 @media (max-width: 768px) {
     .autocomplete-suggestions {
-        position: fixed;
-        /* Muda para fixed em mobile */
-        top: auto;
-        bottom: 80px;
-        /* Fica acima do menu mobile */
-        left: 20px;
-        right: 20px;
         max-height: 50vh;
     }
 }
