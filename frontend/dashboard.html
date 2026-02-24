@@ -310,48 +310,12 @@
                 </div>
             </div>
 
-            <!-- Atalhos rápidos para categorias -->
-            <div class="quick-links" style="margin-top: 16px;">
-                <button class="quick-link" onclick="filterByCategory('lab')" style="background: var(--glass-bg);">
-                    <i class="fas fa-flask"></i>
-                    <span>Laboratórios</span>
-                </button>
-                <button class="quick-link" onclick="filterByCategory('biblioteca')">
-                    <i class="fas fa-book"></i>
-                    <span>Bibliotecas</span>
-                </button>
-                <button class="quick-link" onclick="filterByCategory('esporte')">
-                    <i class="fas fa-futbol"></i>
-                    <span>Esportes</span>
-                </button>
-                <button class="quick-link" onclick="filterByCategory('alimentacao')">
-                    <i class="fas fa-utensils"></i>
-                    <span>Alimentação</span>
-                </button>
-                <button class="quick-link" onclick="toggleMapNightMode()">
-                    <i class="fas fa-moon"></i>
-                    <span>Modo Noturno</span>
-                </button>
-            </div>
+            
 
             <!-- Mapa Interativo -->
             <div class="ios-panel" style="padding: 0; overflow: hidden; position: relative;">
                 <div class="panel-header" style="padding: 20px 24px; margin: 0;">
                     <div class="panel-title"><i class="fas fa-map-marked-alt"></i> Mapa do Campus 3D</div>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="ios-btn secondary" onclick="resetMap()" style="padding: 12px 16px;"
-                            title="Resetar visualização">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                        <button class="ios-btn secondary" onclick="zoomMap(1.2)" style="padding: 12px 16px;"
-                            title="Aumentar zoom">
-                            <i class="fas fa-search-plus"></i>
-                        </button>
-                        <button class="ios-btn secondary" onclick="zoomMap(0.8)" style="padding: 12px 16px;"
-                            title="Diminuir zoom">
-                            <i class="fas fa-search-minus"></i>
-                        </button>
-                    </div>
                 </div>
 
                 <!-- Container do mapa -->
@@ -474,6 +438,26 @@
                         <div class="building-label">Piscina</div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Atalhos rápidos para categorias -->
+            <div class="quick-links" style="margin-top: 16px;">
+                <button class="quick-link" onclick="filterByCategory('lab')" style="background: var(--glass-bg);">
+                    <i class="fas fa-flask"></i>
+                    <span>Laboratórios</span>
+                </button>
+                <button class="quick-link" onclick="filterByCategory('biblioteca')">
+                    <i class="fas fa-book"></i>
+                    <span>Bibliotecas</span>
+                </button>
+                <button class="quick-link" onclick="filterByCategory('esporte')">
+                    <i class="fas fa-futbol"></i>
+                    <span>Esportes</span>
+                </button>
+                <button class="quick-link" onclick="filterByCategory('alimentacao')">
+                    <i class="fas fa-utensils"></i>
+                    <span>Alimentação</span>
+                </button>
             </div>
 
             <!-- Informações do Campus -->
