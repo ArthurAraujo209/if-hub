@@ -1,3 +1,58 @@
+// ========== INICIALIZAÇÃO ==========
+// Garante que tudo seja registrado no escopo global IMEDIATAMENTE
+(function() {
+    console.log('Inicializando aplicação...');
+    
+    // 1. PRIMEIRO: Registra TODAS as funções globalmente
+    window.showSection = showSection;
+    window.toggleSidebar = toggleSidebar;
+    window.closeSidebar = closeSidebar;
+    window.logout = logout;
+    window.trocarAno = trocarAno;
+    window.performSmartSearch = performSmartSearch;
+    window.handleSearchInput = handleSearchInput;
+    window.selectRoom = selectRoom;
+    window.selectBuilding = selectBuilding;
+    window.zoomMap = zoomMap;
+    window.resetMap = resetMap;
+    window.mudarPeriodoBoletim = mudarPeriodoBoletim;
+    
+    console.log('✓ Funções registradas globalmente:', Object.keys(window).filter(k => 
+        ['showSection','toggleSidebar','closeSidebar','logout','trocarAno',
+         'performSmartSearch','handleSearchInput','selectRoom','selectBuilding',
+         'zoomMap','resetMap','mudarPeriodoBoletim'].includes(k)
+    ));
+    
+    // 2. Inicializa o Fuse
+    if (typeof Fuse !== 'undefined') {
+        console.log('✓ Fuse disponível, inicializando...');
+        initializeFuse();
+    } else {
+        console.error('✗ Fuse NÃO disponível!');
+    }
+    
+    // 3. Carrega os dados
+    carregarDados();
+})();
+
+// Backup: registra novamente no DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded: garantindo funções globais...');
+    
+    // Re-registra funções (por segurança)
+    window.performSmartSearch = window.performSmartSearch || performSmartSearch;
+    window.handleSearchInput = window.handleSearchInput || handleSearchInput;
+    window.selectRoom = window.selectRoom || selectRoom;
+    window.selectBuilding = window.selectBuilding || selectBuilding;
+    
+    // Se o Fuse não foi inicializado, tenta novamente
+    if (!fuseRooms && typeof Fuse !== 'undefined') {
+        initializeFuse();
+    }
+});
+
+
+
 // dashboard.js - Versão SIMPLIFICADA e FUNCIONAL
 
 const API_URL = 'https://if-hub-backend.onrender.com/api';
@@ -169,31 +224,54 @@ function initializeFuse() {
 }
 
 // FUNÇÃO PRINCIPAL DE BUSCA (chamada pelo HTML)
+// FUNÇÃO PRINCIPAL DE BUSCA (VERSÃO ROBUSTA)
 function performSmartSearch() {
-    console.log('Buscando...');
+    console.log('performSmartSearch chamada'); // Debug
     const input = document.getElementById('room-search');
-    if (!input) return;
+    if (!input) {
+        console.error('Input de busca não encontrado');
+        return;
+    }
     
     const query = input.value.trim();
+    console.log('Buscando por:', query);
     
     if (!query || query.length < 2) {
-        document.getElementById('autocomplete-suggestions').classList.remove('show');
+        const suggestions = document.getElementById('autocomplete-suggestions');
+        if (suggestions) suggestions.classList.remove('show');
         return;
     }
 
-    if (!fuseRooms) initializeFuse();
+    // Verifica se Fuse existe
+    if (typeof Fuse === 'undefined') {
+        console.error('Fuse não está disponível!');
+        alert('Erro: Sistema de busca não carregado. Recarregue a página.');
+        return;
+    }
 
-    // Busca salas e blocos
-    const roomResults = fuseRooms.search(query);
-    const buildingResults = fuseBuildings.search(query);
+    // Inicializa Fuse se necessário
+    if (!fuseRooms) {
+        console.log('Inicializando Fuse...');
+        initializeFuse();
+    }
 
-    // Combina resultados
-    const allResults = [
-        ...roomResults.map(r => ({ item: r.item, score: r.score, type: 'room' })),
-        ...buildingResults.map(b => ({ item: b.item, score: b.score, type: 'building' }))
-    ].sort((a, b) => (a.score || 1) - (b.score || 1)).slice(0, 8);
+    try {
+        // Busca salas e blocos
+        const roomResults = fuseRooms ? fuseRooms.search(query) : [];
+        const buildingResults = fuseBuildings ? fuseBuildings.search(query) : [];
 
-    showSuggestions(allResults, query);
+        console.log('Resultados:', roomResults.length, 'salas,', buildingResults.length, 'blocos');
+
+        // Combina resultados
+        const allResults = [
+            ...roomResults.map(r => ({ item: r.item, score: r.score, type: 'room' })),
+            ...buildingResults.map(b => ({ item: b.item, score: b.score, type: 'building' }))
+        ].sort((a, b) => (a.score || 1) - (b.score || 1)).slice(0, 8);
+
+        showSuggestions(allResults, query);
+    } catch (error) {
+        console.error('Erro na busca:', error);
+    }
 }
 
 // Mostra sugestões
@@ -250,11 +328,17 @@ function showSuggestions(results, query) {
 }
 
 // FUNÇÃO CHAMADA PELO oninput
+// FUNÇÃO CHAMADA PELO oninput (VERSÃO ROBUSTA)
 function handleSearchInput() {
+    console.log('handleSearchInput chamada'); // Debug
     const input = document.getElementById('room-search');
-    if (!input) return;
+    if (!input) {
+        console.error('Input não encontrado');
+        return;
+    }
     
     const query = input.value;
+    console.log('Query:', query); // Debug
     
     if (searchTimeout) {
         clearTimeout(searchTimeout);
@@ -262,10 +346,14 @@ function handleSearchInput() {
     
     if (query.length >= 2) {
         searchTimeout = setTimeout(() => {
+            console.log('Executando busca para:', query); // Debug
             performSmartSearch();
         }, 300);
     } else {
-        document.getElementById('autocomplete-suggestions').classList.remove('show');
+        const suggestions = document.getElementById('autocomplete-suggestions');
+        if (suggestions) {
+            suggestions.classList.remove('show');
+        }
     }
 }
 
