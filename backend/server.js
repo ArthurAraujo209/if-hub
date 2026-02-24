@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3000;
 
 // CORS para permitir frontend em outra porta
 app.use(cors({
-    origin: ['http://localhost:5500', 'https://if-hub-frontend.onrender.com' , 'if-hub.netlify.app'],
+    origin: ['http://localhost:5500', 'https://if-hub-frontend.onrender.com' , 'https://if-hub.netlify.app'],
     credentials: true
 }));
 
