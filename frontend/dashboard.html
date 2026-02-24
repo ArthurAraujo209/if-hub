@@ -14,6 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
+<base target="_blank">
 </head>
 <body>
     <!-- Liquid Background -->
@@ -282,9 +283,12 @@
             <div class="ios-panel" style="margin-bottom: 24px;">
                 <div class="panel-header">
                     <div class="panel-title"><i class="fas fa-map-marked-alt"></i> Mapa do Campus 3D</div>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <input type="text" class="ios-input" id="map-search" placeholder="Buscar bloco ou sala..."
-                            style="width: 250px;">
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; position: relative;">
+                        <div style="position: relative; width: 250px; max-width: 100%;">
+                            <input type="text" class="ios-input" id="map-search" placeholder="Buscar bloco ou sala..."
+                                style="width: 100%;" autocomplete="off" oninput="handleSearchInput(this.value)" onkeydown="handleSearchKeydown(event)">
+                            <div id="search-suggestions" class="search-suggestions"></div>
+                        </div>
                         <button class="ios-btn" onclick="searchMap()">
                             <i class="fas fa-search"></i>
                         </button>
@@ -292,14 +296,12 @@
                 </div>
 
                 <div class="map-spiderman-container" id="map-container">
-                    <!-- Imagem de fundo (sua foto do Google Maps) -->
                     <img src="assets/img/campus-satellite.jpeg" alt="Campus IFRN" class="map-base-image"
                         id="campus-image">
 
                     <div class="map-overlay"></div>
 
                     <!-- Blocos 3D - Posições em % para responsividade -->
-                    <!-- Bloco B - Grande, 3 andares -->
                     <div class="building-3d tipo-admin" data-id="B" data-nome="Bloco B" data-andares="3"
                         style="left: 25%; bottom: 2%; width: 10%; height: 38%;" onclick="selectBuilding('B')">
                         <div class="building-top" style="width: 100%; height: 100%;">
@@ -310,7 +312,6 @@
                         <div class="building-label">Bloco B - Centro de Convivência</div>
                     </div>
 
-                    <!-- Guarita (1) -->
                     <div class="building-3d tipo-admin" data-id="1" data-nome="Guarita" data-andares="1"
                         style="left: 38%; bottom: 2%; width: 4%; height: 8%;" onclick="selectBuilding('1')">
                         <div class="building-top" style="width: 100%; height: 100%;">
@@ -320,7 +321,6 @@
                         <div class="building-label">Guarita/Portaria</div>
                     </div>
 
-                    <!-- Cantina (2) -->
                     <div class="building-3d tipo-alimentacao" data-id="2" data-nome="Cantina" data-andares="1"
                         style="left: 30%; top: 24%; width: 5%; height: 24%;" onclick="selectBuilding('2')">
                         <div class="building-top"
@@ -331,7 +331,6 @@
                         <div class="building-label">Cantina & Saúde</div>
                     </div>
 
-                    <!-- Almoxarifado (3) -->
                     <div class="building-3d tipo-admin" data-id="3" data-nome="Almoxarifado" data-andares="1"
                         style="left: 30%; top: 8%; width: 5%; height: 15%;" onclick="selectBuilding('3')">
                         <div class="building-top" style="width: 100%; height: 100%;">
@@ -341,7 +340,6 @@
                         <div class="building-label">Almoxarifado</div>
                     </div>
 
-                    <!-- Bloco A - 3 andares -->
                     <div class="building-3d tipo-lab" data-id="A" data-nome="Bloco A" data-andares="3"
                         style="left: 39%; top: 28%; width: 18%; height: 20%;" onclick="selectBuilding('A')">
                         <div class="building-top"
@@ -353,7 +351,6 @@
                         <div class="building-label">Bloco A - Labs & Salas</div>
                     </div>
 
-                    <!-- Bloco 5 - Mecânica -->
                     <div class="building-3d tipo-lab" data-id="5" data-nome="Bloco 5" data-andares="2"
                         style="left: 46%; top: 8%; width: 13%; height: 10%;" onclick="selectBuilding('5')">
                         <div class="building-top"
@@ -364,7 +361,6 @@
                         <div class="building-label">Mecânica/Refrigeração</div>
                     </div>
 
-                    <!-- Quadra de Areia -->
                     <div class="building-3d tipo-esporte" data-id="areia" data-nome="Quadra de Areia" data-andares="1"
                         style="left: 60%; top: 25%; width: 10%; height: 23%;" onclick="selectBuilding('areia')">
                         <div class="building-top"
@@ -375,7 +371,6 @@
                         <div class="building-label">Quadra de Areia</div>
                     </div>
 
-                    <!-- Espaço Multiuso (4) -->
                     <div class="building-3d tipo-esporte" data-id="4" data-nome="Espaço Multiuso" data-andares="1"
                         style="left: 70.5%; top: 45%; width: 4%; height: 7%;" onclick="selectBuilding('4')">
                         <div class="building-top"
@@ -386,7 +381,6 @@
                         <div class="building-label">Espaço Multiuso</div>
                     </div>
 
-                    <!-- Quadra Poliesportiva -->
                     <div class="building-3d tipo-esporte" data-id="quadra" data-nome="Quadra Poliesportiva"
                         data-andares="1" style="left: 79%; top: 22%; width: 18%; height: 20%; transform: rotate(57deg);"
                         onclick="selectBuilding('quadra')">
@@ -398,7 +392,6 @@
                         <div class="building-label">Quadra & Vestiários</div>
                     </div>
 
-                    <!-- Piscina (6) -->
                     <div class="building-3d tipo-esporte" data-id="6" data-nome="Piscina" data-andares="1"
                         style="right: 0.5%; top: 45%; width: 10%; height: 8%; transform: rotate(-34deg);"
                         onclick="selectBuilding('6')">
@@ -409,24 +402,24 @@
                         <div class="building-face front" style="width: 100%;"></div>
                         <div class="building-label">Piscina</div>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Painel de Informações -->
-                    <div class="map-info-panel" id="info-panel">
-                        <div class="info-panel-header">
-                            <div class="info-panel-title" id="panel-title">
-                                <i class="fas fa-building"></i>
-                                <span>Selecione um bloco</span>
-                            </div>
-                            <button class="close-panel" onclick="closePanel()">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                        <div id="panel-content">
-                            <p style="color: var(--ios-text-secondary); text-align: center; padding: 40px 20px;">
-                                Clique em um bloco no mapa para ver detalhes
-                            </p>
-                        </div>
+            <!-- Painel de Informações do Bloco - Agora abaixo do mapa -->
+            <div class="ios-panel map-info-section" id="info-panel-section" style="display: none;">
+                <div class="info-panel-header">
+                    <div class="info-panel-title" id="panel-title">
+                        <i class="fas fa-building"></i>
+                        <span>Selecione um bloco no mapa</span>
                     </div>
+                    <button class="close-panel" onclick="closePanel()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div id="panel-content">
+                    <p style="color: var(--ios-text-secondary); text-align: center; padding: 40px 20px;">
+                        Clique em um bloco no mapa para ver detalhes
+                    </p>
                 </div>
             </div>
 
@@ -439,7 +432,7 @@
                     <div class="info-row">
                         <span class="info-label"><i class="fas fa-map-marker-alt"
                                 style="margin-right: 8px; color: var(--ios-accent-green);"></i>Endereço</span>
-                        <span class="info-value">RN-233, Km 02, Santa Cruz - RN</span>
+                        <span class="info-value">Rua São Braz, nº 304, Paraíso - Santa Cruz-RN</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label"><i class="fas fa-clock"
@@ -449,12 +442,12 @@
                     <div class="info-row">
                         <span class="info-label"><i class="fas fa-phone"
                                 style="margin-right: 8px; color: var(--ios-accent-purple);"></i>Telefone</span>
-                        <span class="info-value">(84) 3291-2200</span>
+                        <span class="info-value">(84) 3291-4700</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label"><i class="fas fa-envelope"
                                 style="margin-right: 8px; color: var(--ios-accent-orange);"></i>Email</span>
-                        <span class="info-value">gabinete.santacruz@ifrn.edu.br</span>
+                        <span class="info-value">cocsev.sc@ifrn.edu.br</span>
                     </div>
                 </div>
             </div>
@@ -521,6 +514,8 @@
                         <i class="fas fa-sign-out-alt"></i>
                         Sair da Conta
                     </button>
+                    <p>&copy; 2026 Arthur Lima – IF HUB. Todos os direitos reservados.</p>
+
                 </div>
             </div>
         </section>

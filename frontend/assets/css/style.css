@@ -1703,3 +1703,223 @@ body {
         transition-duration: 0.01ms !important;
     }
 }
+
+/* Search Suggestions Autocomplete */
+.search-suggestions {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: var(--glass-bg-elevated);
+    backdrop-filter: var(--liquid-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: var(--glass-shadow-elevated);
+    display: none;
+}
+
+.search-suggestions.active {
+    display: block;
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.suggestion-item {
+    padding: 14px 18px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover,
+.suggestion-item.selected {
+    background: var(--glass-bg-hover);
+}
+
+.suggestion-item.selected {
+    border-left: 3px solid var(--ios-accent-green);
+}
+
+.suggestion-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.suggestion-icon.room { background: var(--gradient-blue); }
+.suggestion-icon.building { background: var(--gradient-purple); }
+.suggestion-icon.lab { background: var(--gradient-teal); }
+
+.suggestion-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.suggestion-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.suggestion-meta {
+    font-size: 0.8rem;
+    color: var(--ios-text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.suggestion-match-score {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: rgba(48, 209, 88, 0.15);
+    color: var(--ios-accent-green);
+    font-weight: 600;
+}
+
+.suggestion-no-results {
+    padding: 20px;
+    text-align: center;
+    color: var(--ios-text-secondary);
+    font-size: 0.9rem;
+}
+
+.suggestion-no-results i {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+    display: block;
+    opacity: 0.5;
+}
+
+/* Map Info Section - Below Map */
+.map-info-section {
+    margin-top: 24px;
+    animation: slideUp 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.map-info-section.hidden {
+    display: none !important;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+    .map-spiderman-container {
+        padding-bottom: 70%;
+        max-height: 50vh;
+    }
+
+    .map-info-section {
+        margin-top: 16px;
+    }
+
+    .info-panel-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .close-panel {
+        align-self: flex-end;
+    }
+
+    .andar-list {
+        gap: 8px;
+    }
+
+    .andar-item {
+        padding: 12px;
+    }
+
+    #map-search {
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+
+    .search-suggestions {
+        max-height: 250px;
+        border-radius: 12px;
+    }
+
+    .suggestion-item {
+        padding: 12px 14px;
+    }
+
+    .suggestion-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .map-spiderman-container {
+        padding-bottom: 80%;
+    }
+
+    .building-label {
+        font-size: 0.65rem;
+        padding: 4px 8px;
+        top: -28px;
+    }
+
+    .building-top span {
+        font-size: 0.7rem;
+    }
+
+    .panel-header {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    #map-search {
+        width: 100% !important;
+    }
+
+    .search-suggestions {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        border-radius: 20px 20px 0 0;
+        max-height: 50vh;
+        z-index: 10000;
+    }
+
+    .suggestion-item {
+        padding: 16px;
+    }
+}
+
+/* Remove old floating panel styles */
+.map-info-panel {
+    display: none !important;
+}
