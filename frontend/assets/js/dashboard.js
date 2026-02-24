@@ -1,6 +1,6 @@
 // dashboard.js - Versão completa com todas as funções do mapa
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'https://if-hub-backend.onrender.com/api';
 let dadosGlobais = null;
 let dadosAluno = null;
 let anoAtual = new Date().getFullYear();
