@@ -4,6 +4,7 @@ const API_URL = 'https://if-hub-backend.onrender.com/api';
 let dadosGlobais = null;
 let dadosAluno = null;
 let anoAtual = new Date().getFullYear();
+let searchTimeout = null; // Para o debounce da busca
 
 // Database de salas do Campus Santa Cruz (baseado em dados reais da estrutura)
 const roomsDatabase = [
@@ -763,11 +764,15 @@ function preencherAvaliacoes(data) {
 }
 
 // Funções do Mapa
+
+// ==================== NOVAS FUNÇÕES DO MAPA (PAINEL INFERIOR) ====================
+
+// Função para selecionar um bloco e abrir o painel inferior
 function selectBuilding(id) {
     const data = buildingData[id];
     if (!data) return;
 
-    // Remove active de todos
+    // Remove active de todos os blocos
     document.querySelectorAll('.building-3d').forEach(b => b.classList.remove('active'));
 
     // Adiciona active no selecionado
@@ -776,23 +781,26 @@ function selectBuilding(id) {
 
     selectedBuilding = id;
 
-    // Atualiza painel
-    const panel = document.getElementById('info-panel');
-    const title = document.getElementById('panel-title');
-    const content = document.getElementById('panel-content');
+    // Atualiza o novo painel inferior
+    const panel = document.getElementById('info-panel-bottom');
+    const title = document.getElementById('panel-title-bottom');
+    const content = document.getElementById('panel-content-bottom');
 
-    title.innerHTML = `<i class="fas fa-${data.icon}" style="color: ${data.cor};"></i> <span>${data.nome}</span>`;
+    // Define o título com ícone
+    title.innerHTML = `<i class="fas fa-${data.icon || 'building'}" style="color: ${data.cor || 'var(--ios-accent-green)'};"></i> <span>${data.nome}</span>`;
 
+    // Gera o HTML dos andares
     let andaresHtml = '';
     for (const [andar, salas] of Object.entries(data.andares)) {
         andaresHtml += `
-            <div class="andar-item" onclick="toggleAndar(this)">
+            <div class="andar-item" onclick="this.style.background='var(--glass-bg-hover)'; setTimeout(()=> this.style.background='', 200);">
                 <div class="andar-numero">${andar}</div>
                 <div class="andar-nome">${salas.join(' • ')}</div>
             </div>
         `;
     }
 
+    // Monta o conteúdo do painel
     content.innerHTML = `
         <p style="color: var(--ios-text-secondary); margin-bottom: 20px; line-height: 1.5;">
             ${data.descricao}
@@ -806,22 +814,288 @@ function selectBuilding(id) {
         </div>
     `;
 
+    // Abre o painel
     panel.classList.add('open');
+
+    // Rolagem suave até o mapa (opcional, bom para mobile)
+    document.getElementById('mapa-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function closePanel() {
-    document.getElementById('info-panel').classList.remove('open');
+// Função para fechar o painel inferior
+function closeBottomPanel() {
+    document.getElementById('info-panel-bottom').classList.remove('open');
     document.querySelectorAll('.building-3d').forEach(b => b.classList.remove('active'));
     selectedBuilding = null;
 }
 
-function toggleAndar(element) {
-    // Animação de expandir/contrair (pode adicionar detalhes depois)
-    element.style.background = 'var(--glass-bg-hover)';
-    setTimeout(() => {
-        element.style.background = '';
-    }, 200);
+// Função de zoom (igual, mas garantindo que funciona)
+function zoomMap(factor) {
+    currentZoom *= factor;
+    currentZoom = Math.max(0.5, Math.min(3, currentZoom));
+    const container = document.getElementById('map-container');
+    const image = document.getElementById('campus-image');
+    if (image) {
+        image.style.transform = `scale(${currentZoom})`;
+        image.style.transition = 'transform 0.3s ease';
+    }
 }
+
+function resetMap() {
+    currentZoom = 1;
+    const image = document.getElementById('campus-image');
+    if (image) image.style.transform = 'scale(1)';
+    closeBottomPanel();
+}
+
+// ==================== NOVO SISTEMA DE BUSCA COM AUTOCOMPLETE E TOLERÂNCIA A ERROS ====================
+
+// Função de similaridade (Levenshtein distance)
+function levenshteinDistance(a, b) {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+    const matrix = [];
+    for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+    for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j] + 1
+                );
+            }
+        }
+    }
+    return matrix[b.length][a.length];
+}
+
+// Função principal de busca com pontuação de relevância
+function searchRoomsWithScore(query) {
+    if (!query || query.length < 2) return [];
+
+    const queryLower = query.toLowerCase().trim();
+    const results = [];
+
+    roomsDatabase.forEach(room => {
+        const nameLower = room.name.toLowerCase();
+        const roomLower = room.room.toLowerCase();
+        const blockLower = room.block.toLowerCase();
+        const typeLower = room.type.toLowerCase();
+        const allKeywords = room.keywords.map(k => k.toLowerCase());
+
+        // Pontuação de relevância (menor é melhor)
+        let score = Infinity;
+
+        // 1. Match exato no nome ou número da sala (maior prioridade)
+        if (nameLower === queryLower || roomLower === queryLower) {
+            score = 0;
+        }
+        // 2. Match exato em keywords
+        else if (allKeywords.some(k => k === queryLower)) {
+            score = 1;
+        }
+        // 3. Match de substring
+        else if (nameLower.includes(queryLower) || roomLower.includes(queryLower) || blockLower.includes(queryLower) || typeLower.includes(queryLower)) {
+            score = 2;
+        }
+        // 4. Match aproximado (Levenshtein) - só para consultas um pouco maiores
+        else if (query.length >= 3) {
+            const distances = [
+                levenshteinDistance(queryLower, nameLower),
+                levenshteinDistance(queryLower, roomLower),
+                ...allKeywords.map(k => levenshteinDistance(queryLower, k))
+            ];
+            const minDist = Math.min(...distances);
+            // Tolerância: permite até 3 erros ou 30% do tamanho da query
+            const maxAllowedErrors = Math.min(3, Math.floor(query.length * 0.3));
+            if (minDist <= maxAllowedErrors) {
+                score = 3 + minDist; // Adiciona a distância para ordenar
+            }
+        }
+
+        if (score !== Infinity) {
+            results.push({
+                ...room,
+                relevance: score
+            });
+        }
+    });
+
+    // Ordena por relevância (menor score primeiro) e depois pelo nome
+    results.sort((a, b) => {
+        if (a.relevance !== b.relevance) return a.relevance - b.relevance;
+        return a.name.localeCompare(b.name);
+    });
+
+    return results.slice(0, 8); // Limita a 8 resultados para não sobrecarregar
+}
+
+// Função para mostrar sugestões de autocomplete
+function showAutocompleteSuggestions() {
+    const input = document.getElementById('room-search');
+    const query = input.value;
+    const suggestionsBox = document.getElementById('autocomplete-suggestions');
+
+    if (!query || query.length < 2) {
+        suggestionsBox.classList.remove('show');
+        return;
+    }
+
+    const results = searchRoomsWithScore(query);
+
+    if (results.length === 0) {
+        suggestionsBox.innerHTML = `<div class="suggestion-item" style="justify-content: center; color: var(--ios-text-secondary);">Nenhuma sala encontrada</div>`;
+        suggestionsBox.classList.add('show');
+        return;
+    }
+
+    let html = '';
+    results.forEach(room => {
+        let icon = 'fa-door-open';
+        if (room.type.includes('laboratório')) icon = 'fa-flask';
+        else if (room.type.includes('biblioteca')) icon = 'fa-book';
+        else if (room.type.includes('administrativo')) icon = 'fa-building';
+        else if (room.type.includes('esporte')) icon = 'fa-futbol';
+        else if (room.type.includes('alimentação')) icon = 'fa-utensils';
+
+        html += `
+            <div class="suggestion-item" onclick="selectRoom('${room.id}')">
+                <i class="fas ${icon}"></i>
+                <div class="suggestion-text">
+                    <div class="suggestion-title">${room.name}</div>
+                    <div class="suggestion-subtitle">${room.room} • Bloco ${room.block}</div>
+                </div>
+            </div>
+        `;
+    });
+
+    suggestionsBox.innerHTML = html;
+    suggestionsBox.classList.add('show');
+}
+
+// Função chamada quando uma sala é selecionada no autocomplete
+function selectRoom(roomId) {
+    const room = roomsDatabase.find(r => r.id === roomId);
+    if (!room) return;
+
+    // Preenche o input com o nome da sala
+    const input = document.getElementById('room-search');
+    input.value = room.name;
+
+    // Esconde as sugestões
+    document.getElementById('autocomplete-suggestions').classList.remove('show');
+
+    // Mostra o resultado detalhado
+    showRoomDetails(room);
+}
+
+// Função para exibir os detalhes da sala (adaptada da antiga searchRoom)
+function showRoomDetails(room) {
+    const resultContainer = document.getElementById('room-result');
+    const titleEl = document.getElementById('room-title');
+    const detailsEl = document.getElementById('room-details');
+
+    resultContainer.classList.add('show');
+    titleEl.style.color = 'var(--ios-accent-green)';
+    titleEl.innerHTML = `<i class="fas fa-check-circle"></i> ${room.name} <span style="background: var(--gradient-primary); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; margin-left: 12px;">Bloco ${room.block}</span>`;
+
+    detailsEl.innerHTML = `
+        <div class="detail-card">
+            <i class="fas fa-door-open"></i>
+            <div>
+                <strong>Sala</strong>
+                <span>${room.room}</span>
+            </div>
+        </div>
+        <div class="detail-card">
+            <i class="fas fa-building"></i>
+            <div>
+                <strong>Bloco</strong>
+                <span>${room.block}</span>
+            </div>
+        </div>
+        <div class="detail-card">
+            <i class="fas fa-layer-group"></i>
+            <div>
+                <strong>Andar</strong>
+                <span>${room.floor}</span>
+            </div>
+        </div>
+        <div class="detail-card">
+            <i class="fas fa-tag"></i>
+            <div>
+                <strong>Tipo</strong>
+                <span>${room.type}</span>
+            </div>
+        </div>
+    `;
+}
+
+// Função de busca principal (agora chamada ao pressionar Enter ou clicar no botão)
+function searchRoom() {
+    const input = document.getElementById('room-search');
+    const query = input.value.trim();
+    if (!query) {
+        showAlert('Digite algo para buscar');
+        return;
+    }
+
+    const results = searchRoomsWithScore(query);
+
+    if (results.length === 0) {
+        const resultContainer = document.getElementById('room-result');
+        resultContainer.classList.add('show');
+        document.getElementById('room-title').innerHTML = '<i class="fas fa-times-circle" style="color: var(--ios-accent-red);"></i> Nenhuma sala encontrada';
+        document.getElementById('room-title').style.color = 'var(--ios-accent-red)';
+        document.getElementById('room-details').innerHTML = '<p style="color: var(--ios-text-secondary);">Tente buscar por: número da sala, bloco, ou tipo (ex: laboratório, biblioteca, 345)</p>';
+        return;
+    }
+
+    // Mostra o melhor resultado
+    showRoomDetails(results[0]);
+
+    // Se houver mais resultados, mostra como sugestões adicionais
+    if (results.length > 1) {
+        const detailsEl = document.getElementById('room-details');
+        let outrasHtml = `
+            <div style="grid-column: 1 / -1; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--glass-border);">
+                <div style="font-size: 0.9rem; color: var(--ios-text-secondary); margin-bottom: 12px; font-weight: 600;">Outras opções encontradas:</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        `;
+        results.slice(1, 4).forEach(r => {
+            outrasHtml += `
+                <span style="background: rgba(255,255,255,0.05); padding: 8px 14px; border-radius: 10px; font-size: 0.85rem; cursor: pointer; border: 1px solid var(--glass-border); font-weight: 500;" 
+                      onclick="selectRoom('${r.id}')">
+                    ${r.name}
+                </span>
+            `;
+        });
+        outrasHtml += '</div></div>';
+        detailsEl.innerHTML += outrasHtml;
+    }
+}
+
+// Debounce para o autocomplete (evita buscar a cada tecla)
+function handleSearchInput() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        showAutocompleteSuggestions();
+    }, 300); // Aguarda 300ms após a última digitação
+}
+
+// Função para esconder sugestões ao clicar fora
+document.addEventListener('click', function(event) {
+    const input = document.getElementById('room-search');
+    const suggestions = document.getElementById('autocomplete-suggestions');
+    if (input && suggestions && !input.contains(event.target) && !suggestions.contains(event.target)) {
+        suggestions.classList.remove('show');
+    }
+});
+
+
 
 function zoomMap(factor) {
     currentZoom *= factor;
@@ -839,28 +1113,6 @@ function resetMap() {
     closePanel();
 }
 
-function searchMap() {
-    const query = document.getElementById('map-search').value.toLowerCase();
-    if (!query) return;
-
-    // Busca em todos os blocos
-    for (const [id, data] of Object.entries(buildingData)) {
-        if (data.nome.toLowerCase().includes(query) ||
-            data.descricao.toLowerCase().includes(query) ||
-            Object.values(data.andares).flat().some(s => s.toLowerCase().includes(query))) {
-            selectBuilding(id);
-
-            // Scroll para o elemento
-            const element = document.querySelector(`[data-id="${id}"]`);
-            if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-            }
-            return;
-        }
-    }
-
-    alert('Bloco ou sala não encontrada');
-}
 
 // Funções de busca de salas (outro sistema de busca, talvez duplicado, mas mantendo)
 function searchRoom() {
@@ -943,10 +1195,7 @@ function searchRoom() {
     }
 }
 
-function quickSearch(term) {
-    document.getElementById('room-search').value = term;
-    searchRoom();
-}
+
 
 // Utilitários
 function formatarData(dataStr) {

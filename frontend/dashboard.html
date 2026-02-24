@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -12,9 +13,11 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
+
 <body>
     <!-- Liquid Background -->
     <div class="liquid-background">
@@ -279,19 +282,52 @@
 
         <!-- MAPA SECTION -->
         <section id="mapa-section" class="content-section">
+            <!-- Painel de Busca de Salas (existente, mas com autocomplete) -->
             <div class="ios-panel" style="margin-bottom: 24px;">
                 <div class="panel-header">
+                    <div class="panel-title"><i class="fas fa-search-location"></i> Localizar Sala</div>
+                </div>
+                <div class="map-search-box">
+                    <div class="autocomplete-container" style="flex: 1;">
+                        <input type="text" class="ios-input" id="room-search"
+                            placeholder="Digite o nome ou número da sala..." oninput="handleSearchInput()"
+                            onkeypress="if(event.key==='Enter') searchRoom()">
+                        <div class="autocomplete-suggestions" id="autocomplete-suggestions"></div>
+                    </div>
+                    <button class="ios-btn" onclick="searchRoom()" style="padding: 16px 24px;">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+
+                <!-- Resultado da busca -->
+                <div class="room-result" id="room-result">
+                    <div class="room-title" id="room-title"></div>
+                    <div class="room-details" id="room-details"></div>
+                </div>
+            </div>
+
+            <!-- Mapa Interativo -->
+            <div class="ios-panel" style="padding: 0; overflow: hidden; position: relative;">
+                <div class="panel-header" style="padding: 20px 24px; margin: 0;">
                     <div class="panel-title"><i class="fas fa-map-marked-alt"></i> Mapa do Campus 3D</div>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <input type="text" class="ios-input" id="map-search" placeholder="Buscar bloco ou sala..."
-                            style="width: 250px;">
-                        <button class="ios-btn" onclick="searchMap()">
-                            <i class="fas fa-search"></i>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="ios-btn secondary" onclick="resetMap()" style="padding: 12px 16px;"
+                            title="Resetar visualização">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button class="ios-btn secondary" onclick="zoomMap(1.2)" style="padding: 12px 16px;"
+                            title="Aumentar zoom">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                        <button class="ios-btn secondary" onclick="zoomMap(0.8)" style="padding: 12px 16px;"
+                            title="Diminuir zoom">
+                            <i class="fas fa-search-minus"></i>
                         </button>
                     </div>
                 </div>
 
-                <div class="map-spiderman-container" id="map-container">
+                <!-- Container do mapa -->
+                <div class="map-spiderman-container" id="map-container" style="border-radius: 0 0 24px 24px;">
                     <!-- Imagem de fundo (sua foto do Google Maps) -->
                     <img src="assets/img/campus-satellite.jpeg" alt="Campus IFRN" class="map-base-image"
                         id="campus-image">
@@ -410,19 +446,17 @@
                         <div class="building-label">Piscina</div>
                     </div>
 
-                    <!-- Painel de Informações -->
-                    <div class="map-info-panel" id="info-panel">
-                        <div class="info-panel-header">
-                            <div class="info-panel-title" id="panel-title">
+                    <!-- NOVO PAINEL INFERIOR (substitui o antigo painel lateral) -->
+                    <div class="map-info-panel-bottom" id="info-panel-bottom">
+                        <div class="info-panel-header-bottom" onclick="closeBottomPanel()">
+                            <div class="info-panel-title-bottom" id="panel-title-bottom">
                                 <i class="fas fa-building"></i>
                                 <span>Selecione um bloco</span>
                             </div>
-                            <button class="close-panel" onclick="closePanel()">
-                                <i class="fas fa-times"></i>
-                            </button>
+                            <i class="fas fa-chevron-down" style="color: var(--ios-text-secondary);"></i>
                         </div>
-                        <div id="panel-content">
-                            <p style="color: var(--ios-text-secondary); text-align: center; padding: 40px 20px;">
+                        <div class="info-panel-content-bottom" id="panel-content-bottom">
+                            <p style="color: var(--ios-text-secondary); text-align: center; padding: 20px;">
                                 Clique em um bloco no mapa para ver detalhes
                             </p>
                         </div>
@@ -553,16 +587,17 @@
     <script src="assets/js/dashboard.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/service-worker.js')
-                .then(reg => {
-                    console.log('Service Worker registrado com sucesso!', reg);
-                })
-                .catch(err => {
-                    console.log('Erro ao registrar Service Worker:', err);
-                });
-        });
-    }
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => {
+                        console.log('Service Worker registrado com sucesso!', reg);
+                    })
+                    .catch(err => {
+                        console.log('Erro ao registrar Service Worker:', err);
+                    });
+            });
+        }
     </script>
 </body>
+
 </html>

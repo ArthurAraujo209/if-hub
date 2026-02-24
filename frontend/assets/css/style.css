@@ -1703,3 +1703,159 @@ body {
         transition-duration: 0.01ms !important;
     }
 }
+
+
+/* ==================== NOVOS ESTILOS ==================== */
+
+/* Painel de Informações do Mapa (Agora na parte inferior) */
+.map-info-panel-bottom {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    background: var(--glass-bg-elevated);
+    backdrop-filter: var(--liquid-blur-heavy);
+    -webkit-backdrop-filter: var(--liquid-blur-heavy);
+    border: 1px solid var(--glass-border-strong);
+    border-radius: 28px;
+    padding: 0; /* Removido padding para o header controlar */
+    box-shadow: var(--glass-shadow-elevated);
+    transform: translateY(calc(100% + 30px)); /* Escondido por padrão */
+    transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    z-index: 100;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.map-info-panel-bottom.open {
+    transform: translateY(0); /* Mostra quando ativo */
+}
+
+.info-panel-header-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid var(--glass-border);
+    cursor: pointer; /* Indica que pode ser clicado para fechar */
+}
+
+.info-panel-title-bottom {
+    font-size: 1.2rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--ios-text-primary);
+}
+
+.info-panel-content-bottom {
+    padding: 24px;
+    overflow-y: auto;
+    max-height: 50vh;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* Ajuste para a lista de andares no novo painel */
+.info-panel-content-bottom .andar-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.info-panel-content-bottom .andar-item {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 18px;
+    transition: all 0.3s;
+}
+.info-panel-content-bottom .andar-item:hover {
+    background: var(--glass-bg-hover);
+    border-color: var(--ios-accent-green);
+}
+
+/* Autocomplete para a busca de salas */
+.autocomplete-container {
+    position: relative;
+    width: 100%;
+}
+
+.autocomplete-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--glass-bg-elevated);
+    backdrop-filter: var(--liquid-blur-heavy);
+    border: 1px solid var(--glass-border-strong);
+    border-radius: 16px;
+    margin-top: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: var(--glass-shadow-elevated);
+    display: none;
+}
+
+.autocomplete-suggestions.show {
+    display: block;
+}
+
+.suggestion-item {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--glass-border);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover {
+    background: var(--glass-bg-hover);
+    transform: translateX(4px);
+}
+
+.suggestion-item i {
+    width: 24px;
+    color: var(--ios-accent-green);
+    font-size: 1rem;
+}
+
+.suggestion-item .suggestion-text {
+    flex: 1;
+}
+
+.suggestion-item .suggestion-title {
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.suggestion-item .suggestion-subtitle {
+    font-size: 0.8rem;
+    color: var(--ios-text-secondary);
+}
+
+/* Ajuste de responsividade para o painel */
+@media (max-width: 768px) {
+    .info-panel-header-bottom {
+        padding: 16px 20px;
+    }
+    .info-panel-content-bottom {
+        padding: 20px;
+    }
+    .info-panel-title-bottom {
+        font-size: 1.1rem;
+    }
+    .suggestion-item {
+        padding: 14px 16px;
+    }
+}
