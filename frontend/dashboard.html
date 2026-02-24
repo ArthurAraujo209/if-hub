@@ -13,11 +13,85 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
-    <!-- Adicione antes do seu style.css -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FUSE.JS - Biblioteca de busca inteligente -->
     <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
+    
     <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        /* Estilos adicionais para a busca */
+        .search-result-container {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 28px;
+            margin-top: 24px;
+            padding: 24px;
+            display: none;
+        }
+        .search-result-container.show {
+            display: block;
+        }
+        .search-result-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .suggestion-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.2s;
+        }
+        .suggestion-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateX(5px);
+        }
+        .suggestion-item mark {
+            background: rgba(48, 209, 88, 0.3);
+            color: inherit;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        .autocomplete-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(20, 20, 30, 0.95);
+            backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            margin-top: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        .autocomplete-suggestions.show {
+            display: block;
+        }
+        .building-3d.highlight .building-top {
+            border-color: #30d158;
+            box-shadow: 0 0 30px rgba(48, 209, 88, 0.8);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 20px rgba(48, 209, 88, 0.6); }
+            50% { box-shadow: 0 0 40px rgba(48, 209, 88, 0.9); }
+            100% { box-shadow: 0 0 20px rgba(48, 209, 88, 0.6); }
+        }
+    </style>
 </head>
 
 <body>
@@ -284,7 +358,7 @@
 
         <!-- MAPA SECTION -->
         <section id="mapa-section" class="content-section">
-            <!-- Painel de Busca de Salas com Autocomplete Inteligente -->
+            <!-- Painel de Busca de Salas -->
             <div class="ios-panel" style="margin-bottom: 24px;">
                 <div class="panel-header">
                     <div class="panel-title"><i class="fas fa-search-location"></i> Localizar Sala ou Bloco</div>
@@ -292,8 +366,9 @@
                 <div class="map-search-box">
                     <div class="autocomplete-container" style="flex: 1; position: relative;">
                         <input type="text" class="ios-input" id="room-search"
-                            placeholder="Digite: bibli, lab, sala 101, bloco A, cantina..."
-                            oninput="handleSearchInput()" onkeypress="if(event.key==='Enter') performSmartSearch()"
+                            placeholder="Digite: bibli, lab, 101, cantina..." 
+                            oninput="handleSearchInput()"
+                            onkeypress="if(event.key==='Enter') performSmartSearch()"
                             autocomplete="off">
                         <div class="autocomplete-suggestions" id="autocomplete-suggestions"></div>
                     </div>
@@ -302,7 +377,7 @@
                     </button>
                 </div>
 
-                <!-- Container de Resultados da Pesquisa (aparece aqui, não mais em popup) -->
+                <!-- Container de Resultados -->
                 <div class="search-result-container" id="search-result-container">
                     <div class="search-result-title" id="search-result-title"></div>
                     <div class="search-result-content" id="search-result-content"></div>
@@ -314,16 +389,13 @@
                 <div class="panel-header" style="padding: 20px 24px; margin: 0;">
                     <div class="panel-title"><i class="fas fa-map-marked-alt"></i> Mapa do Campus 3D</div>
                     <div style="display: flex; gap: 10px;">
-                        <button class="ios-btn secondary" onclick="resetMap()" style="padding: 12px 16px;"
-                            title="Resetar visualização">
+                        <button class="ios-btn secondary" onclick="resetMap()" style="padding: 12px 16px;" title="Resetar visualização">
                             <i class="fas fa-sync-alt"></i>
                         </button>
-                        <button class="ios-btn secondary" onclick="zoomMap(1.2)" style="padding: 12px 16px;"
-                            title="Aumentar zoom">
+                        <button class="ios-btn secondary" onclick="zoomMap(1.2)" style="padding: 12px 16px;" title="Aumentar zoom">
                             <i class="fas fa-search-plus"></i>
                         </button>
-                        <button class="ios-btn secondary" onclick="zoomMap(0.8)" style="padding: 12px 16px;"
-                            title="Diminuir zoom">
+                        <button class="ios-btn secondary" onclick="zoomMap(0.8)" style="padding: 12px 16px;" title="Diminuir zoom">
                             <i class="fas fa-search-minus"></i>
                         </button>
                     </div>
@@ -331,122 +403,46 @@
 
                 <!-- Container do mapa -->
                 <div class="map-spiderman-container" id="map-container" style="border-radius: 0 0 24px 24px;">
-                    <!-- Imagem de fundo (sua foto do Google Maps) -->
-                    <img src="assets/img/campus-satellite.jpeg" alt="Campus IFRN" class="map-base-image"
-                        id="campus-image">
-
+                    <img src="assets/img/campus-satellite.jpeg" alt="Campus IFRN" class="map-base-image" id="campus-image">
                     <div class="map-overlay"></div>
 
-                    <!-- Blocos 3D - Posições em % para responsividade -->
-                    <!-- Bloco B - Grande, 3 andares -->
+                    <!-- Blocos 3D -->
                     <div class="building-3d tipo-admin" data-id="B" data-nome="Bloco B" data-andares="3"
                         style="left: 25%; bottom: 2%; width: 10%; height: 38%;" onclick="selectBuilding('B')">
-                        <div class="building-top" style="width: 100%; height: 100%;">
-                            <span>B</span>
-                        </div>
-                        <div class="building-face front" style="width: 100%;"></div>
-                        <div class="building-face side" style="width: 60px; height: 100%;"></div>
-                        <div class="building-label">Bloco B - Centro de Convivência</div>
+                        <div class="building-top"><span>B</span></div>
+                        <div class="building-face front"></div>
+                        <div class="building-face side"></div>
+                        <div class="building-label">Bloco B</div>
                     </div>
 
-                    <!-- Guarita (1) -->
                     <div class="building-3d tipo-admin" data-id="1" data-nome="Guarita" data-andares="1"
                         style="left: 38%; bottom: 2%; width: 4%; height: 8%;" onclick="selectBuilding('1')">
-                        <div class="building-top" style="width: 100%; height: 100%;">
-                            <span>1</span>
-                        </div>
-                        <div class="building-face front" style="width: 100%;"></div>
-                        <div class="building-label">Guarita/Portaria</div>
+                        <div class="building-top"><span>1</span></div>
+                        <div class="building-face front"></div>
+                        <div class="building-label">Guarita</div>
                     </div>
 
-                    <!-- Cantina (2) -->
                     <div class="building-3d tipo-alimentacao" data-id="2" data-nome="Cantina" data-andares="1"
                         style="left: 30%; top: 24%; width: 5%; height: 24%;" onclick="selectBuilding('2')">
-                        <div class="building-top"
-                            style="width: 100%; height: 100%; border-color: var(--ios-accent-yellow);">
-                            <span>2</span>
-                        </div>
-                        <div class="building-face front" style="width: 100%;"></div>
-                        <div class="building-label">Cantina & Saúde</div>
+                        <div class="building-top"><span>2</span></div>
+                        <div class="building-face front"></div>
+                        <div class="building-label">Cantina</div>
                     </div>
 
-                    <!-- Almoxarifado (3) -->
-                    <div class="building-3d tipo-admin" data-id="3" data-nome="Almoxarifado" data-andares="1"
-                        style="left: 30%; top: 8%; width: 5%; height: 15%;" onclick="selectBuilding('3')">
-                        <div class="building-top" style="width: 100%; height: 100%;">
-                            <span>3</span>
-                        </div>
-                        <div class="building-face front" style="width: 100%;"></div>
-                        <div class="building-label">Almoxarifado</div>
-                    </div>
-
-                    <!-- Bloco A - 3 andares -->
                     <div class="building-3d tipo-lab" data-id="A" data-nome="Bloco A" data-andares="3"
                         style="left: 39%; top: 28%; width: 18%; height: 20%;" onclick="selectBuilding('A')">
-                        <div class="building-top"
-                            style="width: 100%; height: 100%; border-color: var(--ios-accent-purple);">
-                            <span>A</span>
-                        </div>
-                        <div class="building-face front" style="width: 100%;"></div>
-                        <div class="building-face side" style="width: 60px; height: 100%;"></div>
-                        <div class="building-label">Bloco A - Labs & Salas</div>
+                        <div class="building-top"><span>A</span></div>
+                        <div class="building-face front"></div>
+                        <div class="building-face side"></div>
+                        <div class="building-label">Bloco A</div>
                     </div>
 
-                    <!-- Bloco 5 - Mecânica -->
-                    <div class="building-3d tipo-lab" data-id="5" data-nome="Bloco 5" data-andares="2"
-                        style="left: 46%; top: 8%; width: 13%; height: 10%;" onclick="selectBuilding('5')">
-                        <div class="building-top"
-                            style="width: 100%; height: 100%; border-color: var(--ios-accent-purple);">
-                            <span>5</span>
-                        </div>
-                        <div class="building-face front" style="width: 100%;"></div>
-                        <div class="building-label">Mecânica/Refrigeração</div>
-                    </div>
-
-                    <!-- Quadra de Areia -->
-                    <div class="building-3d tipo-esporte" data-id="areia" data-nome="Quadra de Areia" data-andares="1"
-                        style="left: 60%; top: 25%; width: 10%; height: 23%;" onclick="selectBuilding('areia')">
-                        <div class="building-top"
-                            style="width: 100%; height: 100%; border-color: var(--ios-accent-orange); background: rgba(255, 159, 10, 0.2);">
-                            <i class="fas fa-volleyball-ball"></i>
-                        </div>
-                        <div class="building-face front" style="width: 100%;"></div>
-                        <div class="building-label">Quadra de Areia</div>
-                    </div>
-
-                    <!-- Espaço Multiuso (4) -->
-                    <div class="building-3d tipo-esporte" data-id="4" data-nome="Espaço Multiuso" data-andares="1"
-                        style="left: 70.5%; top: 45%; width: 4%; height: 7%;" onclick="selectBuilding('4')">
-                        <div class="building-top"
-                            style="width: 100%; height: 100%; border-color: var(--ios-accent-orange);">
-                            <span>4</span>
-                        </div>
-                        <div class="building-face front" style="width: 100%;"></div>
-                        <div class="building-label">Espaço Multiuso</div>
-                    </div>
-
-                    <!-- Quadra Poliesportiva -->
-                    <div class="building-3d tipo-esporte" data-id="quadra" data-nome="Quadra Poliesportiva"
-                        data-andares="1" style="left: 79%; top: 22%; width: 18%; height: 20%; transform: rotate(57deg);"
+                    <div class="building-3d tipo-esporte" data-id="quadra" data-nome="Quadra" data-andares="1"
+                        style="left: 79%; top: 22%; width: 18%; height: 20%; transform: rotate(57deg);"
                         onclick="selectBuilding('quadra')">
-                        <div class="building-top"
-                            style="width: 100%; height: 100%; border-color: var(--ios-accent-orange); background: rgba(255, 159, 10, 0.2);">
-                            <i class="fas fa-basketball-ball"></i>
-                        </div>
-                        <div class="building-face front" style="width: 100%;"></div>
-                        <div class="building-label">Quadra & Vestiários</div>
-                    </div>
-
-                    <!-- Piscina (6) -->
-                    <div class="building-3d tipo-esporte" data-id="6" data-nome="Piscina" data-andares="1"
-                        style="right: 0.5%; top: 45%; width: 10%; height: 8%; transform: rotate(-34deg);"
-                        onclick="selectBuilding('6')">
-                        <div class="building-top"
-                            style="width: 100%; height: 100%; border-color: var(--ios-accent-blue); background: rgba(10, 132, 255, 0.2);">
-                            <i class="fas fa-swimming-pool"></i>
-                        </div>
-                        <div class="building-face front" style="width: 100%;"></div>
-                        <div class="building-label">Piscina</div>
+                        <div class="building-top"><i class="fas fa-basketball-ball"></i></div>
+                        <div class="building-face front"></div>
+                        <div class="building-label">Quadra</div>
                     </div>
                 </div>
             </div>
@@ -458,24 +454,27 @@
                 </div>
                 <div class="profile-grid">
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-map-marker-alt"
-                                style="margin-right: 8px; color: var(--ios-accent-green);"></i>Endereço</span>
+                        <span class="info-label"><i class="fas fa-map-marker-alt" style="margin-right: 8px;"></i>Endereço</span>
                         <span class="info-value">RN-233, Km 02, Santa Cruz - RN</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-clock"
-                                style="margin-right: 8px; color: var(--ios-accent-blue);"></i>Funcionamento</span>
+                        <span class="info-label"><i class="fas fa-clock" style="margin-right: 8px;"></i>Funcionamento</span>
                         <span class="info-value">07:00 - 22:00 (Seg-Sex)</span>
                     </div>
-                    <div class="info-row">
-                        <span class="info-label"><i class="fas fa-phone"
-                                style="margin-right: 8px; color: var(--ios-accent-purple);"></i>Telefone</span>
-                        <span class="info-value">(84) 3291-2200</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label"><i class="fas fa-envelope"
-                                style="margin-right: 8px; color: var(--ios-accent-orange);"></i>Email</span>
-                        <span class="info-value">gabinete.santacruz@ifrn.edu.br</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- AVALIAÇÕES SECTION -->
+        <section id="avaliacoes-section" class="content-section">
+            <div class="ios-panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="fas fa-clipboard-list"></i> Calendário de Avaliações</div>
+                </div>
+                <div class="ios-timeline" id="avaliacoes-timeline">
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Carregando avaliações...</p>
                     </div>
                 </div>
             </div>
@@ -511,23 +510,10 @@
                         <h2 id="perfil-nome">Carregando...</h2>
                         <p><i class="fas fa-id-badge"></i> <span id="perfil-matricula">...</span></p>
                         <p><i class="fas fa-envelope"></i> <span id="perfil-email">...</span></p>
-                        <p><i class="fas fa-map-marker-alt"></i> <span id="perfil-campus">IFRN - Santa Cruz</span></p>
                     </div>
                 </div>
 
                 <div class="profile-grid" id="perfil-detalhes"></div>
-            </div>
-
-            <div class="ios-panel">
-                <div class="panel-header">
-                    <div class="panel-title"><i class="fas fa-cog"></i> Configurações</div>
-                </div>
-                <div style="display: grid; gap: 12px;">
-                    <button class="ios-btn secondary" style="width: 100%; justify-content: center;" onclick="logout()">
-                        <i class="fas fa-sign-out-alt"></i>
-                        Sair da Conta
-                    </button>
-                </div>
             </div>
         </section>
     </main>
@@ -535,41 +521,280 @@
     <!-- Mobile Bottom Menu -->
     <nav class="mobile-menu">
         <a href="#" class="mobile-menu-item active" onclick="showSection('dashboard'); return false;">
-            <i class="fas fa-home"></i>
-            <span>Início</span>
+            <i class="fas fa-home"></i><span>Início</span>
         </a>
         <a href="#" class="mobile-menu-item" onclick="showSection('boletim'); return false;">
-            <i class="fas fa-file-alt"></i>
-            <span>Notas</span>
+            <i class="fas fa-file-alt"></i><span>Notas</span>
         </a>
         <a href="#" class="mobile-menu-item" onclick="showSection('mapa'); return false;">
-            <i class="fas fa-map-marked-alt"></i>
-            <span>Mapa</span>
+            <i class="fas fa-map-marked-alt"></i><span>Mapa</span>
         </a>
         <a href="#" class="mobile-menu-item" onclick="showSection('horarios'); return false;">
-            <i class="fas fa-clock"></i>
-            <span>Horários</span>
+            <i class="fas fa-clock"></i><span>Horários</span>
         </a>
         <a href="#" class="mobile-menu-item" onclick="showSection('perfil'); return false;">
-            <i class="fas fa-user"></i>
-            <span>Perfil</span>
+            <i class="fas fa-user"></i><span>Perfil</span>
         </a>
     </nav>
 
-    <script src="assets/js/dashboard.js"></script>
     <script>
+        // ========== TODO O JAVASCRIPT AQUI ==========
+        
+        const API_URL = 'https://if-hub-backend.onrender.com/api';
+        let dadosGlobais = null;
+        let dadosAluno = null;
+        let anoAtual = new Date().getFullYear();
+        let fuseRooms, fuseBuildings;
+        let currentZoom = 1;
+        let searchTimeout = null;
+
+        // Database de salas
+        const roomsDatabase = [
+            { id: 'biblioteca', name: 'Biblioteca Central', block: 'A', floor: 'Térreo', room: 'A-101', type: 'biblioteca', keywords: ['biblioteca', 'livros', 'bibli'] },
+            { id: 'sec-academica', name: 'Secretaria', block: 'A', floor: 'Térreo', room: 'A-102', type: 'administrativo', keywords: ['secretaria', 'matricula'] },
+            { id: 'lab-info-1', name: 'Lab. Informática 1', block: 'B', floor: 'Térreo', room: 'B-105', type: 'laboratório', keywords: ['lab', 'informatica', 'computador'] },
+            { id: 'cantina', name: 'Cantina', block: 'F', floor: 'Térreo', room: 'F-001', type: 'alimentação', keywords: ['cantina', 'comida', 'lanche'] },
+            { id: 'quadra', name: 'Quadra Poliesportiva', block: 'Externo', floor: '-', room: 'Quadra', type: 'esporte', keywords: ['quadra', 'esporte'] }
+        ];
+
+        // Dados dos blocos
+        const buildingData = {
+            'B': { nome: 'Bloco B', descricao: 'Salas de Aula', andares: {'Térreo':['Salas'], '1º':['Lab']}, icon: 'building', cor: '#30d158' },
+            'A': { nome: 'Bloco A', descricao: 'Administração', andares: {'Térreo':['Secretaria']}, icon: 'flask', cor: '#bf5af2' },
+            '1': { nome: 'Guarita', descricao: 'Entrada', andares: {'Térreo':['Portaria']}, icon: 'shield-alt', cor: '#0a84ff' },
+            '2': { nome: 'Cantina', descricao: 'Alimentação', andares: {'Térreo':['Cantina']}, icon: 'utensils', cor: '#ffd60a' },
+            'quadra': { nome: 'Quadra', descricao: 'Esportes', andares: {'Externo':['Quadra']}, icon: 'basketball-ball', cor: '#ff9f0a' }
+        };
+
+        // Inicializa Fuse
+        function initializeFuse() {
+            const options = { threshold: 0.4, keys: ['name', 'keywords'] };
+            fuseRooms = new Fuse(roomsDatabase, options);
+            
+            const buildingArray = Object.entries(buildingData).map(([id, data]) => ({ id, ...data }));
+            fuseBuildings = new Fuse(buildingArray, { threshold: 0.4, keys: ['nome'] });
+        }
+
+        // Funções de busca (globais)
+        window.performSmartSearch = function() {
+            const input = document.getElementById('room-search');
+            if (!input) return;
+            
+            const query = input.value.trim();
+            if (query.length < 2) return;
+
+            if (!fuseRooms) initializeFuse();
+
+            const roomResults = fuseRooms.search(query);
+            const buildingResults = fuseBuildings.search(query);
+
+            const results = [
+                ...roomResults.map(r => ({ item: r.item, type: 'room' })),
+                ...buildingResults.map(b => ({ item: b.item, type: 'building' }))
+            ].slice(0, 8);
+
+            showSuggestions(results, query);
+        };
+
+        function showSuggestions(results, query) {
+            const container = document.getElementById('autocomplete-suggestions');
+            if (!container) return;
+            
+            if (results.length === 0) {
+                container.innerHTML = '<div style="padding:20px;text-align:center;">Nada encontrado</div>';
+                container.classList.add('show');
+                return;
+            }
+
+            let html = '';
+            results.forEach(r => {
+                if (r.type === 'room') {
+                    html += `<div class="suggestion-item" onclick="selectRoom('${r.item.id}')">
+                        <i class="fas fa-door-open"></i>
+                        <div><strong>${r.item.name}</strong><br><small>Bloco ${r.item.block}</small></div>
+                    </div>`;
+                } else {
+                    html += `<div class="suggestion-item" onclick="selectBuilding('${r.item.id}')">
+                        <i class="fas fa-building"></i>
+                        <div><strong>${r.item.nome}</strong></div>
+                    </div>`;
+                }
+            });
+            
+            container.innerHTML = html;
+            container.classList.add('show');
+        }
+
+        window.handleSearchInput = function() {
+            const query = document.getElementById('room-search').value;
+            if (searchTimeout) clearTimeout(searchTimeout);
+            if (query.length >= 2) {
+                searchTimeout = setTimeout(() => window.performSmartSearch(), 300);
+            } else {
+                document.getElementById('autocomplete-suggestions').classList.remove('show');
+            }
+        };
+
+        window.selectRoom = function(roomId) {
+            const room = roomsDatabase.find(r => r.id === roomId);
+            if (!room) return;
+            
+            document.getElementById('autocomplete-suggestions').classList.remove('show');
+            document.getElementById('room-search').value = room.name;
+            
+            const container = document.getElementById('search-result-container');
+            const title = document.getElementById('search-result-title');
+            const content = document.getElementById('search-result-content');
+            
+            title.innerHTML = `<i class="fas fa-door-open"></i> ${room.name}`;
+            content.innerHTML = `<p>Sala: ${room.room}<br>Bloco: ${room.block}<br>Andar: ${room.floor}</p>`;
+            container.classList.add('show');
+            
+            highlightBuilding(room.block);
+        };
+
+        window.selectBuilding = function(buildingId) {
+            const building = buildingData[buildingId];
+            if (!building) return;
+            
+            document.getElementById('autocomplete-suggestions').classList.remove('show');
+            document.getElementById('room-search').value = building.nome;
+            
+            const container = document.getElementById('search-result-container');
+            const title = document.getElementById('search-result-title');
+            const content = document.getElementById('search-result-content');
+            
+            title.innerHTML = `<i class="fas fa-${building.icon}"></i> ${building.nome}`;
+            content.innerHTML = `<p>${building.descricao}</p>`;
+            container.classList.add('show');
+            
+            highlightBuilding(buildingId);
+        };
+
+        function highlightBuilding(id) {
+            document.querySelectorAll('.building-3d').forEach(b => b.classList.remove('active', 'highlight'));
+            const el = document.querySelector(`[data-id="${id}"]`);
+            if (el) el.classList.add('active', 'highlight');
+        }
+
+        window.zoomMap = function(factor) {
+            currentZoom *= factor;
+            currentZoom = Math.max(0.5, Math.min(3, currentZoom));
+            const img = document.getElementById('campus-image');
+            if (img) img.style.transform = `scale(${currentZoom})`;
+        };
+
+        window.resetMap = function() {
+            currentZoom = 1;
+            document.getElementById('campus-image').style.transform = 'scale(1)';
+            document.querySelectorAll('.building-3d').forEach(b => b.classList.remove('active', 'highlight'));
+            document.getElementById('search-result-container').classList.remove('show');
+            document.getElementById('room-search').value = '';
+            document.getElementById('autocomplete-suggestions').classList.remove('show');
+        };
+
+        // Fechar sugestões ao clicar fora
+        document.addEventListener('click', function(e) {
+            const searchBox = document.querySelector('.map-search-box');
+            if (searchBox && !searchBox.contains(e.target)) {
+                document.getElementById('autocomplete-suggestions').classList.remove('show');
+            }
+        });
+
+        // Funções originais (mantidas)
+        window.showSection = function(section) {
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(section + '-section')?.classList.add('active');
+            
+            document.querySelectorAll('.nav-link, .mobile-menu-item').forEach(l => l.classList.remove('active'));
+            const activeLink = Array.from(document.querySelectorAll('[onclick*="' + section + '"]')).find(l => l.classList.contains('nav-link') || l.classList.contains('mobile-menu-item'));
+            if (activeLink) activeLink.classList.add('active');
+            
+            document.getElementById('page-title').innerHTML = section === 'dashboard' ? '<i class="fas fa-home"></i> Dashboard' : 
+                                                              section === 'mapa' ? '<i class="fas fa-map-marked-alt"></i> Mapa' : 
+                                                              section.charAt(0).toUpperCase() + section.slice(1);
+            closeSidebar();
+        };
+
+        window.toggleSidebar = function() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebar-overlay').style.display = 
+                document.getElementById('sidebar').classList.contains('open') ? 'block' : 'none';
+        };
+
+        window.closeSidebar = function() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebar-overlay').style.display = 'none';
+        };
+
+        window.logout = function() {
+            localStorage.removeItem('suap_token');
+            window.location.href = '/index.html';
+        };
+
+        window.trocarAno = function(ano) {
+            anoAtual = parseInt(ano);
+            carregarDadosAno(anoAtual);
+        };
+
+        // Carregar dados
+        async function carregarDadosAluno() {
+            const token = localStorage.getItem('suap_token');
+            if (!token) { window.location.href = '/index.html'; return; }
+            try {
+                const r = await fetch(`${API_URL}/me`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (r.status === 401) { localStorage.removeItem('suap_token'); window.location.href = '/index.html'; return; }
+                dadosAluno = (await r.json()).aluno;
+                document.getElementById('sidebar-nome').textContent = dadosAluno.nome_usual || dadosAluno.nome;
+                document.getElementById('sidebar-matricula').textContent = dadosAluno.matricula || '';
+                document.getElementById('perfil-nome').textContent = dadosAluno.nome_usual || dadosAluno.nome;
+                document.getElementById('perfil-matricula').textContent = dadosAluno.identificacao || '--';
+                document.getElementById('perfil-email').textContent = dadosAluno.email_academico || '--';
+            } catch (e) { console.error(e); }
+        }
+
+        async function carregarDadosAno(ano) {
+            const token = localStorage.getItem('suap_token');
+            if (!token) return;
+            try {
+                const r = await fetch(`${API_URL}/dashboard/${ano}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (r.status === 401) { localStorage.removeItem('suap_token'); window.location.href = '/index.html'; return; }
+                const data = await r.json();
+                dadosGlobais = { ...data, aluno: dadosAluno };
+                
+                document.getElementById('card-ira').textContent = dadosAluno?.ira || '--';
+                document.getElementById('card-situacao').textContent = dadosAluno?.situacao || '--';
+                document.getElementById('card-curso').textContent = dadosAluno?.curso?.split(' - ')[1] || dadosAluno?.curso || '--';
+                document.getElementById('card-ingresso').textContent = dadosAluno?.ingresso || '--';
+                
+                const boletim = data.boletim || [];
+                document.getElementById('card-faltas').textContent = boletim.reduce((s,d) => s + (parseInt(d.numero_faltas)||0), 0);
+                document.getElementById('card-disciplinas').textContent = boletim.length;
+                
+                document.getElementById('loading').style.display = 'none';
+            } catch (e) { console.error(e); }
+        }
+
+        async function carregarDados() {
+            document.getElementById('loading').style.display = 'flex';
+            await carregarDadosAluno();
+            await carregarDadosAno(anoAtual);
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarDados();
+            initializeFuse();
+        });
+
+        // Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/service-worker.js')
-                    .then(reg => {
-                        console.log('Service Worker registrado com sucesso!', reg);
-                    })
-                    .catch(err => {
-                        console.log('Erro ao registrar Service Worker:', err);
-                    });
+                    .then(reg => console.log('Service Worker registrado!', reg))
+                    .catch(err => console.log('Erro Service Worker:', err));
             });
         }
     </script>
 </body>
-
 </html>
