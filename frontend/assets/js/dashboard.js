@@ -13,26 +13,26 @@ const roomsDatabase = [
     { id: 'direcao', name: 'Direção/Gabinete', block: 'A', floor: '1º Andar', room: 'A-201', type: 'administrativo', keywords: ['direção', 'diretor', 'gabinete'] },
     { id: 'sala-prof', name: 'Sala dos Professores', block: 'A', floor: '1º Andar', room: 'A-202', type: 'administrativo', keywords: ['professores', 'docentes'] },
     { id: 'saude', name: 'Posto de Saúde', block: 'A', floor: 'Térreo', room: 'A-103', type: 'saúde', keywords: ['saúde', 'enfermaria', 'médico'] },
-    
+
     // Bloco B
     { id: 'lab-info-1', name: 'Laboratório de Informática 1', block: 'B', floor: 'Térreo', room: 'B-105', type: 'laboratório', keywords: ['lab', 'informática', 'computador', 'info'] },
     { id: 'lab-info-2', name: 'Laboratório de Informática 2', block: 'B', floor: 'Térreo', room: 'B-106', type: 'laboratório', keywords: ['lab', 'informática'] },
     { id: 'sala-201', name: 'Sala de Aula 201', block: 'B', floor: '2º Andar', room: 'B-301', type: 'sala', keywords: ['sala', 'aula', '201'] },
     { id: 'sala-101', name: 'Sala de Aula 101', block: 'B', floor: '1º Andar', room: 'B-201', type: 'sala', keywords: ['101', 'sala 101'] },
-    
+
     // Bloco C
     { id: 'lab-quimica', name: 'Laboratório de Química', block: 'C', floor: 'Térreo', room: 'C-101', type: 'laboratório', keywords: ['química', 'lab', 'quimica'] },
     { id: 'lab-fisica', name: 'Laboratório de Física', block: 'C', floor: 'Térreo', room: 'C-102', type: 'laboratório', keywords: ['física', 'lab', 'fisica'] },
     { id: 'auditorio', name: 'Auditório Central', block: 'C', floor: '2º Andar', room: 'C-401', type: 'auditório', keywords: ['auditório', 'eventos', 'palestras'] },
-    
+
     // Bloco D
     { id: 'lab-eletrica', name: 'Laboratório de Eletricidade', block: 'D', floor: 'Térreo', room: 'D-110', type: 'laboratório', keywords: ['elétrica', 'eletricidade'] },
     { id: 'lab-mecanica', name: 'Laboratório de Mecânica', block: 'D', floor: 'Térreo', room: 'D-111', type: 'laboratório', keywords: ['mecânica', 'mecanica'] },
-    
+
     // Bloco F
     { id: 'cantina', name: 'Cantina/Restaurante', block: 'F', floor: 'Térreo', room: 'F-001', type: 'alimentação', keywords: ['cantina', 'restaurante', 'comida', 'lanche'] },
     { id: 'biblioteca-setorial', name: 'Biblioteca Setorial', block: 'F', floor: '1º Andar', room: 'F-101', type: 'biblioteca', keywords: ['biblioteca', 'livros', 'setorial'] },
-    
+
     // Áreas Externas
     { id: 'quadra', name: 'Quadra Poliesportiva', block: 'Externo', floor: '-', room: 'Quadra', type: 'esporte', keywords: ['quadra', 'esporte', 'futsal', 'basquete'] },
     { id: 'areia', name: 'Quadra de Areia', block: 'Externo', floor: '-', room: 'Areia', type: 'esporte', keywords: ['areia', 'vôlei', 'futevôlei'] }
@@ -133,7 +133,7 @@ let searchTimeout = null;
 // Inicializa o Fuse.js
 function initializeFuse() {
     console.log('Inicializando busca inteligente...');
-    
+
     const fuseOptions = {
         includeScore: true,
         threshold: 0.4,
@@ -149,7 +149,7 @@ function initializeFuse() {
     };
 
     fuseRooms = new Fuse(roomsDatabase, fuseOptions);
-    
+
     const buildingArray = Object.entries(buildingData).map(([id, data]) => ({
         id: id,
         nome: data.nome,
@@ -158,13 +158,13 @@ function initializeFuse() {
         cor: data.cor,
         andares: data.andares
     }));
-    
+
     fuseBuildings = new Fuse(buildingArray, {
         includeScore: true,
         threshold: 0.4,
         keys: ['nome', 'descricao']
     });
-    
+
     console.log('Busca inteligente pronta!');
 }
 
@@ -173,9 +173,9 @@ function performSmartSearch() {
     console.log('Buscando...');
     const input = document.getElementById('room-search');
     if (!input) return;
-    
+
     const query = input.value.trim();
-    
+
     if (!query || query.length < 2) {
         document.getElementById('autocomplete-suggestions').classList.remove('show');
         return;
@@ -196,11 +196,34 @@ function performSmartSearch() {
     showSuggestions(allResults, query);
 }
 
+// Função para limpar pesquisa (nova funcionalidade para o botão)
+function clearSearch() {
+    const input = document.getElementById('room-search');
+    if (input) input.value = '';
+
+    document.getElementById('autocomplete-suggestions').classList.remove('show');
+
+    // Fecha o painel de resultados se estiver aberto
+    closeResultPanel();
+
+    // Remove destaques do mapa
+    document.querySelectorAll('.building-3d').forEach(b => b.classList.remove('active', 'highlight'));
+}
+
+// Função para fechar o painel de resultados
+function closeResultPanel() {
+    const container = document.getElementById('search-result-container');
+    if (container) {
+        container.style.display = 'none';
+        container.classList.remove('show');
+    }
+}
+
 // Mostra sugestões
 function showSuggestions(results, query) {
     const container = document.getElementById('autocomplete-suggestions');
     if (!container) return;
-    
+
     if (results.length === 0) {
         container.innerHTML = `
             <div style="padding: 20px; text-align: center; color: var(--ios-text-secondary);">
@@ -214,7 +237,7 @@ function showSuggestions(results, query) {
     }
 
     let html = '';
-    
+
     results.forEach(result => {
         if (result.type === 'room') {
             const room = result.item;
@@ -249,62 +272,72 @@ function showSuggestions(results, query) {
     container.classList.add('show');
 }
 
-// FUNÇÃO CHAMADA PELO oninput
+// FUNÇÃO CHAMADA PELO oninput (otimizada)
 function handleSearchInput() {
     const input = document.getElementById('room-search');
     if (!input) return;
-    
+
     const query = input.value;
-    
+
     if (searchTimeout) {
         clearTimeout(searchTimeout);
     }
-    
+
     if (query.length >= 2) {
         searchTimeout = setTimeout(() => {
             performSmartSearch();
         }, 300);
     } else {
         document.getElementById('autocomplete-suggestions').classList.remove('show');
+
+        // Se o campo ficar vazio, não fecha os resultados automaticamente
+        // O usuário pode querer ver o resultado ainda
     }
 }
 
-// Seleciona uma sala
+// Atualizar a função selectRoom para ter botão de fechar
 function selectRoom(roomId) {
     const room = roomsDatabase.find(r => r.id === roomId);
     if (!room) return;
-    
+
     document.getElementById('autocomplete-suggestions').classList.remove('show');
     document.getElementById('room-search').value = room.name;
-    
+
     showRoomDetails(room);
     highlightBuilding(room.block);
 }
 
-// Seleciona um bloco
+// Atualizar a função selectBuilding para ter botão de fechar
 function selectBuilding(buildingId) {
     const building = buildingData[buildingId];
     if (!building) return;
-    
+
     document.getElementById('autocomplete-suggestions').classList.remove('show');
     document.getElementById('room-search').value = building.nome;
-    
+
     showBuildingDetails(buildingId, building);
     highlightBuilding(buildingId);
 }
 
-// Mostra detalhes da sala
+// Mostra detalhes da sala (ATUALIZADO COM BOTÃO FECHAR)
 function showRoomDetails(room) {
     const container = document.getElementById('search-result-container');
     const title = document.getElementById('search-result-title');
     const content = document.getElementById('search-result-content');
-    
+
     if (!container) return;
-    
+
     title.innerHTML = `
-        <i class="fas fa-door-open" style="color: var(--ios-accent-green);"></i>
-        <span>${room.name}</span>
-        <span style="background: var(--gradient-primary); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem;">Bloco ${room.block}</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <i class="fas fa-door-open" style="color: var(--ios-accent-green);"></i>
+                <span>${room.name}</span>
+                <span style="background: var(--gradient-primary); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem;">Bloco ${room.block}</span>
+            </div>
+            <button onclick="closeResultPanel()" class="close-panel" style="background: rgba(255,255,255,0.1); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
     `;
 
     content.innerHTML = `
@@ -326,23 +359,36 @@ function showRoomDetails(room) {
                 <div><strong>Tipo</strong><br>${room.type}</div>
             </div>
         </div>
+        <button class="ios-btn result-action-btn" onclick="resetMap()" style="margin-top: 20px;">
+            <i class="fas fa-sync-alt"></i> Resetar Visualização
+        </button>
     `;
 
     container.style.display = 'block';
     container.classList.add('show');
+
+    // Scroll suave até o resultado
+    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// Mostra detalhes do bloco
+// Mostra detalhes do bloco (ATUALIZADO COM BOTÃO FECHAR)
 function showBuildingDetails(buildingId, building) {
     const container = document.getElementById('search-result-container');
     const title = document.getElementById('search-result-title');
     const content = document.getElementById('search-result-content');
-    
+
     if (!container) return;
-    
+
     title.innerHTML = `
-        <i class="fas fa-${building.icon}" style="color: ${building.cor};"></i>
-        <span>${building.nome}</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <i class="fas fa-${building.icon}" style="color: ${building.cor};"></i>
+                <span>${building.nome}</span>
+            </div>
+            <button onclick="closeResultPanel()" class="close-panel" style="background: rgba(255,255,255,0.1); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
     `;
 
     let andaresHtml = '';
@@ -359,16 +405,22 @@ function showBuildingDetails(buildingId, building) {
         <p style="color: var(--ios-text-secondary); margin-bottom: 20px;">${building.descricao}</p>
         <h4 style="margin-bottom: 15px;">Andares</h4>
         ${andaresHtml}
+        <button class="ios-btn result-action-btn" onclick="resetMap()" style="margin-top: 20px;">
+            <i class="fas fa-sync-alt"></i> Resetar Visualização
+        </button>
     `;
 
     container.style.display = 'block';
     container.classList.add('show');
+
+    // Scroll suave até o resultado
+    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 // Destaca bloco no mapa
 function highlightBuilding(buildingId) {
     document.querySelectorAll('.building-3d').forEach(b => b.classList.remove('active', 'highlight'));
-    
+
     const building = document.querySelector(`[data-id="${buildingId}"]`);
     if (building) {
         building.classList.add('active', 'highlight');
@@ -389,18 +441,18 @@ function resetMap() {
     currentZoom = 1;
     const image = document.getElementById('campus-image');
     if (image) image.style.transform = 'scale(1)';
-    
+
     document.querySelectorAll('.building-3d').forEach(b => b.classList.remove('active', 'highlight'));
-    
+
     const container = document.getElementById('search-result-container');
     if (container) {
         container.style.display = 'none';
         container.classList.remove('show');
     }
-    
+
     const input = document.getElementById('room-search');
     if (input) input.value = '';
-    
+
     document.getElementById('autocomplete-suggestions').classList.remove('show');
 }
 
@@ -443,14 +495,14 @@ function safeObject(data) {
 
 function parseHorario(codigo) {
     if (!codigo || codigo.length < 3) return null;
-    
+
     const dia = parseInt(codigo[0]);
     const turno = codigo[1];
     const horas = codigo.substring(2).split('').map(h => parseInt(h));
-    
+
     const diasNomes = ['', 'Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
     const turnosNomes = { 'M': 'Manhã', 'V': 'Tarde', 'N': 'Noite' };
-    
+
     return {
         dia,
         diaNome: diasNomes[dia] || '',
@@ -537,7 +589,7 @@ function closeSidebar() {
 async function logout() {
     try {
         await fetch(`${API_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
-    } catch (e) {}
+    } catch (e) { }
     localStorage.removeItem('suap_token');
     window.location.href = '/index.html';
 }
@@ -545,10 +597,10 @@ async function logout() {
 function showAlert(message, type = 'error') {
     const container = document.getElementById('alert-container');
     if (!container) return;
-    
+
     const icon = type === 'error' ? 'exclamation-circle' : 'check-circle';
     const className = type === 'error' ? 'alert-error' : 'alert-success';
-    
+
     container.innerHTML = `
         <div class="ios-alert ${className}">
             <i class="fas fa-${icon}"></i>
@@ -595,10 +647,10 @@ async function carregarDadosAluno() {
 
         const data = await response.json();
         dadosAluno = data.aluno;
-        
+
         preencherSidebar({ aluno: dadosAluno });
         preencherPerfil({ aluno: dadosAluno });
-        
+
     } catch (error) {
         console.error('Erro ao carregar dados do aluno:', error);
     }
@@ -621,12 +673,12 @@ async function carregarDadosAno(ano) {
         }
 
         const data = await response.json();
-        
+
         dadosGlobais = {
             ...data,
             aluno: dadosAluno
         };
-        
+
         if (data.erro) {
             showAlert(data.erro);
             return;
@@ -660,10 +712,10 @@ function preencherSidebar(data) {
 
     const nomeEl = document.getElementById('sidebar-nome');
     const matriculaEl = document.getElementById('sidebar-matricula');
-    
+
     if (nomeEl) nomeEl.textContent = nome;
     if (matriculaEl) matriculaEl.textContent = matricula;
-    
+
     const avatarEl = document.getElementById('sidebar-avatar');
     if (avatarEl) {
         if (foto) {
@@ -676,7 +728,7 @@ function preencherSidebar(data) {
 
 function preencherDashboard(data) {
     const aluno = safeObject(data.aluno);
-    
+
     const cardIra = document.getElementById('card-ira');
     const cardSituacao = document.getElementById('card-situacao');
     const cardCurso = document.getElementById('card-curso');
@@ -691,13 +743,13 @@ function preencherDashboard(data) {
 
     const boletim = safeArray(data.boletim);
     const totalFaltas = boletim.reduce((sum, d) => sum + (parseInt(d.numero_faltas) || 0), 0);
-    
+
     if (cardFaltas) cardFaltas.textContent = totalFaltas;
     if (cardDisciplinas) cardDisciplinas.textContent = boletim.length;
 
     const containerAval = document.getElementById('dashboard-avaliacoes');
     const avaliacoes = safeArray(data.avaliacoes);
-    
+
     if (containerAval) {
         if (avaliacoes.length === 0) {
             containerAval.innerHTML = `
@@ -727,7 +779,7 @@ function preencherDashboard(data) {
                 let situacaoClass = 'tag-cursando';
                 if (d.situacao === 'Aprovado') situacaoClass = 'tag-aprovado';
                 else if (d.situacao === 'Reprovado') situacaoClass = 'tag-reprovado';
-                
+
                 return `
                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px; background: rgba(255,255,255,0.03); border-radius: 16px; margin-bottom: 12px; border: 1px solid var(--glass-border);">
                         <div>
@@ -794,12 +846,12 @@ function preencherPerfil(data) {
 function preencherPeriodos(data) {
     const periodos = safeArray(data.periodos);
     const container = document.getElementById('periodos-grid');
-    
+
     const anos = [...new Set(periodos.map(p => p.ano_letivo))].sort((a, b) => b - a);
 
     const headerSelect = document.getElementById('ano-select');
     if (headerSelect) {
-        headerSelect.innerHTML = anos.map(ano => 
+        headerSelect.innerHTML = anos.map(ano =>
             `<option value="${ano}" ${ano === anoAtual ? 'selected' : ''}>${ano}</option>`
         ).join('');
     }
@@ -843,22 +895,22 @@ function preencherBoletim(data) {
             </thead>
             <tbody>
                 ${boletim.map(d => {
-                    const n1 = d.nota_etapa_1?.nota || '--';
-                    const n2 = d.nota_etapa_2?.nota || '--';
-                    const n3 = d.nota_etapa_3?.nota || '--';
-                    const n4 = d.nota_etapa_4?.nota || '--';
-                    const media = d.media_disciplina || d.media_final_disciplina || '--';
-                    
-                    const n1Num = parseFloat(n1) || 0;
-                    const n2Num = parseFloat(n2) || 0;
-                    const n3Num = parseFloat(n3) || 0;
-                    const n4Num = parseFloat(n4) || 0;
-                    
-                    let situacaoClass = 'tag-cursando';
-                    if (d.situacao === 'Aprovado') situacaoClass = 'tag-aprovado';
-                    else if (d.situacao === 'Reprovado') situacaoClass = 'tag-reprovado';
-                    
-                    return `
+        const n1 = d.nota_etapa_1?.nota || '--';
+        const n2 = d.nota_etapa_2?.nota || '--';
+        const n3 = d.nota_etapa_3?.nota || '--';
+        const n4 = d.nota_etapa_4?.nota || '--';
+        const media = d.media_disciplina || d.media_final_disciplina || '--';
+
+        const n1Num = parseFloat(n1) || 0;
+        const n2Num = parseFloat(n2) || 0;
+        const n3Num = parseFloat(n3) || 0;
+        const n4Num = parseFloat(n4) || 0;
+
+        let situacaoClass = 'tag-cursando';
+        if (d.situacao === 'Aprovado') situacaoClass = 'tag-aprovado';
+        else if (d.situacao === 'Reprovado') situacaoClass = 'tag-reprovado';
+
+        return `
                         <tr>
                             <td>
                                 <div class="disciplina-info">
@@ -874,11 +926,11 @@ function preencherBoletim(data) {
                             <td style="text-align: center;"><span class="situacao-badge ${situacaoClass}">${d.situacao || 'Cursando'}</span></td>
                         </tr>
                     `;
-                }).join('')}
+    }).join('')}
             </tbody>
         </table>
     `;
-    
+
     container.innerHTML = html;
 }
 
@@ -913,14 +965,14 @@ function preencherHorarios(data) {
     const diasSemana = { 2: 'Segunda-feira', 3: 'Terça-feira', 4: 'Quarta-feira', 5: 'Quinta-feira', 6: 'Sexta-feira' };
 
     let html = '<div>';
-    
+
     [2, 3, 4, 5, 6].forEach(dia => {
         const aulasDia = horariosParseados.filter(h => h.dia === dia);
-        
+
         if (aulasDia.length > 0) {
             html += `<div class="dia-card">`;
             html += `<div class="dia-header"><i class="fas fa-calendar-day"></i> ${diasSemana[dia]}</div>`;
-            
+
             const ordemTurno = { 'M': 1, 'V': 2, 'N': 3 };
             aulasDia.sort((a, b) => {
                 if (ordemTurno[a.turno] !== ordemTurno[b.turno]) {
@@ -928,10 +980,10 @@ function preencherHorarios(data) {
                 }
                 return a.horas[0] - b.horas[0];
             });
-            
+
             aulasDia.forEach(aula => {
                 const tagClass = { 'M': 'tag-manha', 'V': 'tag-tarde', 'N': 'tag-noite' }[aula.turno] || 'tag-manha';
-                
+
                 html += `
                     <div class="aula-card">
                         <div class="aula-info">
@@ -947,11 +999,11 @@ function preencherHorarios(data) {
                     </div>
                 `;
             });
-            
+
             html += '</div>';
         }
     });
-    
+
     html += '</div>';
     container.innerHTML = html;
 }
@@ -975,7 +1027,7 @@ function preencherTurmas(data) {
             }
             return '';
         }).join('');
-        
+
         return `
             <div class="turma-item">
                 <span class="turma-badge">${t.sigla || '---'}</span>
@@ -1022,25 +1074,25 @@ function formatarData(dataStr) {
     try {
         const data = new Date(dataStr);
         if (isNaN(data.getTime())) return dataStr;
-        return data.toLocaleDateString('pt-BR', { 
-            weekday: 'long', 
-            day: '2-digit', 
-            month: 'long', 
-            year: 'numeric' 
+        return data.toLocaleDateString('pt-BR', {
+            weekday: 'long',
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
         });
     } catch (e) {
         return dataStr;
     }
 }
 
-function mudarPeriodoBoletim() {}
+function mudarPeriodoBoletim() { }
 
 // ========== INICIALIZAÇÃO ==========
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log('Inicializando aplicação...');
     carregarDados();
     initializeFuse();
-    
+
     // Garante que as funções estão no escopo global
     window.performSmartSearch = performSmartSearch;
     window.handleSearchInput = handleSearchInput;
@@ -1053,6 +1105,6 @@ document.addEventListener('DOMContentLoaded', function() {
     window.closeSidebar = closeSidebar;
     window.logout = logout;
     window.trocarAno = trocarAno;
-    
+
     console.log('Funções registradas globalmente!');
 });

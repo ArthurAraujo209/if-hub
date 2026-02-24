@@ -13,7 +13,8 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <!-- Adicione antes do seu style.css -->
     <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
     <link rel="stylesheet" href="assets/css/style.css">
@@ -296,16 +297,41 @@
                             autocomplete="off">
                         <div class="autocomplete-suggestions" id="autocomplete-suggestions"></div>
                     </div>
-                    <button class="ios-btn" onclick="performSmartSearch()" style="padding: 16px 24px;">
-                        <i class="fas fa-search"></i>
+                    <!-- Botão alterado para limpar pesquisa -->
+                    <button class="ios-btn" onclick="clearSearch()" style="padding: 16px 24px;" title="Limpar pesquisa">
+                        <i class="fas fa-times"></i>
                     </button>
                 </div>
 
-                <!-- Container de Resultados da Pesquisa (aparece aqui, não mais em popup) -->
+                <!-- Container de Resultados da Pesquisa -->
                 <div class="search-result-container" id="search-result-container">
                     <div class="search-result-title" id="search-result-title"></div>
                     <div class="search-result-content" id="search-result-content"></div>
                 </div>
+            </div>
+
+            <!-- Atalhos rápidos para categorias -->
+            <div class="quick-links" style="margin-top: 16px;">
+                <button class="quick-link" onclick="filterByCategory('lab')" style="background: var(--glass-bg);">
+                    <i class="fas fa-flask"></i>
+                    <span>Laboratórios</span>
+                </button>
+                <button class="quick-link" onclick="filterByCategory('biblioteca')">
+                    <i class="fas fa-book"></i>
+                    <span>Bibliotecas</span>
+                </button>
+                <button class="quick-link" onclick="filterByCategory('esporte')">
+                    <i class="fas fa-futbol"></i>
+                    <span>Esportes</span>
+                </button>
+                <button class="quick-link" onclick="filterByCategory('alimentacao')">
+                    <i class="fas fa-utensils"></i>
+                    <span>Alimentação</span>
+                </button>
+                <button class="quick-link" onclick="toggleMapNightMode()">
+                    <i class="fas fa-moon"></i>
+                    <span>Modo Noturno</span>
+                </button>
             </div>
 
             <!-- Mapa Interativo -->
