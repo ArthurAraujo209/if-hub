@@ -557,17 +557,8 @@
 
 
     <script src="assets/js/fuse.js"></script>
-    <!-- 2. Verificação -->
-    <script>
-        console.log('1. Fuse local:', !!window.Fuse);
-    </script>
 
     <script src="assets/js/dashboard.js"></script>
-
-    <script>
-        console.log('2. Dashboard funções:', !!window.performSmartSearch);
-    </script>
-
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -581,32 +572,6 @@
             });
         }
     </script>
-
-
-
-<!-- Adicione isso antes do </body> para debug -->
-<script>
-    console.log('🔍 DEBUG: Verificando funções...');
-    setTimeout(function() {
-        console.log('performSmartSearch:', typeof window.performSmartSearch);
-        console.log('handleSearchInput:', typeof window.handleSearchInput);
-        
-        // Tenta forçar o registro se não existir
-        if (typeof window.performSmartSearch === 'undefined') {
-            console.error('❌ FUNÇÕES NÃO REGISTRADAS!');
-            // Tenta recuperar do escopo original
-            if (typeof performSmartSearch !== 'undefined') {
-                console.log('✓ Funções encontradas no escopo, registrando...');
-                window.performSmartSearch = performSmartSearch;
-                window.handleSearchInput = handleSearchInput;
-                window.selectRoom = selectRoom;
-                window.selectBuilding = selectBuilding;
-            }
-        } else {
-            console.log('✅ Funções registradas corretamente!');
-        }
-    }, 1000);
-</script>
 </body>
 
 </html>
