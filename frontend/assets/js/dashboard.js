@@ -1,11 +1,11 @@
-// dashboard.js - Versão Ultra-Otimizada com Busca Inteligente
+// dashboard.js - Versão Corrigida e Funcional
 
 const API_URL = 'https://if-hub-backend.onrender.com/api';
 let dadosGlobais = null;
 let dadosAluno = null;
 let anoAtual = new Date().getFullYear();
 
-// Database de salas do Campus Santa Cruz (expandido e otimizado)
+// Database de salas do Campus Santa Cruz
 const roomsDatabase = [
     // Bloco A - Administrativo e Biblioteca
     { id: 'biblioteca', name: 'Biblioteca Central', block: 'A', floor: 'Térreo', room: 'A-101', type: 'biblioteca', keywords: ['biblioteca', 'livros', 'estudo', 'leitura', 'acervo', 'bibli', 'livro', 'estudar', 'pesquisa'] },
@@ -162,16 +162,18 @@ const buildingData = {
     }
 };
 
-// ========== CONFIGURAÇÃO DO FUSE.JS (BUSCA INTELIGENTE) ==========
+// ========== CONFIGURAÇÃO DO FUSE.JS ==========
 let fuseRooms, fuseBuildings;
 
 function initializeFuse() {
-    // Configuração otimizada do Fuse.js para busca com erros ortográficos
+    console.log('Inicializando Fuse.js...');
+    
+    // Configuração do Fuse.js para busca com erros ortográficos
     const fuseOptions = {
         includeScore: true,
         includeMatches: true,
-        threshold: 0.4, // Mais tolerante a erros (0 = perfeito, 1 = qualquer coisa)
-        ignoreLocation: true, // Não penaliza por posição diferente
+        threshold: 0.3, // Mais tolerante a erros (0 = perfeito, 1 = qualquer coisa)
+        ignoreLocation: true,
         findAllMatches: true,
         minMatchCharLength: 2,
         shouldSort: true,
@@ -179,39 +181,41 @@ function initializeFuse() {
             { name: 'name', weight: 2 },
             { name: 'keywords', weight: 1.5 },
             { name: 'room', weight: 1 },
-            { name: 'block', weight: 1 },
-            { name: 'type', weight: 1 }
+            { name: 'block', weight: 1 }
         ]
     };
 
     // Prepara dados para busca de salas
-    const roomSearchData = roomsDatabase.map(room => ({
-        ...room,
-        searchableText: `${room.name} ${room.room} ${room.block} ${room.type} ${room.keywords.join(' ')}`.toLowerCase()
-    }));
-
+    fuseRooms = new Fuse(roomsDatabase, fuseOptions);
+    
     // Prepara dados para busca de blocos
     const buildingSearchData = Object.entries(buildingData).map(([id, data]) => ({
         id: id,
-        name: data.nome,
-        description: data.descricao,
-        allSalas: Object.values(data.andares).flat(),
-        searchableText: `${data.nome} ${data.descricao} ${Object.values(data.andares).flat().join(' ')}`.toLowerCase(),
-        type: 'building',
+        nome: data.nome,
+        descricao: data.descricao,
         icon: data.icon,
         cor: data.cor,
-        salas: data.salas
+        andares: data.andares,
+        salas: data.salas,
+        searchableText: `${data.nome} ${data.descricao} ${Object.values(data.andares).flat().join(' ')}`.toLowerCase()
     }));
 
-    fuseRooms = new Fuse(roomSearchData, fuseOptions);
+    const buildingOptions = { 
+        ...fuseOptions, 
+        keys: [
+            { name: 'nome', weight: 2 },
+            { name: 'descricao', weight: 1.5 },
+            { name: 'searchableText', weight: 1 }
+        ] 
+    };
     
-    const buildingOptions = { ...fuseOptions, keys: ['name', 'description', 'allSalas'] };
     fuseBuildings = new Fuse(buildingSearchData, buildingOptions);
+    console.log('Fuse.js inicializado com sucesso!');
 }
 
 // ========== VARIÁVEIS GLOBAIS ==========
 let currentZoom = 1;
-let selectedItem = null;
+let searchTimeout = null;
 
 // ========== FUNÇÕES UTILITÁRIAS ==========
 function safeArray(data) {
@@ -812,160 +816,14 @@ function preencherAvaliacoes(data) {
     `).join('');
 }
 
-// ========== FUNÇÕES DO MAPA OTIMIZADAS ==========
+// ========== FUNÇÕES DO MAPA ==========
 
-// Mostra resultado da pesquisa ou bloco selecionado
-function showSearchResult(type, data) {
-    const resultContainer = document.getElementById('search-result-container');
-    const resultTitle = document.getElementById('search-result-title');
-    const resultContent = document.getElementById('search-result-content');
-
-    if (type === 'room') {
-        // Resultado de sala
-        const room = data;
-        resultTitle.innerHTML = `
-            <i class="fas fa-door-open" style="color: var(--ios-accent-green);"></i>
-            <span>${room.name}</span>
-            <span class="result-block-badge">Bloco ${room.block}</span>
-        `;
-
-        resultContent.innerHTML = `
-            <div class="result-details-grid">
-                <div class="result-detail-card">
-                    <i class="fas fa-door-closed"></i>
-                    <div>
-                        <strong>Sala</strong>
-                        <span>${room.room}</span>
-                    </div>
-                </div>
-                <div class="result-detail-card">
-                    <i class="fas fa-building"></i>
-                    <div>
-                        <strong>Bloco</strong>
-                        <span>${room.block}</span>
-                    </div>
-                </div>
-                <div class="result-detail-card">
-                    <i class="fas fa-layer-group"></i>
-                    <div>
-                        <strong>Andar</strong>
-                        <span>${room.floor}</span>
-                    </div>
-                </div>
-                <div class="result-detail-card">
-                    <i class="fas fa-tag"></i>
-                    <div>
-                        <strong>Tipo</strong>
-                        <span>${room.type}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="result-keywords">
-                <strong><i class="fas fa-hashtag"></i> Palavras-chave:</strong>
-                <div class="keywords-container">
-                    ${room.keywords.map(k => `<span class="keyword-tag">${k}</span>`).join('')}
-                </div>
-            </div>
-            <button class="ios-btn result-action-btn" onclick="highlightBuildingOnMap('${room.block}')">
-                <i class="fas fa-map-marker-alt"></i> Localizar no mapa
-            </button>
-        `;
-
-        // Destacar bloco no mapa (sem rolagem forçada)
-        highlightBuildingOnMap(room.block, false);
-
-    } else if (type === 'building') {
-        // Resultado de bloco
-        const building = data;
-        resultTitle.innerHTML = `
-            <i class="fas fa-${building.icon}" style="color: ${building.cor};"></i>
-            <span>${building.nome}</span>
-        `;
-
-        let andaresHtml = '';
-        for (const [andar, salas] of Object.entries(building.andares)) {
-            andaresHtml += `
-                <div class="andar-card">
-                    <div class="andar-header">${andar}</div>
-                    <div class="andar-salas">${salas.join(' • ')}</div>
-                </div>
-            `;
-        }
-
-        // Buscar salas deste bloco
-        const salasDoBloco = roomsDatabase.filter(r => r.block === building.nome.split(' ')[1] || 
-                                                       (building.salas && building.salas.includes(r.room)));
-
-        resultContent.innerHTML = `
-            <p class="building-description">${building.descricao}</p>
-            
-            <div class="building-andares-section">
-                <h4><i class="fas fa-layer-group"></i> Andares e Salas</h4>
-                ${andaresHtml}
-            </div>
-
-            ${salasDoBloco.length > 0 ? `
-                <div class="building-salas-section">
-                    <h4><i class="fas fa-door-open"></i> Salas neste bloco</h4>
-                    <div class="salas-grid">
-                        ${salasDoBloco.map(sala => `
-                            <div class="sala-mini-card" onclick="showSearchResult('room', ${JSON.stringify(sala).replace(/"/g, '&quot;')})">
-                                <strong>${sala.room}</strong>
-                                <span>${sala.name}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            ` : ''}
-        `;
-
-        // Destacar este bloco no mapa
-        highlightBuildingOnMap(building.id);
-    }
-
-    resultContainer.classList.add('show');
-    
-    // Scroll suave até o resultado (apenas em mobile)
-    if (window.innerWidth <= 768) {
-        setTimeout(() => {
-            resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
-    }
-}
-
-// Destaca um bloco no mapa (sem abrir painel)
-function highlightBuildingOnMap(buildingId, scrollToMap = true) {
-    // Remove highlight de todos
-    document.querySelectorAll('.building-3d').forEach(b => b.classList.remove('active', 'highlight'));
-    
-    // Adiciona highlight no selecionado
-    const building = document.querySelector(`[data-id="${buildingId}"]`);
-    if (building) {
-        building.classList.add('active', 'highlight');
-        
-        // Scroll suave até o bloco no mapa (apenas se solicitado)
-        if (scrollToMap) {
-            const mapContainer = document.getElementById('map-container');
-            if (mapContainer) {
-                const rect = building.getBoundingClientRect();
-                const mapRect = mapContainer.getBoundingClientRect();
-                
-                // Verifica se o bloco está visível
-                if (rect.top < mapRect.top || rect.bottom > mapRect.bottom || 
-                    rect.left < mapRect.left || rect.right > mapRect.right) {
-                    // Rolagem suave apenas se necessário
-                    building.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-                }
-            }
-        }
-    }
-}
-
-// Busca inteligente com Fuse.js
+// Função principal de busca
 function performSmartSearch() {
+    console.log('Buscando...');
     const query = document.getElementById('room-search').value.trim();
     
-    if (!query) {
+    if (!query || query.length < 2) {
         document.getElementById('autocomplete-suggestions').classList.remove('show');
         return;
     }
@@ -974,14 +832,16 @@ function performSmartSearch() {
         initializeFuse();
     }
 
-    // Busca por salas e blocos simultaneamente
+    // Busca por salas
     const roomResults = fuseRooms.search(query);
+    
+    // Busca por blocos
     const buildingResults = fuseBuildings.search(query);
 
-    // Combina e ordena por score
+    // Combina e ordena resultados
     const allResults = [
-        ...roomResults.map(r => ({ ...r, type: 'room' })),
-        ...buildingResults.map(r => ({ ...r, type: 'building' }))
+        ...roomResults.map(r => ({ item: r.item, score: r.score, type: 'room' })),
+        ...buildingResults.map(b => ({ item: b.item, score: b.score, type: 'building' }))
     ].sort((a, b) => (a.score || 1) - (b.score || 1)).slice(0, 8);
 
     showAutocompleteSuggestions(allResults, query);
@@ -989,6 +849,11 @@ function performSmartSearch() {
 
 function showAutocompleteSuggestions(results, query) {
     const container = document.getElementById('autocomplete-suggestions');
+    
+    if (!container) {
+        console.error('Container de sugestões não encontrado');
+        return;
+    }
     
     if (results.length === 0) {
         container.innerHTML = `
@@ -1002,83 +867,247 @@ function showAutocompleteSuggestions(results, query) {
         return;
     }
 
-    container.innerHTML = results.map((result, index) => {
-        const item = result.item;
-        const score = result.score || 0;
-        const confidence = Math.round((1 - score) * 100);
-        
+    let html = '';
+    
+    results.forEach((result, index) => {
         if (result.type === 'room') {
-            return `
-                <div class="suggestion-item" onclick="selectSuggestion('room', '${item.id}')" data-index="${index}">
+            const room = result.item;
+            html += `
+                <div class="suggestion-item" onclick="selectRoom('${room.id}')">
                     <div class="suggestion-icon" style="background: rgba(48,209,88,0.1);">
                         <i class="fas fa-door-open"></i>
                     </div>
                     <div class="suggestion-content">
-                        <div class="suggestion-title">${highlightMatch(item.name, query)}</div>
+                        <div class="suggestion-title">${highlightMatch(room.name, query)}</div>
                         <div class="suggestion-meta">
-                            <span><i class="fas fa-building"></i> Bloco ${item.block}</span>
-                            <span><i class="fas fa-door-closed"></i> ${item.room}</span>
+                            <span><i class="fas fa-building"></i> Bloco ${room.block}</span>
+                            <span><i class="fas fa-door-closed"></i> ${room.room}</span>
                         </div>
                     </div>
-                    ${confidence < 90 ? `<span class="suggestion-confidence">${confidence}%</span>` : ''}
                 </div>
             `;
         } else {
-            return `
-                <div class="suggestion-item" onclick="selectSuggestion('building', '${item.id}')" data-index="${index}">
+            const building = result.item;
+            html += `
+                <div class="suggestion-item" onclick="selectBuilding('${building.id}')">
                     <div class="suggestion-icon" style="background: rgba(10,132,255,0.1);">
-                        <i class="fas fa-${item.icon}"></i>
+                        <i class="fas fa-${building.icon || 'building'}"></i>
                     </div>
                     <div class="suggestion-content">
-                        <div class="suggestion-title">${highlightMatch(item.name, query)}</div>
+                        <div class="suggestion-title">${highlightMatch(building.nome, query)}</div>
                         <div class="suggestion-meta">
-                            <span>${item.description.substring(0, 40)}${item.description.length > 40 ? '...' : ''}</span>
+                            <span>${building.descricao.substring(0, 40)}${building.descricao.length > 40 ? '...' : ''}</span>
                         </div>
                     </div>
                 </div>
             `;
         }
-    }).join('');
+    });
+
+    container.innerHTML = html;
+    container.classList.add('show');
+}
+
+function selectRoom(roomId) {
+    const room = roomsDatabase.find(r => r.id === roomId);
+    if (!room) return;
+    
+    document.getElementById('autocomplete-suggestions').classList.remove('show');
+    document.getElementById('room-search').value = room.name;
+    
+    showRoomDetails(room);
+    highlightBuildingOnMap(room.block);
+}
+
+function selectBuilding(buildingId) {
+    const building = buildingData[buildingId];
+    if (!building) return;
+    
+    document.getElementById('autocomplete-suggestions').classList.remove('show');
+    document.getElementById('room-search').value = building.nome;
+    
+    showBuildingDetails(buildingId, building);
+    highlightBuildingOnMap(buildingId);
+}
+
+function showRoomDetails(room) {
+    const container = document.getElementById('search-result-container');
+    const title = document.getElementById('search-result-title');
+    const content = document.getElementById('search-result-content');
+    
+    if (!container || !title || !content) return;
+    
+    title.innerHTML = `
+        <i class="fas fa-door-open" style="color: var(--ios-accent-green);"></i>
+        <span>${room.name}</span>
+        <span class="result-block-badge">Bloco ${room.block}</span>
+    `;
+
+    content.innerHTML = `
+        <div class="result-details-grid">
+            <div class="result-detail-card">
+                <i class="fas fa-door-closed"></i>
+                <div>
+                    <strong>Sala</strong>
+                    <span>${room.room}</span>
+                </div>
+            </div>
+            <div class="result-detail-card">
+                <i class="fas fa-building"></i>
+                <div>
+                    <strong>Bloco</strong>
+                    <span>${room.block}</span>
+                </div>
+            </div>
+            <div class="result-detail-card">
+                <i class="fas fa-layer-group"></i>
+                <div>
+                    <strong>Andar</strong>
+                    <span>${room.floor}</span>
+                </div>
+            </div>
+            <div class="result-detail-card">
+                <i class="fas fa-tag"></i>
+                <div>
+                    <strong>Tipo</strong>
+                    <span>${room.type}</span>
+                </div>
+            </div>
+        </div>
+        <div class="result-keywords">
+            <strong><i class="fas fa-hashtag"></i> Palavras-chave:</strong>
+            <div class="keywords-container">
+                ${room.keywords.map(k => `<span class="keyword-tag">${k}</span>`).join('')}
+            </div>
+        </div>
+    `;
+
+    container.classList.add('show');
+    
+    if (window.innerWidth <= 768) {
+        setTimeout(() => {
+            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+    }
+}
+
+function showBuildingDetails(buildingId, building) {
+    const container = document.getElementById('search-result-container');
+    const title = document.getElementById('search-result-title');
+    const content = document.getElementById('search-result-content');
+    
+    if (!container || !title || !content) return;
+    
+    title.innerHTML = `
+        <i class="fas fa-${building.icon}" style="color: ${building.cor};"></i>
+        <span>${building.nome}</span>
+    `;
+
+    let andaresHtml = '';
+    for (const [andar, salas] of Object.entries(building.andares)) {
+        andaresHtml += `
+            <div class="andar-card">
+                <div class="andar-header">${andar}</div>
+                <div class="andar-salas">${salas.join(' • ')}</div>
+            </div>
+        `;
+    }
+
+    // Buscar salas deste bloco
+    const blockLetter = building.nome.split(' ')[1];
+    const salasDoBloco = roomsDatabase.filter(r => r.block === blockLetter || 
+                                                   (building.salas && building.salas.includes(r.room)));
+
+    content.innerHTML = `
+        <p class="building-description">${building.descricao}</p>
+        
+        <div class="building-andares-section">
+            <h4><i class="fas fa-layer-group"></i> Andares e Salas</h4>
+            ${andaresHtml}
+        </div>
+
+        ${salasDoBloco.length > 0 ? `
+            <div class="building-salas-section">
+                <h4><i class="fas fa-door-open"></i> Salas neste bloco</h4>
+                <div class="salas-grid">
+                    ${salasDoBloco.map(sala => `
+                        <div class="sala-mini-card" onclick="selectRoom('${sala.id}')">
+                            <strong>${sala.room}</strong>
+                            <span>${sala.name}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        ` : ''}
+    `;
 
     container.classList.add('show');
 }
 
-function selectSuggestion(type, id) {
-    document.getElementById('autocomplete-suggestions').classList.remove('show');
+function highlightBuildingOnMap(buildingId) {
+    // Remove highlight de todos
+    document.querySelectorAll('.building-3d').forEach(b => b.classList.remove('active', 'highlight'));
     
-    if (type === 'room') {
-        const room = roomsDatabase.find(r => r.id === id);
-        if (room) {
-            document.getElementById('room-search').value = room.name;
-            showSearchResult('room', room);
-        }
-    } else if (type === 'building') {
-        const building = buildingData[id];
-        if (building) {
-            document.getElementById('room-search').value = building.nome;
-            showSearchResult('building', { ...building, id: id });
+    // Adiciona highlight no selecionado
+    const building = document.querySelector(`[data-id="${buildingId}"]`);
+    if (building) {
+        building.classList.add('active', 'highlight');
+        
+        // Scroll suave até o bloco
+        const mapContainer = document.getElementById('map-container');
+        if (mapContainer) {
+            const rect = building.getBoundingClientRect();
+            const mapRect = mapContainer.getBoundingClientRect();
+            
+            if (rect.top < mapRect.top || rect.bottom > mapRect.bottom || 
+                rect.left < mapRect.left || rect.right > mapRect.right) {
+                building.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+            }
         }
     }
 }
 
-// Versão melhorada do selectBuilding (agora mostra resultado)
-function selectBuilding(id) {
-    const data = buildingData[id];
-    if (!data) return;
-
-    // Remove active de todos
-    document.querySelectorAll('.building-3d').forEach(b => b.classList.remove('active', 'highlight'));
-
-    // Adiciona active no selecionado
-    const building = document.querySelector(`[data-id="${id}"]`);
-    if (building) building.classList.add('active', 'highlight');
-
-    // Mostra resultado no painel de busca
-    document.getElementById('room-search').value = data.nome;
-    showSearchResult('building', { ...data, id: id });
+function handleSearchInput() {
+    const query = document.getElementById('room-search').value;
+    
+    // Limpa timeout anterior
+    if (searchTimeout) {
+        clearTimeout(searchTimeout);
+    }
+    
+    if (query.length >= 2) {
+        // Debounce para não buscar a cada tecla
+        searchTimeout = setTimeout(() => {
+            performSmartSearch();
+        }, 300);
+    } else {
+        document.getElementById('autocomplete-suggestions').classList.remove('show');
+        document.getElementById('search-result-container').classList.remove('show');
+    }
 }
 
-// Funções auxiliares
+function zoomMap(factor) {
+    currentZoom *= factor;
+    currentZoom = Math.max(0.5, Math.min(3, currentZoom));
+    const image = document.getElementById('campus-image');
+    if (image) {
+        image.style.transform = `scale(${currentZoom})`;
+        image.style.transition = 'transform 0.3s ease';
+    }
+}
+
+function resetMap() {
+    currentZoom = 1;
+    const image = document.getElementById('campus-image');
+    if (image) image.style.transform = 'scale(1)';
+    
+    document.querySelectorAll('.building-3d').forEach(b => b.classList.remove('active', 'highlight'));
+    document.getElementById('search-result-container').classList.remove('show');
+    document.getElementById('room-search').value = '';
+    document.getElementById('autocomplete-suggestions').classList.remove('show');
+}
+
+// ========== UTILITÁRIOS ==========
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
@@ -1099,55 +1128,6 @@ function escapeRegExp(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// Fechar sugestões ao clicar fora
-document.addEventListener('click', function(event) {
-    const searchContainer = document.querySelector('.map-search-box');
-    const suggestions = document.getElementById('autocomplete-suggestions');
-    
-    if (searchContainer && !searchContainer.contains(event.target)) {
-        suggestions.classList.remove('show');
-    }
-});
-
-// Funções de zoom do mapa
-function zoomMap(factor) {
-    currentZoom *= factor;
-    currentZoom = Math.max(0.5, Math.min(3, currentZoom));
-    const container = document.getElementById('map-container');
-    const image = document.getElementById('campus-image');
-    if (image) {
-        image.style.transform = `scale(${currentZoom})`;
-        image.style.transition = 'transform 0.3s ease';
-    }
-}
-
-function resetMap() {
-    currentZoom = 1;
-    const image = document.getElementById('campus-image');
-    if (image) image.style.transform = 'scale(1)';
-    
-    // Remove highlights
-    document.querySelectorAll('.building-3d').forEach(b => b.classList.remove('active', 'highlight'));
-    
-    // Limpa resultado da pesquisa
-    document.getElementById('search-result-container').classList.remove('show');
-    document.getElementById('room-search').value = '';
-}
-
-function searchRoom() {
-    performSmartSearch();
-}
-
-function handleSearchInput() {
-    const query = document.getElementById('room-search').value;
-    if (query.length >= 2) {
-        performSmartSearch();
-    } else {
-        document.getElementById('autocomplete-suggestions').classList.remove('show');
-    }
-}
-
-// ========== UTILITÁRIOS ==========
 function formatarData(dataStr) {
     if (!dataStr) return 'Data não definida';
     try {
@@ -1168,16 +1148,29 @@ function mudarPeriodoBoletim() {
     // Implementar se necessário
 }
 
-// ========== INICIALIZAÇÃO ==========
+// ========== EVENT LISTENERS ==========
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM carregado, inicializando...');
     carregarDados();
     initializeFuse();
     
-    // Adiciona evento de tecla Enter na busca
-    document.getElementById('room-search').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            performSmartSearch();
+    const searchInput = document.getElementById('room-search');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                performSmartSearch();
+            }
+        });
+    }
+    
+    // Fechar sugestões ao clicar fora
+    document.addEventListener('click', function(event) {
+        const searchContainer = document.querySelector('.map-search-box');
+        const suggestions = document.getElementById('autocomplete-suggestions');
+        
+        if (searchContainer && !searchContainer.contains(event.target)) {
+            suggestions.classList.remove('show');
         }
     });
 });
