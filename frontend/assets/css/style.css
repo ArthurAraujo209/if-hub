@@ -835,6 +835,8 @@ body {
     display: flex;
     gap: 12px;
     margin-bottom: 24px;
+    align-items: flex-start; /* children align at top so button doesn't stretch */
+    flex-wrap: wrap; /* allow wrapping when container grows */
 }
 
 .ios-input {
@@ -1870,16 +1872,18 @@ body {
 }
 
 /* Autocomplete para a busca de salas */
+/* o container já era relativo, mantemos para posicionamento de elementos internos */
 .autocomplete-container {
     position: relative;
     width: 100%;
 }
 
+/* as sugestões agora participam do fluxo normal para que o painel pai aumente de altura
+   quando aparecem. Isso evita que as sugestões fiquem "embaixo" do mapa, já que o painel
+   de busca será redimensionado automaticamente. */
 .autocomplete-suggestions {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
+    position: relative; /* não mais absoluto */
+    /* top/left/right removidos */
     background: var(--glass-bg-elevated);
     backdrop-filter: var(--liquid-blur-heavy);
     border: 1px solid var(--glass-border-strong);
@@ -2421,11 +2425,11 @@ body {
     /* Aumentado drasticamente */
 }
 
+/* sobrescrevemos a posição absoluta em caso de regras repetidas mais abaixo; manteremos relativo
+   para que o painel de busca cresça com o conteúdo das sugestões */
 .autocomplete-suggestions {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
+    position: relative;
+    /* top/left/right removidos */
     background: var(--glass-bg-elevated);
     backdrop-filter: var(--liquid-blur-heavy);
     -webkit-backdrop-filter: var(--liquid-blur-heavy);
@@ -2435,7 +2439,7 @@ body {
     max-height: 400px;
     overflow-y: auto;
     z-index: 10001;
-    /* Maior que qualquer outro elemento */
+    /* Maior que qualquer outro elemento quando necessário */
     box-shadow: var(--glass-shadow-elevated);
     display: none;
 }
