@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a0f">
+    <title>IF HUB - Login</title>
+    <link rel="manifest" href="/manifest.json">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --glass-highlight: rgba(255, 255, 255, 0.25);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --liquid-blur: blur(20px) saturate(180%);
+            
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --gradient-4: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --gradient-5: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --gradient-primary: linear-gradient(135deg, #1b5e20 0%, #2e7d32 50%, #4caf50 100%);
+            
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --accent: #00d4ff;
+            --success: #43e97b;
+            --warning: #fee140;
+            --danger: #f5576c;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(27, 94, 32, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(76, 175, 80, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(46, 125, 50, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 60% 60%, rgba(102, 126, 234, 0.15) 0%, transparent 40%);
+            animation: bgFloat 20s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes bgFloat {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(2%, 2%) rotate(1deg); }
+            66% { transform: translate(-1%, 1%) rotate(-1deg); }
+        }
+
+        /* Floating Orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.5;
+            animation: orbFloat 15s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(135deg, #1b5e20, #4caf50);
+            top: -100px;
+            right: -100px;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            bottom: -50px;
+            left: -50px;
+            animation-delay: -5s;
+        }
+
+        .orb-3 {
+            width: 250px;
+            height: 250px;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            top: 50%;
+            left: 30%;
+            animation-delay: -10s;
+        }
+
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, -30px) scale(1.1); }
+        }
+
+        /* Liquid Glass Container */
+        .login-container {
+            background: var(--glass-bg);
+            backdrop-filter: var(--liquid-blur);
+            -webkit-backdrop-filter: var(--liquid-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 32px;
+            padding: 50px;
+            box-shadow: 
+                var(--glass-shadow),
+                inset 0 1px 0 var(--glass-highlight);
+            text-align: center;
+            max-width: 450px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            transform: translateZ(0);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .login-container:hover {
+            transform: translateY(-5px) translateZ(0);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 var(--glass-highlight);
+        }
+
+        /* Shine Effect */
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.1),
+                transparent
+            );
+            transition: left 0.7s;
+        }
+
+        .login-container:hover::before {
+            left: 100%;
+        }
+
+        /* Top Gradient Line */
+        .login-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+            opacity: 0.8;
+        }
+
+        .logo {
+            width: 100px;
+            height: 100px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 2px solid var(--glass-border);
+            border-radius: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            color: white;
+            font-size: 2.5rem;
+            box-shadow: 
+                0 10px 30px rgba(27, 94, 32, 0.3),
+                inset 0 1px 0 var(--glass-highlight);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--gradient-primary);
+            opacity: 0.2;
+            z-index: -1;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.8) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .feature:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .feature i {
+            color: var(--success);
+            font-size: 1.1rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 18px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 var(--glass-highlight);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--gradient-primary);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .btn-login:hover::before {
+            opacity: 0.2;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 10px 30px rgba(27, 94, 32, 0.4),
+                inset 0 1px 0 var(--glass-highlight);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-login:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-login i {
+            position: relative;
+            z-index: 1;
+            transition: transform 0.3s;
+        }
+
+        .btn-login:hover i {
+            transform: translateX(5px);
+        }
+
+        .btn-login span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .footer a {
+            color: var(--success);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .footer a:hover {
+            color: var(--text-primary);
+            text-shadow: 0 0 10px rgba(67, 233, 123, 0.5);
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+                border-radius: 24px;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="login-container">
+        <div class="logo">
+            <img src="assets/icons/IF HUB - SEM FUNDO - 192x192.png" style="width: 100%;" alt="IF HUB Logo">
+        </div>
+
+        
+        <p class="subtitle">Acesse seus dados acadêmicos com estilo</p>
+
+        <div class="features">
+            <div class="feature">
+                <i class="fas fa-chart-line"></i>
+                <span>Acompanhe seu IRA</span>
+            </div>
+            <div class="feature">
+                <i class="fas fa-calendar-check"></i>
+                <span>Agenda de provas</span>
+            </div>
+            <div class="feature">
+                <i class="fas fa-clock"></i>
+                <span>Horários de aula</span>
+            </div>
+            <div class="feature">
+                <i class="fas fa-map-marked-alt"></i>
+                <span>Mapa do Campus</span>
+            </div>
+        </div>
+
+        <button class="btn-login" onclick="login()">
+            <i class="fas fa-sign-in-alt"></i>
+            <span>Entrar com SUAP</span>
+        </button>
+
+        <div class="footer">
+            <p>Sistema integrado ao SUAP IFRN</p>
+            <p style="margin-top: 10px;">
+                <a href="https://suap.ifrn.edu.br" target="_blank">
+                    <i class="fas fa-external-link-alt"></i> Acessar SUAP oficial
+                </a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function login() {
+            window.location.href = "http://localhost:3000/auth/login";
+        }
+
+        // Registrar Service Worker (opcional)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => console.log('Service Worker registrado!', reg))
+                    .catch(err => console.log('Erro ao registrar Service Worker:', err));
+            });
+        }
+    </script>
+</html>

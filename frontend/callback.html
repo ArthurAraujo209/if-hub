@@ -1,0 +1,205 @@
+<!-- callback.html -->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autenticando... - IF HUB</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --liquid-blur: blur(20px) saturate(180%);
+            --bg-primary: #0a0a0f;
+            --success: #43e97b;
+            --danger: #f5576c;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(27, 94, 32, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(76, 175, 80, 0.3) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        .glass-box {
+            background: var(--glass-bg);
+            backdrop-filter: var(--liquid-blur);
+            -webkit-backdrop-filter: var(--liquid-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 32px;
+            padding: 50px;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .spinner-container {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 30px;
+        }
+
+        .spinner {
+            width: 100%;
+            height: 100%;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--success);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            position: relative;
+        }
+
+        .spinner::before {
+            content: '';
+            position: absolute;
+            inset: -5px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-top-color: rgba(67, 233, 123, 0.3);
+            animation: spin 2s linear infinite reverse;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        p {
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
+        }
+
+        .erro {
+            color: var(--danger);
+            text-shadow: 0 0 20px rgba(245, 87, 108, 0.5);
+        }
+
+        .sucesso {
+            color: var(--success);
+            text-shadow: 0 0 20px rgba(67, 233, 123, 0.5);
+        }
+
+        .icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-top: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), #38f9d7);
+            width: 0%;
+            animation: progress 2s ease-out forwards;
+            box-shadow: 0 0 10px rgba(67, 233, 123, 0.5);
+        }
+
+        @keyframes progress {
+            to { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="glass-box">
+        <div class="spinner-container" id="spinner-container">
+            <div class="spinner" id="spinner"></div>
+        </div>
+        <div id="icon-container" class="icon" style="display: none;"></div>
+        
+        <h2 id="titulo">Autenticando...</h2>
+        <p id="mensagem">Aguarde enquanto processamos seu login</p>
+        
+        <div class="progress-bar" id="progress-container">
+            <div class="progress-fill"></div>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+        const error = params.get('error');
+
+        const titulo = document.getElementById('titulo');
+        const mensagem = document.getElementById('mensagem');
+        const spinnerContainer = document.getElementById('spinner-container');
+        const iconContainer = document.getElementById('icon-container');
+        const progressContainer = document.getElementById('progress-container');
+
+        if (error) {
+            spinnerContainer.style.display = 'none';
+            iconContainer.style.display = 'block';
+            iconContainer.innerHTML = '❌';
+            iconContainer.className = 'icon erro';
+            progressContainer.style.display = 'none';
+            
+            titulo.innerHTML = '<span class="erro">Erro na autenticação</span>';
+            mensagem.textContent = error === 'auth_failed' ? 'Falha ao conectar com SUAP' : error;
+            
+            setTimeout(() => window.location.href = '/index.html', 3000);
+        } else if (token) {
+            localStorage.setItem('suap_token', token);
+            
+            setTimeout(() => {
+                spinnerContainer.style.display = 'none';
+                iconContainer.style.display = 'block';
+                iconContainer.innerHTML = '✅';
+                iconContainer.className = 'icon sucesso';
+                
+                titulo.innerHTML = '<span class="sucesso">Login realizado!</span>';
+                mensagem.textContent = 'Redirecionando para o dashboard...';
+            }, 500);
+            
+            setTimeout(() => window.location.href = '/dashboard.html', 1500);
+        } else {
+            spinnerContainer.style.display = 'none';
+            iconContainer.style.display = 'block';
+            iconContainer.innerHTML = '⚠️';
+            iconContainer.className = 'icon erro';
+            progressContainer.style.display = 'none';
+            
+            titulo.innerHTML = '<span class="erro">Token não recebido</span>';
+            
+            setTimeout(() => window.location.href = '/index.html', 2000);
+        }
+    </script>
+</body>
+</html>

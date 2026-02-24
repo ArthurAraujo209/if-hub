@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0a0a0f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>IF HUB - Portal Acadêmico</title>
+    <link rel="manifest" href="/manifest.json">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <!-- Liquid Background -->
+    <div class="liquid-background">
+        <div class="bubble bubble-1"></div>
+        <div class="bubble bubble-2"></div>
+        <div class="bubble bubble-3"></div>
+        <div class="bubble bubble-4"></div>
+        <div class="bubble bubble-5"></div>
+    </div>
+
+    <!-- Overlay para fechar sidebar no mobile -->
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Menu">
+        <i id="menu-toggle-icon" class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="brand">
+                <img src="assets/icons/IF HUB - SEM FUNDO - 192x192.png" style="width: 50%;" alt="">
+            </div>
+        </div>
+
+        <div class="user-card" onclick="showSection('perfil')">
+            <div class="user-avatar" id="sidebar-avatar">
+                <span id="sidebar-avatar-text">A</span>
+            </div>
+            <div class="user-info">
+                <h3 id="sidebar-nome">Carregando...</h3>
+                <p id="sidebar-matricula">...</p>
+            </div>
+        </div>
+
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a class="nav-link active" onclick="showSection('dashboard')">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="showSection('boletim')">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Boletim</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="showSection('horarios')">
+                    <i class="fas fa-clock"></i>
+                    <span>Horários</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="showSection('turmas')">
+                    <i class="fas fa-users"></i>
+                    <span>Turmas</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="showSection('mapa')">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <span>Mapa Campus</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="showSection('avaliacoes')">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Avaliações</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="showSection('periodos')">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Períodos</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="showSection('perfil')">
+                    <i class="fas fa-user"></i>
+                    <span>Perfil</span>
+                </a>
+            </li>
+        </ul>
+
+        <button class="logout-btn" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i>
+            Sair
+        </button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <div class="ios-header">
+            <h1 class="header-title" id="page-title">
+                <i class="fas fa-home"></i>
+                Dashboard
+            </h1>
+            <div class="header-controls">
+                <span style="color: var(--ios-text-secondary); font-size: 0.9rem; font-weight: 600;">Ano Letivo:</span>
+                <select id="ano-select" onchange="trocarAno(this.value)" class="ios-select">
+                    <option>2024</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Alerts -->
+        <div id="alert-container"></div>
+
+        <!-- Loading -->
+        <div id="loading" class="loading-container">
+            <div class="ios-spinner"></div>
+            <p style="color: var(--ios-text-secondary); font-weight: 500;">Carregando dados...</p>
+        </div>
+
+        <!-- DASHBOARD SECTION -->
+        <section id="dashboard-section" class="content-section active">
+            <div class="stats-grid">
+                <div class="stat-widget ira" onclick="showSection('boletim')">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-label">Coeficiente de Rendimento</div>
+                            <div class="stat-value" id="card-ira">--</div>
+                        </div>
+                        <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                    </div>
+                </div>
+
+                <div class="stat-widget situacao">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-label">Situação Acadêmica</div>
+                            <div class="stat-value" id="card-situacao">--</div>
+                        </div>
+                        <div class="stat-icon" style="width: 30%;"><i class="fas fa-check-circle"></i></div>
+                    </div>
+                </div>
+
+                <div class="stat-widget curso">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-label">Curso</div>
+                            <div class="stat-value small" id="card-curso">--</div>
+                        </div>
+                        <div class="stat-icon" style="width: 100%;"><i class="fas fa-book"></i></div>
+                    </div>
+                </div>
+
+                <div class="stat-widget ingresso">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-label">Ano de Ingresso</div>
+                            <div class="stat-value" id="card-ingresso">--</div>
+                        </div>
+                        <div class="stat-icon"><i class="fas fa-calendar"></i></div>
+                    </div>
+                </div>
+
+                <div class="stat-widget faltas">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-label">Total de Faltas</div>
+                            <div class="stat-value" id="card-faltas">--</div>
+                        </div>
+                        <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                    </div>
+                </div>
+
+                <div class="stat-widget">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-label">Disciplinas</div>
+                            <div class="stat-value" id="card-disciplinas">--</div>
+                        </div>
+                        <div class="stat-icon"><i class="fas fa-list"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ios-panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="fas fa-bell"></i> Próximas Avaliações</div>
+                    <a href="#" onclick="showSection('avaliacoes')"
+                        style="color: var(--ios-accent-green); text-decoration: none; font-weight: 600; font-size: 0.9rem;">Ver
+                        todas →</a>
+                </div>
+                <div id="dashboard-avaliacoes">
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-check"></i>
+                        <p>Carregando avaliações...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ios-panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="fas fa-file-alt"></i> Resumo do Boletim</div>
+                    <a href="#" onclick="showSection('boletim')"
+                        style="color: var(--ios-accent-green); text-decoration: none; font-weight: 600; font-size: 0.9rem;">Ver
+                        completo →</a>
+                </div>
+                <div id="dashboard-boletim-resumo">
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Carregando...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- BOLETIM SECTION -->
+        <section id="boletim-section" class="content-section">
+            <div class="ios-panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="fas fa-file-alt"></i> Boletim Completo</div>
+                    <select id="periodo-select" onchange="mudarPeriodoBoletim()" class="ios-select"
+                        style="width: auto;">
+                        <option value="atual">Período Atual</option>
+                    </select>
+                </div>
+                <div id="boletim-content">
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Carregando boletim...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- HORÁRIOS SECTION -->
+        <section id="horarios-section" class="content-section">
+            <div class="ios-panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="fas fa-clock"></i> Grade Horária</div>
+                </div>
+                <div id="horarios-content">
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Carregando horários...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TURMAS SECTION -->
+        <section id="turmas-section" class="content-section">
+            <div class="ios-panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="fas fa-users"></i> Minhas Turmas</div>
+                </div>
+                <div id="turmas-content">
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Carregando turmas...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MAPA SECTION -->
+        <section id="mapa-section" class="content-section">
+            <div class="ios-panel" style="margin-bottom: 24px;">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="fas fa-map-marked-alt"></i> Mapa do Campus 3D</div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <input type="text" class="ios-input" id="map-search" placeholder="Buscar bloco ou sala..."
+                            style="width: 250px;">
+                        <button class="ios-btn" onclick="searchMap()">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="map-spiderman-container" id="map-container">
+                    <!-- Imagem de fundo (sua foto do Google Maps) -->
+                    <img src="assets/img/campus-satellite.jpeg" alt="Campus IFRN" class="map-base-image"
+                        id="campus-image">
+
+                    <div class="map-overlay"></div>
+
+                    <!-- Blocos 3D - Posições em % para responsividade -->
+                    <!-- Bloco B - Grande, 3 andares -->
+                    <div class="building-3d tipo-admin" data-id="B" data-nome="Bloco B" data-andares="3"
+                        style="left: 25%; bottom: 2%; width: 10%; height: 38%;" onclick="selectBuilding('B')">
+                        <div class="building-top" style="width: 100%; height: 100%;">
+                            <span>B</span>
+                        </div>
+                        <div class="building-face front" style="width: 100%;"></div>
+                        <div class="building-face side" style="width: 60px; height: 100%;"></div>
+                        <div class="building-label">Bloco B - Centro de Convivência</div>
+                    </div>
+
+                    <!-- Guarita (1) -->
+                    <div class="building-3d tipo-admin" data-id="1" data-nome="Guarita" data-andares="1"
+                        style="left: 38%; bottom: 2%; width: 4%; height: 8%;" onclick="selectBuilding('1')">
+                        <div class="building-top" style="width: 100%; height: 100%;">
+                            <span>1</span>
+                        </div>
+                        <div class="building-face front" style="width: 100%;"></div>
+                        <div class="building-label">Guarita/Portaria</div>
+                    </div>
+
+                    <!-- Cantina (2) -->
+                    <div class="building-3d tipo-alimentacao" data-id="2" data-nome="Cantina" data-andares="1"
+                        style="left: 30%; top: 24%; width: 5%; height: 24%;" onclick="selectBuilding('2')">
+                        <div class="building-top"
+                            style="width: 100%; height: 100%; border-color: var(--ios-accent-yellow);">
+                            <span>2</span>
+                        </div>
+                        <div class="building-face front" style="width: 100%;"></div>
+                        <div class="building-label">Cantina & Saúde</div>
+                    </div>
+
+                    <!-- Almoxarifado (3) -->
+                    <div class="building-3d tipo-admin" data-id="3" data-nome="Almoxarifado" data-andares="1"
+                        style="left: 30%; top: 8%; width: 5%; height: 15%;" onclick="selectBuilding('3')">
+                        <div class="building-top" style="width: 100%; height: 100%;">
+                            <span>3</span>
+                        </div>
+                        <div class="building-face front" style="width: 100%;"></div>
+                        <div class="building-label">Almoxarifado</div>
+                    </div>
+
+                    <!-- Bloco A - 3 andares -->
+                    <div class="building-3d tipo-lab" data-id="A" data-nome="Bloco A" data-andares="3"
+                        style="left: 39%; top: 28%; width: 18%; height: 20%;" onclick="selectBuilding('A')">
+                        <div class="building-top"
+                            style="width: 100%; height: 100%; border-color: var(--ios-accent-purple);">
+                            <span>A</span>
+                        </div>
+                        <div class="building-face front" style="width: 100%;"></div>
+                        <div class="building-face side" style="width: 60px; height: 100%;"></div>
+                        <div class="building-label">Bloco A - Labs & Salas</div>
+                    </div>
+
+                    <!-- Bloco 5 - Mecânica -->
+                    <div class="building-3d tipo-lab" data-id="5" data-nome="Bloco 5" data-andares="2"
+                        style="left: 46%; top: 8%; width: 13%; height: 10%;" onclick="selectBuilding('5')">
+                        <div class="building-top"
+                            style="width: 100%; height: 100%; border-color: var(--ios-accent-purple);">
+                            <span>5</span>
+                        </div>
+                        <div class="building-face front" style="width: 100%;"></div>
+                        <div class="building-label">Mecânica/Refrigeração</div>
+                    </div>
+
+                    <!-- Quadra de Areia -->
+                    <div class="building-3d tipo-esporte" data-id="areia" data-nome="Quadra de Areia" data-andares="1"
+                        style="left: 60%; top: 25%; width: 10%; height: 23%;" onclick="selectBuilding('areia')">
+                        <div class="building-top"
+                            style="width: 100%; height: 100%; border-color: var(--ios-accent-orange); background: rgba(255, 159, 10, 0.2);">
+                            <i class="fas fa-volleyball-ball"></i>
+                        </div>
+                        <div class="building-face front" style="width: 100%;"></div>
+                        <div class="building-label">Quadra de Areia</div>
+                    </div>
+
+                    <!-- Espaço Multiuso (4) -->
+                    <div class="building-3d tipo-esporte" data-id="4" data-nome="Espaço Multiuso" data-andares="1"
+                        style="left: 70.5%; top: 45%; width: 4%; height: 7%;" onclick="selectBuilding('4')">
+                        <div class="building-top"
+                            style="width: 100%; height: 100%; border-color: var(--ios-accent-orange);">
+                            <span>4</span>
+                        </div>
+                        <div class="building-face front" style="width: 100%;"></div>
+                        <div class="building-label">Espaço Multiuso</div>
+                    </div>
+
+                    <!-- Quadra Poliesportiva -->
+                    <div class="building-3d tipo-esporte" data-id="quadra" data-nome="Quadra Poliesportiva"
+                        data-andares="1" style="left: 79%; top: 22%; width: 18%; height: 20%; transform: rotate(57deg);"
+                        onclick="selectBuilding('quadra')">
+                        <div class="building-top"
+                            style="width: 100%; height: 100%; border-color: var(--ios-accent-orange); background: rgba(255, 159, 10, 0.2);">
+                            <i class="fas fa-basketball-ball"></i>
+                        </div>
+                        <div class="building-face front" style="width: 100%;"></div>
+                        <div class="building-label">Quadra & Vestiários</div>
+                    </div>
+
+                    <!-- Piscina (6) -->
+                    <div class="building-3d tipo-esporte" data-id="6" data-nome="Piscina" data-andares="1"
+                        style="right: 0.5%; top: 45%; width: 10%; height: 8%; transform: rotate(-34deg);"
+                        onclick="selectBuilding('6')">
+                        <div class="building-top"
+                            style="width: 100%; height: 100%; border-color: var(--ios-accent-blue); background: rgba(10, 132, 255, 0.2);">
+                            <i class="fas fa-swimming-pool"></i>
+                        </div>
+                        <div class="building-face front" style="width: 100%;"></div>
+                        <div class="building-label">Piscina</div>
+                    </div>
+
+                    <!-- Painel de Informações -->
+                    <div class="map-info-panel" id="info-panel">
+                        <div class="info-panel-header">
+                            <div class="info-panel-title" id="panel-title">
+                                <i class="fas fa-building"></i>
+                                <span>Selecione um bloco</span>
+                            </div>
+                            <button class="close-panel" onclick="closePanel()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div id="panel-content">
+                            <p style="color: var(--ios-text-secondary); text-align: center; padding: 40px 20px;">
+                                Clique em um bloco no mapa para ver detalhes
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informações do Campus -->
+            <div class="ios-panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="fas fa-info-circle"></i> Informações do Campus</div>
+                </div>
+                <div class="profile-grid">
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-map-marker-alt"
+                                style="margin-right: 8px; color: var(--ios-accent-green);"></i>Endereço</span>
+                        <span class="info-value">RN-233, Km 02, Santa Cruz - RN</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-clock"
+                                style="margin-right: 8px; color: var(--ios-accent-blue);"></i>Funcionamento</span>
+                        <span class="info-value">07:00 - 22:00 (Seg-Sex)</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-phone"
+                                style="margin-right: 8px; color: var(--ios-accent-purple);"></i>Telefone</span>
+                        <span class="info-value">(84) 3291-2200</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-envelope"
+                                style="margin-right: 8px; color: var(--ios-accent-orange);"></i>Email</span>
+                        <span class="info-value">gabinete.santacruz@ifrn.edu.br</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AVALIAÇÕES SECTION -->
+        <section id="avaliacoes-section" class="content-section">
+            <div class="ios-panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="fas fa-clipboard-list"></i> Calendário de Avaliações</div>
+                </div>
+                <div class="ios-timeline" id="avaliacoes-timeline">
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Carregando avaliações...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PERÍODOS SECTION -->
+        <section id="periodos-section" class="content-section">
+            <div class="ios-panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="fas fa-history"></i> Histórico Acadêmico</div>
+                </div>
+                <div class="periodos-grid" id="periodos-grid">
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Carregando períodos...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PERFIL SECTION -->
+        <section id="perfil-section" class="content-section">
+            <div class="ios-panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="fas fa-id-card"></i> Dados Pessoais</div>
+                </div>
+
+                <div class="profile-header">
+                    <div class="profile-avatar-large" id="perfil-avatar">
+                        <span id="perfil-avatar-text">A</span>
+                    </div>
+                    <div class="profile-info">
+                        <h2 id="perfil-nome">Carregando...</h2>
+                        <p><i class="fas fa-id-badge"></i> <span id="perfil-matricula">...</span></p>
+                        <p><i class="fas fa-envelope"></i> <span id="perfil-email">...</span></p>
+                        <p><i class="fas fa-map-marker-alt"></i> <span id="perfil-campus">IFRN - Santa Cruz</span></p>
+                    </div>
+                </div>
+
+                <div class="profile-grid" id="perfil-detalhes"></div>
+            </div>
+
+            <div class="ios-panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="fas fa-cog"></i> Configurações</div>
+                </div>
+                <div style="display: grid; gap: 12px;">
+                    <button class="ios-btn secondary" style="width: 100%; justify-content: center;" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Sair da Conta
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Mobile Bottom Menu -->
+    <nav class="mobile-menu">
+        <a href="#" class="mobile-menu-item active" onclick="showSection('dashboard'); return false;">
+            <i class="fas fa-home"></i>
+            <span>Início</span>
+        </a>
+        <a href="#" class="mobile-menu-item" onclick="showSection('boletim'); return false;">
+            <i class="fas fa-file-alt"></i>
+            <span>Notas</span>
+        </a>
+        <a href="#" class="mobile-menu-item" onclick="showSection('mapa'); return false;">
+            <i class="fas fa-map-marked-alt"></i>
+            <span>Mapa</span>
+        </a>
+        <a href="#" class="mobile-menu-item" onclick="showSection('horarios'); return false;">
+            <i class="fas fa-clock"></i>
+            <span>Horários</span>
+        </a>
+        <a href="#" class="mobile-menu-item" onclick="showSection('perfil'); return false;">
+            <i class="fas fa-user"></i>
+            <span>Perfil</span>
+        </a>
+    </nav>
+
+    <script src="assets/js/dashboard.js"></script>
+    <script>
+        // Registrar Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => console.log('Service Worker registrado!', reg))
+                    .catch(err => console.log('Erro ao registrar Service Worker:', err));
+            });
+        }
+    </script>
+</body>
+</html>

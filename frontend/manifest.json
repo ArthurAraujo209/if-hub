@@ -1,0 +1,21 @@
+{
+  "name": "IF HUB",
+  "short_name": "IF HUB",
+  "description": "Portal acadêmico com integração SUAP",
+  "start_url": "/dashboard.html",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "icons": [
+    {
+      "src": "/assets/icons/IF HUB - SEM FUNDO - 192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/icons/IF HUB - SEM FUNDO - 512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
