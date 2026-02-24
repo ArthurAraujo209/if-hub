@@ -1,4 +1,4 @@
-// dashboard.js - Versão Corrigida e Funcional
+// dashboard.js - Versão SIMPLIFICADA e FUNCIONAL
 
 const API_URL = 'https://if-hub-backend.onrender.com/api';
 let dadosGlobais = null;
@@ -7,176 +7,139 @@ let anoAtual = new Date().getFullYear();
 
 // Database de salas do Campus Santa Cruz
 const roomsDatabase = [
-    // Bloco A - Administrativo e Biblioteca
-    { id: 'biblioteca', name: 'Biblioteca Central', block: 'A', floor: 'Térreo', room: 'A-101', type: 'biblioteca', keywords: ['biblioteca', 'livros', 'estudo', 'leitura', 'acervo', 'bibli', 'livro', 'estudar', 'pesquisa'] },
-    { id: 'sec-academica', name: 'Secretaria Acadêmica', block: 'A', floor: 'Térreo', room: 'A-102', type: 'administrativo', keywords: ['secretaria', 'acadêmica', 'matrícula', 'documentos', 'declaração', 'secret', 'matricula', 'documento'] },
-    { id: 'direcao', name: 'Direção/Gabinete', block: 'A', floor: '1º Andar', room: 'A-201', type: 'administrativo', keywords: ['direção', 'diretor', 'coordenação', 'gabinete', 'direcao', 'coordenacao'] },
-    { id: 'sala-prof', name: 'Sala dos Professores', block: 'A', floor: '1º Andar', room: 'A-202', type: 'administrativo', keywords: ['professores', 'docentes', 'sala dos professores', 'prof', 'docente'] },
-    { id: 'sala-video', name: 'Sala de Videoconferência', block: 'A', floor: '2º Andar', room: 'A-301', type: 'sala', keywords: ['vídeo', 'video', 'conferência', 'zoom', 'meet', 'videoconferencia', 'chamada'] },
-    { id: 'coord-curso', name: 'Coordenação de Curso', block: 'A', floor: '1º Andar', room: 'A-203', type: 'administrativo', keywords: ['coordenação', 'coordenador', 'curso', 'coord'] },
-    { id: 'cpa', name: 'Comissão Própria de Avaliação', block: 'A', floor: '2º Andar', room: 'A-302', type: 'administrativo', keywords: ['cpa', 'avaliação', 'enade', 'avaliacao'] },
+    // Bloco A
+    { id: 'biblioteca', name: 'Biblioteca Central', block: 'A', floor: 'Térreo', room: 'A-101', type: 'biblioteca', keywords: ['biblioteca', 'livros', 'estudo', 'bibli'] },
+    { id: 'sec-academica', name: 'Secretaria Acadêmica', block: 'A', floor: 'Térreo', room: 'A-102', type: 'administrativo', keywords: ['secretaria', 'matrícula', 'secret'] },
+    { id: 'direcao', name: 'Direção/Gabinete', block: 'A', floor: '1º Andar', room: 'A-201', type: 'administrativo', keywords: ['direção', 'diretor', 'gabinete'] },
+    { id: 'sala-prof', name: 'Sala dos Professores', block: 'A', floor: '1º Andar', room: 'A-202', type: 'administrativo', keywords: ['professores', 'docentes'] },
+    { id: 'saude', name: 'Posto de Saúde', block: 'A', floor: 'Térreo', room: 'A-103', type: 'saúde', keywords: ['saúde', 'enfermaria', 'médico'] },
     
-    // Bloco B - Salas de Aula e Laboratórios de Informática
-    { id: 'lab-info-1', name: 'Laboratório de Informática 1', block: 'B', floor: 'Térreo', room: 'B-105', type: 'laboratório', keywords: ['lab', 'informática', 'computador', 'ti', 'b-105', 'info', 'computacao'] },
-    { id: 'lab-info-2', name: 'Laboratório de Informática 2', block: 'B', floor: 'Térreo', room: 'B-106', type: 'laboratório', keywords: ['lab', 'informática', 'computador', 'b-106'] },
-    { id: 'lab-info-3', name: 'Laboratório de Informática 3', block: 'B', floor: '1º Andar', room: 'B-205', type: 'laboratório', keywords: ['lab', 'informática', 'computador', 'b-205'] },
-    { id: 'sala-201', name: 'Sala de Aula 201', block: 'B', floor: '2º Andar', room: 'B-301', type: 'sala', keywords: ['sala', 'aula', 'b-301', '201'] },
-    { id: 'sala-202', name: 'Sala de Aula 202', block: 'B', floor: '2º Andar', room: 'B-302', type: 'sala', keywords: ['sala', 'aula', 'b-302', '202'] },
-    { id: 'sala-203', name: 'Sala de Aula 203', block: 'B', floor: '2º Andar', room: 'B-303', type: 'sala', keywords: ['sala', 'aula', 'b-303', '203'] },
-    { id: 'sala-101', name: 'Sala de Aula 101', block: 'B', floor: '1º Andar', room: 'B-201', type: 'sala', keywords: ['101', 'sala 101', 'b-201'] },
-    { id: 'sala-102', name: 'Sala de Aula 102', block: 'B', floor: '1º Andar', room: 'B-202', type: 'sala', keywords: ['102', 'sala 102', 'b-202'] },
-    { id: 'sala-103', name: 'Sala de Aula 103', block: 'B', floor: '1º Andar', room: 'B-203', type: 'sala', keywords: ['103', 'sala 103', 'b-203'] },
+    // Bloco B
+    { id: 'lab-info-1', name: 'Laboratório de Informática 1', block: 'B', floor: 'Térreo', room: 'B-105', type: 'laboratório', keywords: ['lab', 'informática', 'computador', 'info'] },
+    { id: 'lab-info-2', name: 'Laboratório de Informática 2', block: 'B', floor: 'Térreo', room: 'B-106', type: 'laboratório', keywords: ['lab', 'informática'] },
+    { id: 'sala-201', name: 'Sala de Aula 201', block: 'B', floor: '2º Andar', room: 'B-301', type: 'sala', keywords: ['sala', 'aula', '201'] },
+    { id: 'sala-101', name: 'Sala de Aula 101', block: 'B', floor: '1º Andar', room: 'B-201', type: 'sala', keywords: ['101', 'sala 101'] },
     
-    // Bloco C - Ciências, Laboratórios Especializados e Auditório
-    { id: 'lab-quimica', name: 'Laboratório de Química', block: 'C', floor: 'Térreo', room: 'C-101', type: 'laboratório', keywords: ['lab', 'química', 'quimica', 'c-101', 'quim'] },
-    { id: 'lab-fisica', name: 'Laboratório de Física', block: 'C', floor: 'Térreo', room: 'C-102', type: 'laboratório', keywords: ['lab', 'física', 'fisica', 'c-102', 'fis'] },
-    { id: 'lab-biologia', name: 'Laboratório de Biologia', block: 'C', floor: 'Térreo', room: 'C-103', type: 'laboratório', keywords: ['lab', 'biologia', 'bio', 'c-103'] },
-    { id: 'sala-musica', name: 'Sala de Música', block: 'C', floor: '1º Andar', room: 'C-345', type: 'sala especial', keywords: ['música', 'musica', 'som', 'instrumento', '345', 'c-345'] },
-    { id: 'sala-artes', name: 'Sala de Artes Visuais', block: 'C', floor: '1º Andar', room: 'C-346', type: 'sala especial', keywords: ['artes', 'desenho', 'pintura', 'c-346'] },
-    { id: 'auditorio', name: 'Auditório Central', block: 'C', floor: '2º Andar', room: 'C-401', type: 'auditório', keywords: ['auditório', 'auditorio', 'eventos', 'palestras', 'c-401', 'audit'] },
-    { id: 'lab-idiomas', name: 'Laboratório de Idiomas', block: 'C', floor: '2º Andar', room: 'C-301', type: 'laboratório', keywords: ['idiomas', 'inglês', 'ingles', 'espanhol', 'c-301'] },
+    // Bloco C
+    { id: 'lab-quimica', name: 'Laboratório de Química', block: 'C', floor: 'Térreo', room: 'C-101', type: 'laboratório', keywords: ['química', 'lab', 'quimica'] },
+    { id: 'lab-fisica', name: 'Laboratório de Física', block: 'C', floor: 'Térreo', room: 'C-102', type: 'laboratório', keywords: ['física', 'lab', 'fisica'] },
+    { id: 'auditorio', name: 'Auditório Central', block: 'C', floor: '2º Andar', room: 'C-401', type: 'auditório', keywords: ['auditório', 'eventos', 'palestras'] },
     
-    // Bloco D - Técnicos, Workshops e NCE
-    { id: 'lab-eletrica', name: 'Laboratório de Eletricidade', block: 'D', floor: 'Térreo', room: 'D-110', type: 'laboratório técnico', keywords: ['lab', 'eletricidade', 'elétrica', 'eletrica', 'd-110'] },
-    { id: 'lab-mecanica', name: 'Laboratório de Mecânica', block: 'D', floor: 'Térreo', room: 'D-111', type: 'laboratório técnico', keywords: ['lab', 'mecânica', 'mecanica', 'd-111'] },
-    { id: 'oficina-auto', name: 'Oficina de Automação', block: 'D', floor: '1º Andar', room: 'D-210', type: 'oficina', keywords: ['oficina', 'automação', 'automacao', 'robótica', 'd-210'] },
-    { id: 'lab-redes', name: 'Laboratório de Redes', block: 'D', floor: '1º Andar', room: 'D-211', type: 'laboratório', keywords: ['lab', 'redes', 'network', 'cisco', 'd-211'] },
-    { id: 'nce', name: 'Núcleo de Computação', block: 'D', floor: '2º Andar', room: 'D-305', type: 'administrativo', keywords: ['nce', 'computação', 'ti', 'suporte', 'd-305'] },
-    { id: 'almoxarifado', name: 'Almoxarifado', block: 'D', floor: 'Subsolo', room: 'D-001', type: 'administrativo', keywords: ['almoxarifado', 'material', 'd-001'] },
+    // Bloco D
+    { id: 'lab-eletrica', name: 'Laboratório de Eletricidade', block: 'D', floor: 'Térreo', room: 'D-110', type: 'laboratório', keywords: ['elétrica', 'eletricidade'] },
+    { id: 'lab-mecanica', name: 'Laboratório de Mecânica', block: 'D', floor: 'Térreo', room: 'D-111', type: 'laboratório', keywords: ['mecânica', 'mecanica'] },
     
-    // Bloco E - Novo/Módulos
-    { id: 'sala-345', name: 'Sala 345 - Música', block: 'E', floor: '3º Andar', room: 'E-345', type: 'sala especial', keywords: ['345', 'música', 'musica', 'e-345'] },
-    { id: 'lab-robotica', name: 'Laboratório de Robótica', block: 'E', floor: 'Térreo', room: 'E-120', type: 'laboratório', keywords: ['robótica', 'robotica', 'arduino', 'e-120'] },
-    { id: 'sala-501', name: 'Sala de Aula 501', block: 'E', floor: '5º Andar', room: 'E-501', type: 'sala', keywords: ['sala', 'aula', '501', 'e-501'] },
-    { id: 'sala-502', name: 'Sala de Aula 502', block: 'E', floor: '5º Andar', room: 'E-502', type: 'sala', keywords: ['sala', 'aula', '502', 'e-502'] },
+    // Bloco F
+    { id: 'cantina', name: 'Cantina/Restaurante', block: 'F', floor: 'Térreo', room: 'F-001', type: 'alimentação', keywords: ['cantina', 'restaurante', 'comida', 'lanche'] },
+    { id: 'biblioteca-setorial', name: 'Biblioteca Setorial', block: 'F', floor: '1º Andar', room: 'F-101', type: 'biblioteca', keywords: ['biblioteca', 'livros', 'setorial'] },
     
-    // Bloco F - Extensão e Serviços
-    { id: 'cantina', name: 'Cantina/Restaurante Universitário', block: 'F', floor: 'Térreo', room: 'F-001', type: 'alimentação', keywords: ['cantina', 'ru', 'restaurante', 'comida', 'lanche', 'comer'] },
-    { id: 'xerox', name: 'Central de Xerox', block: 'F', floor: 'Térreo', room: 'F-002', type: 'serviço', keywords: ['xerox', 'cópia', 'copia', 'impressão', 'impressao'] },
-    { id: 'biblioteca-setorial', name: 'Biblioteca Setorial', block: 'F', floor: '1º Andar', room: 'F-101', type: 'biblioteca', keywords: ['biblioteca', 'setorial', 'livros', 'f-101'] },
-    { id: 'sala-estudo', name: 'Sala de Estudo em Grupo', block: 'F', floor: '1º Andar', room: 'F-102', type: 'sala', keywords: ['estudo', 'grupo', 'sala de estudo', 'f-102'] },
-    { id: 'dce', name: 'Diretório Central dos Estudantes', block: 'F', floor: '2º Andar', room: 'F-201', type: 'estudantil', keywords: ['dce', 'estudantes', 'representação', 'f-201'] },
-    { id: 'ca', name: 'Centro Acadêmico', block: 'F', floor: '2º Andar', room: 'F-202', type: 'estudantil', keywords: ['ca', 'centro acadêmico', 'academico', 'f-202'] },
-    { id: 'pastoral', name: 'Pastoral do Campus', block: 'F', floor: 'Térreo', room: 'F-003', type: 'apoio', keywords: ['pastoral', 'religioso', 'apoio', 'f-003'] },
-    
-    // Áreas Comuns e Externas
-    { id: 'quadra', name: 'Quadra Poliesportiva', block: 'Externo', floor: '-', room: 'Quadra', type: 'esporte', keywords: ['quadra', 'esporte', 'futsal', 'basquete', 'vôlei', 'volei'] },
-    { id: 'estacionamento', name: 'Estacionamento Principal', block: 'Externo', floor: '-', room: 'Estacionamento', type: 'estacionamento', keywords: ['estacionamento', 'carro', 'moto', 'veículo'] },
-    { id: 'jardim', name: 'Jardim Botânico/Área Verde', block: 'Externo', floor: '-', room: 'Jardim', type: 'área verde', keywords: ['jardim', 'verde', 'natureza', 'área externa'] },
-    { id: 'saude', name: 'Posto de Saúde/Enfermaria', block: 'A', floor: 'Térreo', room: 'A-103', type: 'saúde', keywords: ['saúde', 'saude', 'enfermaria', 'médico', 'medico', 'a-103'] },
-    { id: 'manutencao', name: 'Manutenção Predial', block: 'Externo', floor: '-', room: 'Manutenção', type: 'serviço', keywords: ['manutenção', 'manutencao', 'conserto', 'predial'] }
+    // Áreas Externas
+    { id: 'quadra', name: 'Quadra Poliesportiva', block: 'Externo', floor: '-', room: 'Quadra', type: 'esporte', keywords: ['quadra', 'esporte', 'futsal', 'basquete'] },
+    { id: 'areia', name: 'Quadra de Areia', block: 'Externo', floor: '-', room: 'Areia', type: 'esporte', keywords: ['areia', 'vôlei', 'futevôlei'] }
 ];
 
-// Dados dos blocos (para o mapa 3D)
+// Dados dos blocos
 const buildingData = {
     'B': {
         nome: 'Bloco B',
-        descricao: 'Salas de Aula, Centro de Convivência e Espaço Cultural',
+        descricao: 'Salas de Aula e Centro de Convivência',
         andares: {
-            'Térreo': ['Centro de Convivência', 'Espaço Cultural', 'Aquário', 'Banheiros'],
-            '1º Andar': ['Salas de Professores', 'Sala de Reuniões', 'Coordenação de Curso'],
-            '2º Andar': ['Salas de Aula (201-205)', 'Laboratório de Idiomas']
+            'Térreo': ['Centro de Convivência', 'Espaço Cultural'],
+            '1º Andar': ['Salas de Professores'],
+            '2º Andar': ['Salas de Aula 201-205']
         },
         icon: 'building',
-        cor: 'var(--ios-accent-green)',
-        salas: ['B-105', 'B-106', 'B-205', 'B-301', 'B-302', 'B-303', 'B-201', 'B-202', 'B-203']
+        cor: 'var(--ios-accent-green)'
     },
     'A': {
         nome: 'Bloco A',
-        descricao: 'Licenciatura, Laboratórios e Administração',
+        descricao: 'Administração e Laboratórios',
         andares: {
-            'Térreo': ['Auditório', 'Lab. Informática', 'Lab. Química', 'Secretaria'],
-            '1º Andar': ['Lab. Eletrônica', 'Lab. Matemática', 'Salas de Aula'],
-            '2º Andar': ['Coordenação Geral', 'Direção', 'Sala de Professores']
+            'Térreo': ['Secretaria', 'Biblioteca'],
+            '1º Andar': ['Direção', 'Sala dos Professores'],
+            '2º Andar': ['Coordenações']
         },
         icon: 'flask',
-        cor: 'var(--ios-accent-purple)',
-        salas: ['A-101', 'A-102', 'A-103', 'A-201', 'A-202', 'A-203', 'A-301', 'A-302']
+        cor: 'var(--ios-accent-purple)'
     },
     '5': {
         nome: 'Bloco 5',
         descricao: 'Mecânica e Refrigeração',
         andares: {
-            'Térreo': ['Oficina Mecânica', 'Lab. de Usinagem'],
-            '1º Andar': ['Lab. de Refrigeração', 'Salas de Aula Técnicas']
+            'Térreo': ['Oficina Mecânica'],
+            '1º Andar': ['Lab. Refrigeração']
         },
         icon: 'cogs',
-        cor: 'var(--ios-accent-purple)',
-        salas: []
+        cor: 'var(--ios-accent-purple)'
     },
     '1': {
-        nome: 'Guarita/Portaria',
-        descricao: 'Entrada principal do campus',
-        andares: { 'Térreo': ['Portaria', 'Segurança', 'Controle de Acesso'] },
+        nome: 'Guarita',
+        descricao: 'Entrada principal',
+        andares: { 'Térreo': ['Portaria'] },
         icon: 'shield-alt',
-        cor: 'var(--ios-accent-blue)',
-        salas: []
+        cor: 'var(--ios-accent-blue)'
     },
     '2': {
-        nome: 'Cantina & Saúde',
-        descricao: 'Alimentação e atendimento médico',
-        andares: { 'Térreo': ['Cantina', 'Restaurante Universitário', 'Posto de Saúde'] },
+        nome: 'Cantina',
+        descricao: 'Alimentação',
+        andares: { 'Térreo': ['Cantina', 'Restaurante'] },
         icon: 'utensils',
-        cor: 'var(--ios-accent-yellow)',
-        salas: []
+        cor: 'var(--ios-accent-yellow)'
     },
     '3': {
         nome: 'Almoxarifado',
-        descricao: 'Armazenamento e logística',
-        andares: { 'Térreo': ['Almoxarifado Central', 'Depósito de Materiais'] },
+        descricao: 'Armazenamento',
+        andares: { 'Térreo': ['Almoxarifado'] },
         icon: 'boxes',
-        cor: 'var(--ios-accent-blue)',
-        salas: ['D-001']
+        cor: 'var(--ios-accent-blue)'
     },
     'areia': {
         nome: 'Quadra de Areia',
         descricao: 'Esportes de praia',
-        andares: { 'Externo': ['Vôlei de Praia', 'Futevôlei', 'Frescobol'] },
+        andares: { 'Externo': ['Vôlei de Praia'] },
         icon: 'volleyball-ball',
-        cor: 'var(--ios-accent-orange)',
-        salas: []
+        cor: 'var(--ios-accent-orange)'
     },
     '4': {
         nome: 'Espaço Multiuso',
         descricao: 'Atividades diversas',
-        andares: { 'Térreo': ['Ginástica', 'Tênis de Mesa', 'Eventos'] },
+        andares: { 'Térreo': ['Ginástica'] },
         icon: 'table-tennis',
-        cor: 'var(--ios-accent-orange)',
-        salas: []
+        cor: 'var(--ios-accent-orange)'
     },
     'quadra': {
         nome: 'Quadra Poliesportiva',
-        descricao: 'Esportes coletivos',
-        andares: { 'Externo': ['Basquete', 'Futsal', 'Vôlei', 'Vestiários', 'Academia dos Servidores'] },
+        descricao: 'Esportes',
+        andares: { 'Externo': ['Basquete', 'Futsal'] },
         icon: 'basketball-ball',
-        cor: 'var(--ios-accent-orange)',
-        salas: []
+        cor: 'var(--ios-accent-orange)'
     },
     '6': {
         nome: 'Piscina',
-        descricao: 'Natação e lazer',
-        andares: { 'Externo': ['Piscina Olímpica', 'Vestiários', 'Área de Lazer'] },
+        descricao: 'Natação',
+        andares: { 'Externo': ['Piscina'] },
         icon: 'swimming-pool',
-        cor: 'var(--ios-accent-blue)',
-        salas: []
+        cor: 'var(--ios-accent-blue)'
     }
 };
 
-// ========== CONFIGURAÇÃO DO FUSE.JS ==========
+// ========== VARIÁVEIS GLOBAIS ==========
 let fuseRooms, fuseBuildings;
+let currentZoom = 1;
+let searchTimeout = null;
 
+// ========== FUNÇÕES DE BUSCA ==========
+
+// Inicializa o Fuse.js
 function initializeFuse() {
-    console.log('Inicializando Fuse.js...');
+    console.log('Inicializando busca inteligente...');
     
-    // Configuração do Fuse.js para busca com erros ortográficos
     const fuseOptions = {
         includeScore: true,
-        includeMatches: true,
-        threshold: 0.3, // Mais tolerante a erros (0 = perfeito, 1 = qualquer coisa)
+        threshold: 0.4,
         ignoreLocation: true,
         findAllMatches: true,
         minMatchCharLength: 2,
-        shouldSort: true,
         keys: [
             { name: 'name', weight: 2 },
             { name: 'keywords', weight: 1.5 },
@@ -185,39 +148,285 @@ function initializeFuse() {
         ]
     };
 
-    // Prepara dados para busca de salas
     fuseRooms = new Fuse(roomsDatabase, fuseOptions);
     
-    // Prepara dados para busca de blocos
-    const buildingSearchData = Object.entries(buildingData).map(([id, data]) => ({
+    const buildingArray = Object.entries(buildingData).map(([id, data]) => ({
         id: id,
         nome: data.nome,
         descricao: data.descricao,
         icon: data.icon,
         cor: data.cor,
-        andares: data.andares,
-        salas: data.salas,
-        searchableText: `${data.nome} ${data.descricao} ${Object.values(data.andares).flat().join(' ')}`.toLowerCase()
+        andares: data.andares
     }));
-
-    const buildingOptions = { 
-        ...fuseOptions, 
-        keys: [
-            { name: 'nome', weight: 2 },
-            { name: 'descricao', weight: 1.5 },
-            { name: 'searchableText', weight: 1 }
-        ] 
-    };
     
-    fuseBuildings = new Fuse(buildingSearchData, buildingOptions);
-    console.log('Fuse.js inicializado com sucesso!');
+    fuseBuildings = new Fuse(buildingArray, {
+        includeScore: true,
+        threshold: 0.4,
+        keys: ['nome', 'descricao']
+    });
+    
+    console.log('Busca inteligente pronta!');
 }
 
-// ========== VARIÁVEIS GLOBAIS ==========
-let currentZoom = 1;
-let searchTimeout = null;
+// FUNÇÃO PRINCIPAL DE BUSCA (chamada pelo HTML)
+function performSmartSearch() {
+    console.log('Buscando...');
+    const input = document.getElementById('room-search');
+    if (!input) return;
+    
+    const query = input.value.trim();
+    
+    if (!query || query.length < 2) {
+        document.getElementById('autocomplete-suggestions').classList.remove('show');
+        return;
+    }
 
-// ========== FUNÇÕES UTILITÁRIAS ==========
+    if (!fuseRooms) initializeFuse();
+
+    // Busca salas e blocos
+    const roomResults = fuseRooms.search(query);
+    const buildingResults = fuseBuildings.search(query);
+
+    // Combina resultados
+    const allResults = [
+        ...roomResults.map(r => ({ item: r.item, score: r.score, type: 'room' })),
+        ...buildingResults.map(b => ({ item: b.item, score: b.score, type: 'building' }))
+    ].sort((a, b) => (a.score || 1) - (b.score || 1)).slice(0, 8);
+
+    showSuggestions(allResults, query);
+}
+
+// Mostra sugestões
+function showSuggestions(results, query) {
+    const container = document.getElementById('autocomplete-suggestions');
+    if (!container) return;
+    
+    if (results.length === 0) {
+        container.innerHTML = `
+            <div style="padding: 20px; text-align: center; color: var(--ios-text-secondary);">
+                <i class="fas fa-search" style="font-size: 2rem; opacity: 0.5; margin-bottom: 10px;"></i>
+                <p>Nenhum resultado para "${escapeHtml(query)}"</p>
+                <small>Tente: bibli, lab, 101, cantina...</small>
+            </div>
+        `;
+        container.classList.add('show');
+        return;
+    }
+
+    let html = '';
+    
+    results.forEach(result => {
+        if (result.type === 'room') {
+            const room = result.item;
+            html += `
+                <div class="suggestion-item" onclick="selectRoom('${room.id}')">
+                    <i class="fas fa-door-open" style="color: var(--ios-accent-green); width: 30px;"></i>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600;">${highlightMatch(room.name, query)}</div>
+                        <div style="font-size: 0.8rem; color: var(--ios-text-secondary);">
+                            Bloco ${room.block} • ${room.room}
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            const building = result.item;
+            html += `
+                <div class="suggestion-item" onclick="selectBuilding('${building.id}')">
+                    <i class="fas fa-building" style="color: var(--ios-accent-blue); width: 30px;"></i>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600;">${highlightMatch(building.nome, query)}</div>
+                        <div style="font-size: 0.8rem; color: var(--ios-text-secondary);">
+                            ${building.descricao.substring(0, 40)}...
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    });
+
+    container.innerHTML = html;
+    container.classList.add('show');
+}
+
+// FUNÇÃO CHAMADA PELO oninput
+function handleSearchInput() {
+    const input = document.getElementById('room-search');
+    if (!input) return;
+    
+    const query = input.value;
+    
+    if (searchTimeout) {
+        clearTimeout(searchTimeout);
+    }
+    
+    if (query.length >= 2) {
+        searchTimeout = setTimeout(() => {
+            performSmartSearch();
+        }, 300);
+    } else {
+        document.getElementById('autocomplete-suggestions').classList.remove('show');
+    }
+}
+
+// Seleciona uma sala
+function selectRoom(roomId) {
+    const room = roomsDatabase.find(r => r.id === roomId);
+    if (!room) return;
+    
+    document.getElementById('autocomplete-suggestions').classList.remove('show');
+    document.getElementById('room-search').value = room.name;
+    
+    showRoomDetails(room);
+    highlightBuilding(room.block);
+}
+
+// Seleciona um bloco
+function selectBuilding(buildingId) {
+    const building = buildingData[buildingId];
+    if (!building) return;
+    
+    document.getElementById('autocomplete-suggestions').classList.remove('show');
+    document.getElementById('room-search').value = building.nome;
+    
+    showBuildingDetails(buildingId, building);
+    highlightBuilding(buildingId);
+}
+
+// Mostra detalhes da sala
+function showRoomDetails(room) {
+    const container = document.getElementById('search-result-container');
+    const title = document.getElementById('search-result-title');
+    const content = document.getElementById('search-result-content');
+    
+    if (!container) return;
+    
+    title.innerHTML = `
+        <i class="fas fa-door-open" style="color: var(--ios-accent-green);"></i>
+        <span>${room.name}</span>
+        <span style="background: var(--gradient-primary); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem;">Bloco ${room.block}</span>
+    `;
+
+    content.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
+                <i class="fas fa-door-closed"></i>
+                <div><strong>Sala</strong><br>${room.room}</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
+                <i class="fas fa-building"></i>
+                <div><strong>Bloco</strong><br>${room.block}</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
+                <i class="fas fa-layer-group"></i>
+                <div><strong>Andar</strong><br>${room.floor}</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
+                <i class="fas fa-tag"></i>
+                <div><strong>Tipo</strong><br>${room.type}</div>
+            </div>
+        </div>
+    `;
+
+    container.style.display = 'block';
+    container.classList.add('show');
+}
+
+// Mostra detalhes do bloco
+function showBuildingDetails(buildingId, building) {
+    const container = document.getElementById('search-result-container');
+    const title = document.getElementById('search-result-title');
+    const content = document.getElementById('search-result-content');
+    
+    if (!container) return;
+    
+    title.innerHTML = `
+        <i class="fas fa-${building.icon}" style="color: ${building.cor};"></i>
+        <span>${building.nome}</span>
+    `;
+
+    let andaresHtml = '';
+    for (const [andar, salas] of Object.entries(building.andares)) {
+        andaresHtml += `
+            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 10px;">
+                <div style="font-weight: 600; color: var(--ios-accent-green); margin-bottom: 5px;">${andar}</div>
+                <div style="color: var(--ios-text-secondary);">${salas.join(' • ')}</div>
+            </div>
+        `;
+    }
+
+    content.innerHTML = `
+        <p style="color: var(--ios-text-secondary); margin-bottom: 20px;">${building.descricao}</p>
+        <h4 style="margin-bottom: 15px;">Andares</h4>
+        ${andaresHtml}
+    `;
+
+    container.style.display = 'block';
+    container.classList.add('show');
+}
+
+// Destaca bloco no mapa
+function highlightBuilding(buildingId) {
+    document.querySelectorAll('.building-3d').forEach(b => b.classList.remove('active', 'highlight'));
+    
+    const building = document.querySelector(`[data-id="${buildingId}"]`);
+    if (building) {
+        building.classList.add('active', 'highlight');
+    }
+}
+
+// Funções de zoom
+function zoomMap(factor) {
+    currentZoom *= factor;
+    currentZoom = Math.max(0.5, Math.min(3, currentZoom));
+    const image = document.getElementById('campus-image');
+    if (image) {
+        image.style.transform = `scale(${currentZoom})`;
+    }
+}
+
+function resetMap() {
+    currentZoom = 1;
+    const image = document.getElementById('campus-image');
+    if (image) image.style.transform = 'scale(1)';
+    
+    document.querySelectorAll('.building-3d').forEach(b => b.classList.remove('active', 'highlight'));
+    
+    const container = document.getElementById('search-result-container');
+    if (container) {
+        container.style.display = 'none';
+        container.classList.remove('show');
+    }
+    
+    const input = document.getElementById('room-search');
+    if (input) input.value = '';
+    
+    document.getElementById('autocomplete-suggestions').classList.remove('show');
+}
+
+// Utilitários
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function highlightMatch(text, query) {
+    if (!query) return escapeHtml(text);
+    try {
+        const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
+        return escapeHtml(text).replace(regex, '<mark style="background: rgba(48,209,88,0.3); padding: 2px; border-radius: 3px;">$1</mark>');
+    } catch (e) {
+        return escapeHtml(text);
+    }
+}
+
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// ========== FUNÇÕES ORIGINAIS (mantidas) ==========
+
 function safeArray(data) {
     if (!data) return [];
     if (Array.isArray(data)) return data;
@@ -252,7 +461,7 @@ function parseHorario(codigo) {
     };
 }
 
-// ========== NAVEGAÇÃO ==========
+// Navegação
 function showSection(sectionName, event) {
     document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
     if (event && event.currentTarget) {
@@ -325,7 +534,6 @@ function closeSidebar() {
     icon.classList.add('fa-bars');
 }
 
-// ========== LOGOUT ==========
 async function logout() {
     try {
         await fetch(`${API_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
@@ -334,7 +542,6 @@ async function logout() {
     window.location.href = '/index.html';
 }
 
-// ========== ALERTAS ==========
 function showAlert(message, type = 'error') {
     const container = document.getElementById('alert-container');
     if (!container) return;
@@ -351,7 +558,6 @@ function showAlert(message, type = 'error') {
     setTimeout(() => container.innerHTML = '', 5000);
 }
 
-// ========== LOADING ==========
 function mostrarLoading() {
     const loadingEl = document.getElementById('loading');
     if (loadingEl) loadingEl.style.display = 'flex';
@@ -362,7 +568,6 @@ function esconderLoading() {
     if (loadingEl) loadingEl.style.display = 'none';
 }
 
-// ========== TROCA DE ANO ==========
 async function trocarAno(novoAno) {
     anoAtual = parseInt(novoAno);
     mostrarLoading();
@@ -370,7 +575,6 @@ async function trocarAno(novoAno) {
     esconderLoading();
 }
 
-// ========== CARREGAR DADOS ==========
 async function carregarDadosAluno() {
     const token = localStorage.getItem('suap_token');
     if (!token) {
@@ -448,7 +652,6 @@ async function carregarDados() {
     esconderLoading();
 }
 
-// ========== PREENCHER SEÇÕES ==========
 function preencherSidebar(data) {
     const aluno = safeObject(data.aluno);
     const nome = aluno.nome_usual || aluno.nome || 'Aluno';
@@ -492,7 +695,6 @@ function preencherDashboard(data) {
     if (cardFaltas) cardFaltas.textContent = totalFaltas;
     if (cardDisciplinas) cardDisciplinas.textContent = boletim.length;
 
-    // Avaliações
     const containerAval = document.getElementById('dashboard-avaliacoes');
     const avaliacoes = safeArray(data.avaliacoes);
     
@@ -515,7 +717,6 @@ function preencherDashboard(data) {
         }
     }
 
-    // Boletim resumo
     const containerBoletim = document.getElementById('dashboard-boletim-resumo');
     if (containerBoletim) {
         if (boletim.length === 0) {
@@ -816,318 +1017,6 @@ function preencherAvaliacoes(data) {
     `).join('');
 }
 
-// ========== FUNÇÕES DO MAPA ==========
-
-// Função principal de busca
-function performSmartSearch() {
-    console.log('Buscando...');
-    const query = document.getElementById('room-search').value.trim();
-    
-    if (!query || query.length < 2) {
-        document.getElementById('autocomplete-suggestions').classList.remove('show');
-        return;
-    }
-
-    if (!fuseRooms || !fuseBuildings) {
-        initializeFuse();
-    }
-
-    // Busca por salas
-    const roomResults = fuseRooms.search(query);
-    
-    // Busca por blocos
-    const buildingResults = fuseBuildings.search(query);
-
-    // Combina e ordena resultados
-    const allResults = [
-        ...roomResults.map(r => ({ item: r.item, score: r.score, type: 'room' })),
-        ...buildingResults.map(b => ({ item: b.item, score: b.score, type: 'building' }))
-    ].sort((a, b) => (a.score || 1) - (b.score || 1)).slice(0, 8);
-
-    showAutocompleteSuggestions(allResults, query);
-}
-
-function showAutocompleteSuggestions(results, query) {
-    const container = document.getElementById('autocomplete-suggestions');
-    
-    if (!container) {
-        console.error('Container de sugestões não encontrado');
-        return;
-    }
-    
-    if (results.length === 0) {
-        container.innerHTML = `
-            <div class="suggestion-no-results">
-                <i class="fas fa-search"></i>
-                Nenhum resultado para "${escapeHtml(query)}"
-                <small>Tente: bibli, lab, sala, bloco, 101...</small>
-            </div>
-        `;
-        container.classList.add('show');
-        return;
-    }
-
-    let html = '';
-    
-    results.forEach((result, index) => {
-        if (result.type === 'room') {
-            const room = result.item;
-            html += `
-                <div class="suggestion-item" onclick="selectRoom('${room.id}')">
-                    <div class="suggestion-icon" style="background: rgba(48,209,88,0.1);">
-                        <i class="fas fa-door-open"></i>
-                    </div>
-                    <div class="suggestion-content">
-                        <div class="suggestion-title">${highlightMatch(room.name, query)}</div>
-                        <div class="suggestion-meta">
-                            <span><i class="fas fa-building"></i> Bloco ${room.block}</span>
-                            <span><i class="fas fa-door-closed"></i> ${room.room}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        } else {
-            const building = result.item;
-            html += `
-                <div class="suggestion-item" onclick="selectBuilding('${building.id}')">
-                    <div class="suggestion-icon" style="background: rgba(10,132,255,0.1);">
-                        <i class="fas fa-${building.icon || 'building'}"></i>
-                    </div>
-                    <div class="suggestion-content">
-                        <div class="suggestion-title">${highlightMatch(building.nome, query)}</div>
-                        <div class="suggestion-meta">
-                            <span>${building.descricao.substring(0, 40)}${building.descricao.length > 40 ? '...' : ''}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-    });
-
-    container.innerHTML = html;
-    container.classList.add('show');
-}
-
-function selectRoom(roomId) {
-    const room = roomsDatabase.find(r => r.id === roomId);
-    if (!room) return;
-    
-    document.getElementById('autocomplete-suggestions').classList.remove('show');
-    document.getElementById('room-search').value = room.name;
-    
-    showRoomDetails(room);
-    highlightBuildingOnMap(room.block);
-}
-
-function selectBuilding(buildingId) {
-    const building = buildingData[buildingId];
-    if (!building) return;
-    
-    document.getElementById('autocomplete-suggestions').classList.remove('show');
-    document.getElementById('room-search').value = building.nome;
-    
-    showBuildingDetails(buildingId, building);
-    highlightBuildingOnMap(buildingId);
-}
-
-function showRoomDetails(room) {
-    const container = document.getElementById('search-result-container');
-    const title = document.getElementById('search-result-title');
-    const content = document.getElementById('search-result-content');
-    
-    if (!container || !title || !content) return;
-    
-    title.innerHTML = `
-        <i class="fas fa-door-open" style="color: var(--ios-accent-green);"></i>
-        <span>${room.name}</span>
-        <span class="result-block-badge">Bloco ${room.block}</span>
-    `;
-
-    content.innerHTML = `
-        <div class="result-details-grid">
-            <div class="result-detail-card">
-                <i class="fas fa-door-closed"></i>
-                <div>
-                    <strong>Sala</strong>
-                    <span>${room.room}</span>
-                </div>
-            </div>
-            <div class="result-detail-card">
-                <i class="fas fa-building"></i>
-                <div>
-                    <strong>Bloco</strong>
-                    <span>${room.block}</span>
-                </div>
-            </div>
-            <div class="result-detail-card">
-                <i class="fas fa-layer-group"></i>
-                <div>
-                    <strong>Andar</strong>
-                    <span>${room.floor}</span>
-                </div>
-            </div>
-            <div class="result-detail-card">
-                <i class="fas fa-tag"></i>
-                <div>
-                    <strong>Tipo</strong>
-                    <span>${room.type}</span>
-                </div>
-            </div>
-        </div>
-        <div class="result-keywords">
-            <strong><i class="fas fa-hashtag"></i> Palavras-chave:</strong>
-            <div class="keywords-container">
-                ${room.keywords.map(k => `<span class="keyword-tag">${k}</span>`).join('')}
-            </div>
-        </div>
-    `;
-
-    container.classList.add('show');
-    
-    if (window.innerWidth <= 768) {
-        setTimeout(() => {
-            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
-    }
-}
-
-function showBuildingDetails(buildingId, building) {
-    const container = document.getElementById('search-result-container');
-    const title = document.getElementById('search-result-title');
-    const content = document.getElementById('search-result-content');
-    
-    if (!container || !title || !content) return;
-    
-    title.innerHTML = `
-        <i class="fas fa-${building.icon}" style="color: ${building.cor};"></i>
-        <span>${building.nome}</span>
-    `;
-
-    let andaresHtml = '';
-    for (const [andar, salas] of Object.entries(building.andares)) {
-        andaresHtml += `
-            <div class="andar-card">
-                <div class="andar-header">${andar}</div>
-                <div class="andar-salas">${salas.join(' • ')}</div>
-            </div>
-        `;
-    }
-
-    // Buscar salas deste bloco
-    const blockLetter = building.nome.split(' ')[1];
-    const salasDoBloco = roomsDatabase.filter(r => r.block === blockLetter || 
-                                                   (building.salas && building.salas.includes(r.room)));
-
-    content.innerHTML = `
-        <p class="building-description">${building.descricao}</p>
-        
-        <div class="building-andares-section">
-            <h4><i class="fas fa-layer-group"></i> Andares e Salas</h4>
-            ${andaresHtml}
-        </div>
-
-        ${salasDoBloco.length > 0 ? `
-            <div class="building-salas-section">
-                <h4><i class="fas fa-door-open"></i> Salas neste bloco</h4>
-                <div class="salas-grid">
-                    ${salasDoBloco.map(sala => `
-                        <div class="sala-mini-card" onclick="selectRoom('${sala.id}')">
-                            <strong>${sala.room}</strong>
-                            <span>${sala.name}</span>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        ` : ''}
-    `;
-
-    container.classList.add('show');
-}
-
-function highlightBuildingOnMap(buildingId) {
-    // Remove highlight de todos
-    document.querySelectorAll('.building-3d').forEach(b => b.classList.remove('active', 'highlight'));
-    
-    // Adiciona highlight no selecionado
-    const building = document.querySelector(`[data-id="${buildingId}"]`);
-    if (building) {
-        building.classList.add('active', 'highlight');
-        
-        // Scroll suave até o bloco
-        const mapContainer = document.getElementById('map-container');
-        if (mapContainer) {
-            const rect = building.getBoundingClientRect();
-            const mapRect = mapContainer.getBoundingClientRect();
-            
-            if (rect.top < mapRect.top || rect.bottom > mapRect.bottom || 
-                rect.left < mapRect.left || rect.right > mapRect.right) {
-                building.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-            }
-        }
-    }
-}
-
-function handleSearchInput() {
-    const query = document.getElementById('room-search').value;
-    
-    // Limpa timeout anterior
-    if (searchTimeout) {
-        clearTimeout(searchTimeout);
-    }
-    
-    if (query.length >= 2) {
-        // Debounce para não buscar a cada tecla
-        searchTimeout = setTimeout(() => {
-            performSmartSearch();
-        }, 300);
-    } else {
-        document.getElementById('autocomplete-suggestions').classList.remove('show');
-        document.getElementById('search-result-container').classList.remove('show');
-    }
-}
-
-function zoomMap(factor) {
-    currentZoom *= factor;
-    currentZoom = Math.max(0.5, Math.min(3, currentZoom));
-    const image = document.getElementById('campus-image');
-    if (image) {
-        image.style.transform = `scale(${currentZoom})`;
-        image.style.transition = 'transform 0.3s ease';
-    }
-}
-
-function resetMap() {
-    currentZoom = 1;
-    const image = document.getElementById('campus-image');
-    if (image) image.style.transform = 'scale(1)';
-    
-    document.querySelectorAll('.building-3d').forEach(b => b.classList.remove('active', 'highlight'));
-    document.getElementById('search-result-container').classList.remove('show');
-    document.getElementById('room-search').value = '';
-    document.getElementById('autocomplete-suggestions').classList.remove('show');
-}
-
-// ========== UTILITÁRIOS ==========
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-function highlightMatch(text, query) {
-    if (!query) return escapeHtml(text);
-    try {
-        const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
-        return escapeHtml(text).replace(regex, '<mark>$1</mark>');
-    } catch (e) {
-        return escapeHtml(text);
-    }
-}
-
-function escapeRegExp(string) {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 function formatarData(dataStr) {
     if (!dataStr) return 'Data não definida';
     try {
@@ -1144,33 +1033,26 @@ function formatarData(dataStr) {
     }
 }
 
-function mudarPeriodoBoletim() {
-    // Implementar se necessário
-}
+function mudarPeriodoBoletim() {}
 
-// ========== EVENT LISTENERS ==========
+// ========== INICIALIZAÇÃO ==========
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM carregado, inicializando...');
+    console.log('Inicializando aplicação...');
     carregarDados();
     initializeFuse();
     
-    const searchInput = document.getElementById('room-search');
-    if (searchInput) {
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                performSmartSearch();
-            }
-        });
-    }
+    // Garante que as funções estão no escopo global
+    window.performSmartSearch = performSmartSearch;
+    window.handleSearchInput = handleSearchInput;
+    window.selectRoom = selectRoom;
+    window.selectBuilding = selectBuilding;
+    window.zoomMap = zoomMap;
+    window.resetMap = resetMap;
+    window.showSection = showSection;
+    window.toggleSidebar = toggleSidebar;
+    window.closeSidebar = closeSidebar;
+    window.logout = logout;
+    window.trocarAno = trocarAno;
     
-    // Fechar sugestões ao clicar fora
-    document.addEventListener('click', function(event) {
-        const searchContainer = document.querySelector('.map-search-box');
-        const suggestions = document.getElementById('autocomplete-suggestions');
-        
-        if (searchContainer && !searchContainer.contains(event.target)) {
-            suggestions.classList.remove('show');
-        }
-    });
+    console.log('Funções registradas globalmente!');
 });
