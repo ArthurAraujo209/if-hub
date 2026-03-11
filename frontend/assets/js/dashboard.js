@@ -941,7 +941,7 @@ function preencherDashboard(data) {
     const proximas = safeArray(data.avaliacoes.proximas);
     
 
-    avaliacoes = [proximas];
+    avaliacoes = proximas;
   }
 
   if (containerAval) {
@@ -1291,7 +1291,7 @@ let avaliacoes = [];
 
 if (data.avaliacoes) {
     const proximas = safeArray(data.avaliacoes.proximas);
-    const historico = safeArray(data.avaliacoes.historico);
+    const historico = safeArray(data.avaliacoes.disciplinas);
 
     avaliacoes = [...proximas, ...historico];
 }
