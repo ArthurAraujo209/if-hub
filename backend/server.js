@@ -34,7 +34,8 @@ app.use(session({
 
 // ===== ADICIONADO (ping para evitar cold start) =====
 app.get('/ping', (req, res) => {
-    res.json({ status: 'online' });
+  console.log("Pong! Eu estou acordado!");
+  res.send("pong");
 });
 // ====================================================
 
