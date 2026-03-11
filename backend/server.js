@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
-const axios = require('axios'); // ADICIONADO
+const axios = require('axios');
 
 // ===== CACHE =====
 const NodeCache = require('node-cache');
@@ -64,15 +64,13 @@ app.post('/api/notifications/subscribe', async (req, res) => {
             return res.status(400).json({ erro: 'Dados incompletos' });
         }
 
-        // Verifica se token é válido (opcional, mas recomendado)
-        // Aqui usamos o próprio token como userId (simplificado)
-        const userId = token; // ou gere um hash do token
+        const userId = token;
         
         subscriptions.set(userId, {
             subscription,
             lastCheck: new Date(),
-            lastNotas: new Map(),    // disciplina_etapa -> nota
-            lastAvaliacoes: new Set() // ids de avaliações
+            lastNotas: new Map(),
+            lastAvaliacoes: new Set()
         });
 
         console.log(`✅ Usuário inscrito: ${userId.substring(0, 20)}...`);
@@ -106,10 +104,74 @@ app.get('/api/notifications/status', (req, res) => {
     });
 });
 
+// ===== ROTAS DE TESTE (REMOVER DEPOIS) =====
+
+// Testar notificação manual
+app.get('/api/test/notificacao', async (req, res) => {
+    console.log('🧪 TESTE: Enviando notificação manual...');
+    
+    if (subscriptions.size === 0) {
+        return res.json({ erro: 'Nenhum usuário inscrito' });
+    }
+
+    let enviadas = 0;
+    
+    for (const [userId, userData] of subscriptions) {
+        try {
+            await webpush.sendNotification(userData.subscription, JSON.stringify({
+                title: '🧪 Teste IF HUB',
+                body: 'Suas notificações estão funcionando! 🎉',
+                tag: 'teste-' + Date.now(),
+                url: '/dashboard.html',
+                actions: [{ action: 'ver', title: 'Abrir App' }]
+            }));
+            enviadas++;
+        } catch (err) {
+            console.error('Erro:', err.message);
+        }
+    }
+    
+    res.json({ enviadas, total: subscriptions.size });
+});
+
+// Ver status das inscrições
+app.get('/api/test/status', (req, res) => {
+    const status = [];
+    for (const [userId, data] of subscriptions) {
+        status.push({
+            userId: userId.substring(0, 20) + '...',
+            lastCheck: data.lastCheck,
+            totalNotas: data.lastNotas.size,
+            totalAvaliacoes: data.lastAvaliacoes.size
+        });
+    }
+    res.json({ subscriptions: status, total: subscriptions.size });
+});
+
+// Simular avaliação nova
+app.get('/api/test/simular-avaliacao', async (req, res) => {
+    console.log('🎭 SIMULANDO avaliação nova...');
+    
+    if (subscriptions.size === 0) {
+        return res.json({ erro: 'Nenhum usuário inscrito' });
+    }
+
+    for (const [userId, userData] of subscriptions) {
+        await webpush.sendNotification(userData.subscription, JSON.stringify({
+            title: '📝 Nova Avaliação Agendada!',
+            body: 'Prova de Matemática em 7 dias (SIMULAÇÃO)',
+            tag: 'simulada-' + Date.now(),
+            url: '/dashboard.html#avaliacoes',
+            actions: [{ action: 'ver', title: 'Ver Avaliações' }]
+        }));
+    }
+    
+    res.json({ simulado: true, para: subscriptions.size });
+});
+
 // ===== CRON JOB - VERIFICAÇÃO PERIÓDICA =====
-// Roda a cada 30 minutos
 cron.schedule('*/30 * * * *', async () => {
-    console.log('🔍 Verificando novidades no SUAP...', new Date().toISOString());
+    console.log('🔍 Verificando novidades...', new Date().toISOString());
     
     if (subscriptions.size === 0) {
         console.log('Nenhum usuário inscrito');
@@ -120,7 +182,7 @@ cron.schedule('*/30 * * * *', async () => {
         try {
             await verificarNovidades(userId, userData);
         } catch (err) {
-            console.error(`Erro ao verificar ${userId.substring(0, 20)}:`, err.message);
+            console.error(`Erro ${userId.substring(0, 20)}:`, err.message);
         }
     }
 });
@@ -128,7 +190,7 @@ cron.schedule('*/30 * * * *', async () => {
 // Função que verifica novidades no SUAP
 async function verificarNovidades(userId, userData) {
     const { SUAP_BASE_URL } = process.env;
-    const token = userId; // simplificado - em produção use refresh token
+    const token = userId;
     
     const headers = {
         Authorization: `Bearer ${token}`,
@@ -136,9 +198,11 @@ async function verificarNovidades(userId, userData) {
     };
 
     const anoAtual = new Date().getFullYear();
-    let notificacoesEnviadas = 0;
+    let notificacoes = 0;
 
-    // ===== 1. VERIFICAR NOTAS NOVAS =====
+    console.log(`\n🔍 [${new Date().toLocaleTimeString()}] Usuário: ${userId.substring(0, 20)}...`);
+
+    // ===== VERIFICAR NOTAS NOVAS =====
     try {
         const boletimRes = await axios.get(
             `${SUAP_BASE_URL}/api/ensino/meu-boletim/${anoAtual}/1/`,
@@ -146,46 +210,41 @@ async function verificarNovidades(userId, userData) {
         );
 
         const disciplinas = boletimRes.data?.results || [];
+        console.log(`  📊 ${disciplinas.length} disciplinas`);
 
         for (const disc of disciplinas) {
-            // Verifica etapas 1 e 2 (ajuste se necessário)
-            for (let etapa = 1; etapa <= 2; etapa++) {
+            for (let etapa = 1; etapa <= 4; etapa++) {
                 const notaKey = `${disc.codigo_diario}_etapa${etapa}`;
                 const notaAtual = disc[`nota_etapa_${etapa}`]?.nota;
                 const notaAnterior = userData.lastNotas.get(notaKey);
 
-                // NOTA NOVA: tem nota agora e não tinha antes
+                // Nota nova detectada
                 if (notaAtual !== null && notaAtual !== undefined && notaAnterior === undefined) {
+                    console.log(`    🔔 NOTA NOVA: ${disc.disciplina} - ${etapa}ª: ${notaAtual}`);
                     
-                    // Salva nova nota
                     userData.lastNotas.set(notaKey, notaAtual);
                     
-                    // Envia notificação
-                    await enviarNotificacao(userData.subscription, {
+                    await webpush.sendNotification(userData.subscription, JSON.stringify({
                         title: '📊 Nota Publicada!',
                         body: `${disc.disciplina.split(' - ')[1] || disc.disciplina}: ${notaAtual} (${etapa}ª etapa)`,
                         tag: `nota-${notaKey}`,
                         url: '/dashboard.html#boletim',
-                        actions: [
-                            { action: 'ver', title: 'Ver Boletim' }
-                        ]
-                    });
+                        actions: [{ action: 'ver', title: 'Ver Boletim' }]
+                    }));
                     
-                    notificacoesEnviadas++;
-                    console.log(`📤 Notificação de nota enviada: ${disc.disciplina}`);
+                    notificacoes++;
                 }
             }
         }
     } catch (err) {
         if (err.response?.status === 401) {
-            console.log(`Token expirado para ${userId.substring(0, 20)}...`);
-            // Opcional: remover subscription ou marcar para reautenticação
+            console.log(`  ⚠️ Token expirado`);
         } else {
-            console.error('Erro boletim:', err.message);
+            console.error('  ❌ Erro boletim:', err.message);
         }
     }
 
-    // ===== 2. VERIFICAR AVALIAÇÕES NOVAS =====
+    // ===== VERIFICAR AVALIAÇÕES NOVAS =====
     try {
         const avalRes = await axios.get(
             `${SUAP_BASE_URL}/api/ensino/minhas-proximas-avaliacoes/`,
@@ -193,66 +252,35 @@ async function verificarNovidades(userId, userData) {
         );
 
         const avaliacoes = avalRes.data?.results || [];
+        console.log(`  📝 ${avaliacoes.length} avaliações`);
 
         for (const av of avaliacoes) {
             const avId = av.id.toString();
             
-            // AVALIAÇÃO NOVA: não existia no último check
             if (!userData.lastAvaliacoes.has(avId)) {
+                console.log(`    🔔 AVALIAÇÃO NOVA: ${av.descricao || 'Prova'}`);
+                
                 userData.lastAvaliacoes.add(avId);
                 
-                const dataProva = new Date(av.data);
-                const hoje = new Date();
-                const diasFaltando = Math.ceil((dataProva - hoje) / (1000 * 60 * 60 * 24));
+                const dias = Math.ceil((new Date(av.data) - new Date()) / (1000 * 60 * 60 * 24));
                 
-                await enviarNotificacao(userData.subscription, {
-                    title: '📝 Nova Avaliação!',
-                    body: `${av.descricao || 'Prova'} em ${diasFaltando} dias (${formatarData(av.data)})`,
-                    tag: `avaliacao-${avId}`,
+                await webpush.sendNotification(userData.subscription, JSON.stringify({
+                    title: '📝 Nova Avaliação Agendada!',
+                    body: `${av.descricao || 'Prova'} em ${dias} dias`,
+                    tag: `av-${avId}`,
                     url: '/dashboard.html#avaliacoes',
-                    actions: [
-                        { action: 'ver', title: 'Ver Avaliações' }
-                    ]
-                });
+                    actions: [{ action: 'ver', title: 'Ver Avaliações' }]
+                }));
                 
-                notificacoesEnviadas++;
-                console.log(`📤 Notificação de avaliação enviada: ${av.descricao}`);
+                notificacoes++;
             }
         }
     } catch (err) {
-        console.error('Erro avaliações:', err.message);
+        console.error('  ❌ Erro avaliações:', err.message);
     }
 
     userData.lastCheck = new Date();
-    
-    if (notificacoesEnviadas > 0) {
-        console.log(`✅ ${notificacoesEnviadas} notificação(ões) enviada(s) para ${userId.substring(0, 20)}...`);
-    }
-}
-
-// Helper: enviar notificação push
-async function enviarNotificacao(subscription, data) {
-    try {
-        await webpush.sendNotification(subscription, JSON.stringify(data));
-        return true;
-    } catch (err) {
-        console.error('Erro ao enviar push:', err.statusCode, err.message);
-        
-        // Subscription expirada ou inválida
-        if (err.statusCode === 410 || err.statusCode === 404) {
-            console.log('Subscription expirada, removendo...');
-            // Remove do map (precisaria do userId aqui, simplificado)
-        }
-        return false;
-    }
-}
-
-// Helper: formatar data
-function formatarData(dataStr) {
-    return new Date(dataStr).toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: 'short'
-    });
+    console.log(`  ✅ ${notificacoes} notificação(ões)\n`);
 }
 
 // ===== ROTAS PRINCIPAIS =====
@@ -265,7 +293,8 @@ app.use('/api', (req, res, next) => {
 
 app.listen(PORT, () => {
     console.log(`✅ Backend rodando em http://localhost:${PORT}`);
-    console.log(`📡 Aguardando frontend em http://localhost:5500`);
+    console.log(`📡 Frontend: http://localhost:5500`);
     console.log(`🔔 Notificações: ${subscriptions.size} inscritos`);
-    console.log(`⏰ Cron job: a cada 30 minutos`);
+    console.log(`⏰ Verificação: a cada 30 minutos`);
+    console.log(`🧪 Teste: /api/test/notificacao`);
 });
