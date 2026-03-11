@@ -1281,38 +1281,72 @@ function preencherTurmas(data) {
 }
 
 function preencherAvaliacoes(data) {
+    // Próximas avaliações
+    const containerProximas = document.getElementById("avaliacoes-content");
+    if (containerProximas) {
+        console.log("DEBUG - Avaliações recebidas:", data.avaliacoes);
+        
+        let proximas = [];
+        if (data.avaliacoes && data.avaliacoes.proximas) {
+            proximas = safeArray(data.avaliacoes.proximas);
+        }
+        
+        console.log("DEBUG - Próximas processadas:", proximas);
 
-const container = document.getElementById("avaliacoes-content");
-if (!container) return;
+        if (proximas.length === 0) {
+            containerProximas.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-calendar-check"></i>
+                    <p>Nenhuma avaliação agendada</p>
+                    <small>As avaliações aparecerão aqui quando forem marcadas</small>
+                </div>
+            `;
+        } else {
+            containerProximas.innerHTML = proximas.map(av => `
+                <div class="timeline-item" style="margin-bottom: 16px; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid var(--glass-border);">
+                    <div class="timeline-date" style="color: var(--ios-accent-green); font-weight: 600; margin-bottom: 8px;">
+                        <i class="fas fa-clock"></i> ${formatarData(av.data)} ${av.hora_inicio ? `às ${av.hora_inicio}` : ''}
+                    </div>
+                    <div class="timeline-title" style="font-size: 1.1rem; font-weight: 600; margin-bottom: 4px;">
+                        ${av.descricao || av.tipo || "Avaliação"}
+                    </div>
+                    <div class="timeline-desc" style="color: var(--ios-text-secondary);">
+                        ${av.componente_curricular || av.diario || "Disciplina não informada"}
+                    </div>
+                    ${av.nota_maxima ? `<div style="margin-top: 8px; font-size: 0.9rem; color: var(--ios-accent-orange);"><i class="fas fa-star"></i> Valor máximo: ${av.nota_maxima}</div>` : ''}
+                </div>
+            `).join("");
+        }
+    }
 
-console.log("DEBUG AVALIAÇÕES COMPLETAS:", data.avaliacoes);
-
-let avaliacoes = [];
-
-if (data.avaliacoes) {
-    const proximas = safeArray(data.avaliacoes.proximas);
-    const historico = safeArray(data.avaliacoes.disciplinas);
-
-    avaliacoes = [...proximas, ...historico];
-}
-
-if (avaliacoes.length === 0) {
-    container.innerHTML = `
-        <div class="empty-state">
-            Nenhuma avaliação encontrada
-        </div>
-    `;
-    return;
-}
-
-container.innerHTML = avaliacoes.map(av => `
-    <div class="avaliacao-card">
-        <div class="disciplina">${av.disciplina}</div>
-        <div class="etapa">Etapa ${av.etapa ?? "-"}</div>
-        <div class="nota">${av.nota ?? "-"}</div>
-    </div>
-`).join("");
-
+    // Histórico de avaliações (do boletim)
+    const containerHistorico = document.getElementById("avaliacoes-historico-content");
+    if (containerHistorico && data.avaliacoes && data.avaliacoes.historico) {
+        const historico = safeArray(data.avaliacoes.historico);
+        
+        if (historico.length === 0) {
+            containerHistorico.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-history"></i>
+                    <p>Nenhuma avaliação no histórico</p>
+                </div>
+            `;
+        } else {
+            containerHistorico.innerHTML = historico.map(av => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px; background: rgba(255,255,255,0.03); border-radius: 16px; margin-bottom: 12px; border: 1px solid var(--glass-border);">
+                    <div>
+                        <div style="font-weight: 600; margin-bottom: 4px;">${av.disciplina}</div>
+                        <div style="font-size: 0.85rem; color: var(--ios-text-secondary);">
+                            Etapa ${av.etapa} • ${av.codigo_diario || ''}
+                        </div>
+                    </div>
+                    <span class="nota-badge ${parseFloat(av.nota) >= 60 ? 'nota-aprovado' : parseFloat(av.nota) >= 40 ? 'nota-recuperacao' : 'nota-reprovado'}">
+                        ${av.nota !== null && av.nota !== undefined ? av.nota : '-'}
+                    </span>
+                </div>
+            `).join("");
+        }
+    }
 }
 
 function formatarData(dataStr) {

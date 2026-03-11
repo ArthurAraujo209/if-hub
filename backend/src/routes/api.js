@@ -120,7 +120,10 @@ router.get("/dashboard/:ano?", verificarToken, async (req, res) => {
         .get(`${SUAP_BASE_URL}/api/ensino/minhas-proximas-avaliacoes/`, {
           headers,
         })
-        .catch(() => ({ data: { results: [] } })),
+        .catch((err) => {
+          console.error("Erro ao buscar próximas avaliações:", err.response?.status, err.response?.data || err.message);
+          return { data: { results: [] } };
+      })
     ]);
 
     const disciplinas = boletimRes.data?.results || [];

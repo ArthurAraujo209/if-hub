@@ -2464,3 +2464,13 @@ body {
         max-height: 50vh;
     }
 }
+
+
+.timeline-item {
+    transition: transform 0.2s;
+}
+
+.timeline-item:hover {
+    transform: translateX(5px);
+    background: rgba(255,255,255,0.05) !important;
+}
