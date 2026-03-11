@@ -505,7 +505,7 @@
             </div>
         </section>
 
-        <!-- PERFIL SECTION -->
+                <!-- PERFIL SECTION -->
         <section id="perfil-section" class="content-section">
             <div class="ios-panel">
                 <div class="panel-header">
@@ -532,6 +532,13 @@
                     <div class="panel-title"><i class="fas fa-cog"></i> Configurações</div>
                 </div>
                 <div style="display: grid; gap: 12px;">
+                    
+                    <!-- BOTÃO DE NOTIFICAÇÕES -->
+                    <button id="notification-btn" class="ios-btn" onclick="initNotifications()" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-bell"></i>
+                        <span>Ativar Notificações</span>
+                    </button>
+                    
                     <button class="ios-btn secondary" style="width: 100%; justify-content: center;" onclick="logout()">
                         <i class="fas fa-sign-out-alt"></i>
                         Sair da Conta

@@ -2475,42 +2475,7 @@ body {
     background: rgba(255,255,255,0.05) !important;
 }
 
-/* Botão de Notificações */
-.notification-btn {
-    position: fixed;
-    bottom: 100px;
-    right: 20px;
-    z-index: 1000;
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
-    color: var(--ios-text-primary);
-    padding: 14px 20px;
-    border-radius: 50px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s ease;
-}
-
-.notification-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
-}
-
-.notification-btn.active {
-    background: var(--gradient-primary);
-    color: white;
-}
-
-.notification-btn i {
-    font-size: 1.1rem;
-}
-
+/* Toast */
 /* Toast */
 .toast {
     position: fixed;
@@ -2555,4 +2520,38 @@ body {
     .notification-btn span {
         display: none; /* Só mostra ícone no mobile */
     }
+}
+
+/* Botão de Notificações - Versão Configurações */
+#notification-btn {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--ios-text-primary);
+    transition: all 0.3s ease;
+}
+
+#notification-btn:hover {
+    background: rgba(48, 209, 88, 0.1);
+    border-color: var(--ios-accent-green);
+}
+
+#notification-btn.active {
+    background: var(--gradient-primary);
+    color: white;
+    border-color: transparent;
+}
+
+#notification-btn.active i {
+    animation: bell-ring 2s infinite;
+}
+
+@keyframes bell-ring {
+    0%, 100% { transform: rotate(0); }
+    10%, 30%, 50% { transform: rotate(10deg); }
+    20%, 40% { transform: rotate(-10deg); }
+}
+
+/* Remover o CSS antigo de botão flutuante se existir */
+.notification-btn {
+    /* delete isso se existir */
 }
