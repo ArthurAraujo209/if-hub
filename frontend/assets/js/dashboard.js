@@ -1319,11 +1319,28 @@ function preencherAvaliacoes(data) {
         }
     }
 
-    // Histórico de avaliações (do boletim)
+    // Histórico de avaliações - ORDENADO POR ETAPA
     const containerHistorico = document.getElementById("avaliacoes-historico-content");
     if (containerHistorico && data.avaliacoes && data.avaliacoes.historico) {
-        const historico = safeArray(data.avaliacoes.historico);
+        let historico = safeArray(data.avaliacoes.historico);
         
+        // 🔥 ORDENAÇÃO: Primeiro por Etapa (1→4), depois por Disciplina
+        historico.sort((a, b) => {
+            // Ordena por etapa primeiro
+            if (a.etapa !== b.etapa) {
+                return a.etapa - b.etapa;
+            }
+            // Se mesma etapa, ordena por disciplina alfabeticamente
+            return (a.disciplina || "").localeCompare(b.disciplina || "");
+        });
+        
+        // Agrupa por Etapa para visualização melhor
+        const porEtapa = {};
+        historico.forEach(av => {
+            if (!porEtapa[av.etapa]) porEtapa[av.etapa] = [];
+            porEtapa[av.etapa].push(av);
+        });
+
         if (historico.length === 0) {
             containerHistorico.innerHTML = `
                 <div class="empty-state">
@@ -1332,19 +1349,46 @@ function preencherAvaliacoes(data) {
                 </div>
             `;
         } else {
-            containerHistorico.innerHTML = historico.map(av => `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px; background: rgba(255,255,255,0.03); border-radius: 16px; margin-bottom: 12px; border: 1px solid var(--glass-border);">
-                    <div>
-                        <div style="font-weight: 600; margin-bottom: 4px;">${av.disciplina}</div>
-                        <div style="font-size: 0.85rem; color: var(--ios-text-secondary);">
-                            Etapa ${av.etapa} • ${av.codigo_diario || ''}
+            // Renderiza agrupado por etapa
+            let html = '';
+            
+            // Ordem das etapas: 1, 2, 3, 4
+            [1, 2, 3, 4].forEach(etapa => {
+                if (porEtapa[etapa]) {
+                    html += `
+                        <div style="margin-bottom: 24px;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--glass-border);">
+                                <span style="background: var(--gradient-primary); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 700;">
+                                    ${etapa}ª Etapa
+                                </span>
+                                <span style="color: var(--ios-text-secondary); font-size: 0.9rem;">
+                                    ${porEtapa[etapa].length} avaliação(ões)
+                                </span>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                    `;
+                    
+                    html += porEtapa[etapa].map(av => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid var(--glass-border); transition: all 0.2s;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; font-size: 1rem; margin-bottom: 4px;">${av.disciplina}</div>
+                                <div style="font-size: 0.8rem; color: var(--ios-text-secondary);">
+                                    ${av.codigo_diario || ''}
+                                </div>
+                            </div>
+                            <div style="text-align: right; margin-left: 16px;">
+                                <span class="nota-badge ${parseFloat(av.nota) >= 60 ? 'nota-aprovado' : parseFloat(av.nota) >= 40 ? 'nota-recuperacao' : 'nota-reprovado'}" style="font-size: 1.1rem; padding: 8px 16px;">
+                                    ${av.nota !== null && av.nota !== undefined ? av.nota : '-'}
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                    <span class="nota-badge ${parseFloat(av.nota) >= 60 ? 'nota-aprovado' : parseFloat(av.nota) >= 40 ? 'nota-recuperacao' : 'nota-reprovado'}">
-                        ${av.nota !== null && av.nota !== undefined ? av.nota : '-'}
-                    </span>
-                </div>
-            `).join("");
+                    `).join('');
+                    
+                    html += `</div></div>`;
+                }
+            });
+            
+            containerHistorico.innerHTML = html;
         }
     }
 }
