@@ -18,19 +18,26 @@ const verificarToken = (req, res, next) => {
 
 // DADOS DO ALUNO (dados pessoais fixos)
 router.get('/me', verificarToken, async (req, res) => {
+
+    //// ===== ADICIONADO =====
+    const cacheKey = `me_${req.token}`;
+    const cached = req.cache.get(cacheKey);
+    if (cached) {
+        return res.json(cached);
+    }
+    //// =====================
+
     try {
         const headers = {
             Authorization: `Bearer ${req.token}`,
             Accept: 'application/json'
         };
 
-        // Busca dados acadêmicos
         const alunoRes = await axios.get(
             `${SUAP_BASE_URL}/api/ensino/meus-dados-aluno/`,
             { headers }
         );
 
-        // Busca dados pessoais (RH)
         let pessoalRes;
         try {
             pessoalRes = await axios.get(
@@ -41,14 +48,19 @@ router.get('/me', verificarToken, async (req, res) => {
             pessoalRes = { data: {} };
         }
 
-        // Mescla dados
         const alunoCompleto = {
             ...alunoRes.data,
             ...pessoalRes.data,
             foto: pessoalRes.data?.foto || alunoRes.data?.url_foto_75x100
         };
 
-        res.json({ aluno: alunoCompleto });
+        const response = { aluno: alunoCompleto };
+
+        //// ===== ADICIONADO =====
+        req.cache.set(cacheKey, response);
+        //// =====================
+
+        res.json(response);
 
     } catch (err) {
         console.error('Erro /me:', err.response?.data || err.message);
@@ -56,35 +68,39 @@ router.get('/me', verificarToken, async (req, res) => {
     }
 });
 
-// DADOS COMPLETOS POR ANO (dinâmico)
+// DADOS COMPLETOS POR ANO
 router.get('/dashboard/:ano?', verificarToken, async (req, res) => {
+
+    //// ===== ADICIONADO =====
+    const cacheKey = `dashboard_${req.token}_${req.params.ano || 'auto'}`;
+    const cached = req.cache.get(cacheKey);
+    if (cached) {
+        return res.json(cached);
+    }
+    //// =====================
+
     try {
         const headers = {
             Authorization: `Bearer ${req.token}`,
             Accept: 'application/json'
         };
 
-        // Busca períodos letivos para encontrar o mais recente
         const periodosRes = await axios.get(
             `${SUAP_BASE_URL}/api/ensino/meus-periodos-letivos/`,
             { headers }
         );
 
         const periodos = periodosRes.data?.results || [];
-        
-        // Determina o ano a usar
+
         let ano = parseInt(req.params.ano);
         if (!ano || isNaN(ano)) {
-            // Se não especificou ano, usa o mais recente
             ano = Math.max(...periodos.map(p => p.ano_letivo), new Date().getFullYear());
         }
 
-        // Encontra o período letivo mais recente do ano
         const periodosDoAno = periodos.filter(p => p.ano_letivo === ano);
         const periodoMaisRecente = periodosDoAno[periodosDoAno.length - 1] || { ano_letivo: ano, periodo_letivo: 1 };
         const periodo = periodoMaisRecente.periodo_letivo;
 
-        // Busca dados em paralelo
         const [avaliacoesRes, boletimRes, turmasRes] = await Promise.all([
             axios.get(`${SUAP_BASE_URL}/api/ensino/minhas-proximas-avaliacoes/`, { headers })
                 .catch(() => ({ data: { results: [] } })),
@@ -94,14 +110,20 @@ router.get('/dashboard/:ano?', verificarToken, async (req, res) => {
                 .catch(() => ({ data: { results: [] } }))
         ]);
 
-        res.json({
+        const response = {
             anoSelecionado: ano,
             periodoAtual: { ano, periodo },
             periodos: periodosRes.data,
             avaliacoes: avaliacoesRes.data,
             boletim: boletimRes.data,
             turmas: turmasRes.data
-        });
+        };
+
+        //// ===== ADICIONADO =====
+        req.cache.set(cacheKey, response);
+        //// =====================
+
+        res.json(response);
 
     } catch (err) {
         console.error('Erro API:', err.response?.data || err.message);
@@ -117,13 +139,21 @@ router.get('/dashboard/:ano?', verificarToken, async (req, res) => {
     }
 });
 
-// BOLETIM ANUAL (AMBOS OS SEMESTRES)
+// BOLETIM ANUAL
 router.get('/boletim-anual/:ano', verificarToken, async (req, res) => {
+
+    //// ===== ADICIONADO =====
+    const cacheKey = `boletim_${req.token}_${req.params.ano}`;
+    const cached = req.cache.get(cacheKey);
+    if (cached) {
+        return res.json(cached);
+    }
+    //// =====================
+
     try {
         const { ano } = req.params;
         const headers = { Authorization: `Bearer ${req.token}`, Accept: 'application/json' };
         
-        // Busca ambos os semestres
         const [semestre1, semestre2] = await Promise.all([
             axios.get(`${SUAP_BASE_URL}/api/ensino/meu-boletim/${ano}/1/`, { headers })
                 .catch(() => ({ data: { results: [] } })),
@@ -134,14 +164,10 @@ router.get('/boletim-anual/:ano', verificarToken, async (req, res) => {
         const disciplinas1 = semestre1.data?.results || [];
         const disciplinas2 = semestre2.data?.results || [];
         
-        // Cria mapa de disciplinas
         const disciplinasMap = new Map();
         
-        // Processa 1º semestre
         disciplinas1.forEach(d => {
-            const codigo = d.codigo_diario;
-            const key = d.disciplina; // Usa nome da disciplina como chave para agrupar
-            
+            const key = d.disciplina;
             if (!disciplinasMap.has(key)) {
                 disciplinasMap.set(key, {
                     codigo_diario: d.codigo_diario,
@@ -159,26 +185,22 @@ router.get('/boletim-anual/:ano', verificarToken, async (req, res) => {
                 });
             }
         });
-        
-        // Processa 2º semestre (mescla)
+
         disciplinas2.forEach(d => {
             const key = d.disciplina;
             
             if (disciplinasMap.has(key)) {
-                // Atualiza disciplina existente
                 const existente = disciplinasMap.get(key);
                 existente.nota_etapa_3 = d.nota_etapa_1 || { nota: null, faltas: 0 };
                 existente.nota_etapa_4 = d.nota_etapa_2 || { nota: null, faltas: 0 };
                 existente.numero_faltas += parseInt(d.numero_faltas) || 0;
                 existente.segundo_semestre = true;
-                
-                // Atualiza média e situação se tiver
+
                 if (d.media_final_disciplina) {
                     existente.media_final_disciplina = d.media_final_disciplina;
                     existente.situacao = d.situacao;
                 }
             } else {
-                // Disciplina só do 2º semestre
                 disciplinasMap.set(key, {
                     codigo_diario: d.codigo_diario,
                     disciplina: d.disciplina,
@@ -196,11 +218,17 @@ router.get('/boletim-anual/:ano', verificarToken, async (req, res) => {
             }
         });
 
-        res.json({
+        const response = {
             ano,
             disciplinas: Array.from(disciplinasMap.values()),
             total_disciplinas: disciplinasMap.size
-        });
+        };
+
+        //// ===== ADICIONADO =====
+        req.cache.set(cacheKey, response);
+        //// =====================
+
+        res.json(response);
 
     } catch (err) {
         console.error('Erro boletim anual:', err);
