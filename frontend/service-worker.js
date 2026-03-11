@@ -1,4 +1,4 @@
-const CACHE_NAME = 'if-smart-v7'; //// ===== ALTERADO (nova versão) =====
+const CACHE_NAME = 'if-smart-v7';
 
 const urlsToCache = [
   '/',
@@ -7,101 +7,39 @@ const urlsToCache = [
   '/callback.html',
   '/style.css',
   '/dashboard.js',
-  '/auth.js', //// ===== ADICIONADO =====
+  '/auth.js',
   '/manifest.json',
-
-  //// ===== ADICIONADO (ícones PWA) =====
   '/icons/icon-192.png',
   '/icons/icon-512.png',
-
-  //// ===== FONTES EXTERNAS =====
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap'
 ];
 
-
-// ================================
-// INSTALAÇÃO
-// ================================
-
 self.addEventListener('install', event => {
-
-  console.log('Service Worker: Instalando...');
+  console.log('Service Worker instalando');
 
   event.waitUntil(
-
     caches.open(CACHE_NAME)
-      .then(cache => {
-
-        console.log('Service Worker: Cache aberto, adicionando arquivos...');
-
-        return cache.addAll(urlsToCache);
-
-      })
-      .then(() => {
-
-        console.log('Service Worker: Arquivos cacheados com sucesso!');
-
-        //// ===== ADICIONADO =====
-        return self.skipWaiting();
-        //// ======================
-
-      })
-      .catch(error => {
-
-        console.error('Service Worker: Erro no cache:', error);
-
-      })
-
+      .then(cache => cache.addAll(urlsToCache))
+      .then(() => self.skipWaiting())
   );
-
 });
-
-
-// ================================
-// ATIVAÇÃO
-// ================================
 
 self.addEventListener('activate', event => {
-
-  console.log('Service Worker: Ativando...');
+  console.log('Service Worker ativando');
 
   event.waitUntil(
-
-    caches.keys().then(cacheNames => {
-
-      return Promise.all(
-
+    caches.keys().then(cacheNames =>
+      Promise.all(
         cacheNames.map(cacheName => {
-
           if (cacheName !== CACHE_NAME) {
-
-            console.log('Service Worker: Removendo cache antigo:', cacheName);
-
             return caches.delete(cacheName);
-
           }
-
         })
-
-      );
-
-    }).then(() => {
-
-      //// ===== ADICIONADO =====
-      return self.clients.claim();
-      //// ======================
-
-    })
-
+      )
+    ).then(() => self.clients.claim())
   );
-
 });
-
-
-// ================================
-// FETCH
-// ================================
 
 self.addEventListener('fetch', event => {
 
@@ -109,109 +47,71 @@ self.addEventListener('fetch', event => {
 
   if (event.request.url.startsWith('chrome-extension')) return;
 
-
-  //// ================================
-  //// HTML - NETWORK FIRST
-  //// ================================
-
-  if (event.request.mode === 'navigate') {
+  // API -> NETWORK FIRST
+  if (event.request.url.includes('/api/')) {
 
     event.respondWith(
-
       fetch(event.request)
-
         .then(response => {
 
           const responseClone = response.clone();
 
           caches.open(CACHE_NAME)
-
-            .then(cache => {
-
-              cache.put(event.request, responseClone);
-
-            });
+            .then(cache => cache.put(event.request, responseClone));
 
           return response;
 
         })
-
-        .catch(() => {
-
-          return caches.match(event.request)
-
-            .then(cachedResponse => {
-
-              if (cachedResponse) {
-
-                return cachedResponse;
-
-              }
-
-              return caches.match('/dashboard.html');
-
-            });
-
-        })
-
+        .catch(() => caches.match(event.request))
     );
 
     return;
-
   }
 
+  // HTML -> NETWORK FIRST
+  if (event.request.mode === 'navigate') {
 
-  //// ================================
-  //// ASSETS - CACHE FIRST
-  //// ================================
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
 
+          const responseClone = response.clone();
+
+          caches.open(CACHE_NAME)
+            .then(cache => cache.put(event.request, responseClone));
+
+          return response;
+
+        })
+        .catch(() => caches.match(event.request))
+    );
+
+    return;
+  }
+
+  // Assets -> CACHE FIRST
   event.respondWith(
-
     caches.match(event.request)
-
       .then(cachedResponse => {
 
-        if (cachedResponse) {
-
-          return cachedResponse;
-
-        }
+        if (cachedResponse) return cachedResponse;
 
         return fetch(event.request)
-
           .then(response => {
 
             if (response && response.status === 200) {
 
-              const responseClone = response.clone();
+              const responseClone = response.clone;
 
               caches.open(CACHE_NAME)
-
-                .then(cache => {
-
-                  cache.put(event.request, responseClone);
-
-                });
+                .then(cache => cache.put(event.request, responseClone));
 
             }
 
             return response;
 
-          })
-
-          .catch(() => {
-
-            //// ===== FALLBACK PARA IMAGENS =====
-            if (event.request.url.match(/\.(jpg|jpeg|png|gif|svg)$/)) {
-
-              return new Response('Imagem não disponível offline', { status: 404 });
-
-            }
-
           });
-
       })
-
   );
 
 });
