@@ -1418,6 +1418,23 @@ function mudarPeriodoBoletim() {}
 
 const messaging = firebase.messaging();
 
+// Toast simples (se não existir)
+function showToast(message, duration = 3000) {
+    const existing = document.querySelector('.toast');
+    if (existing) existing.remove();
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `<i class="fas fa-info-circle"></i><span>${message}</span>`;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.classList.add('show'), 100);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
+
 async function initNotifications() {
   try {
     console.log('🔔 Iniciando Firebase...');
@@ -1428,10 +1445,12 @@ async function initNotifications() {
       return;
     }
 
-    // Obter token FCM
-    const token = await messaging.getToken({
-      vapidKey: 'SUA_VAPID_PUBLIC_KEY_DO_FIREBASE' // Web Push certificates
-    });
+    // COLE SUA VAPID KEY AQUI! (da seção Web Push certificates no Firebase)
+    const vapidKey = 'BOamnGvNvE8HipXDCIasCWMlIzI1sWS1ONqG8ZXp0RUwsyJuxT1zjSB2vKaLHwVP45Bhl5SWoJKlraRNTvbAH_o'; // ← SUBSTITUA PELA SUA CHAVE!
+    
+    console.log('⏳ Obtendo token com VAPID:', vapidKey.substring(0, 10) + '...');
+
+    const token = await messaging.getToken({ vapidKey });
 
     if (!token) {
       showToast('❌ Erro ao obter token');
@@ -1442,7 +1461,7 @@ async function initNotifications() {
 
     // Enviar para backend
     const suapToken = localStorage.getItem('suap_token');
-    await fetch(`${API_URL}/notifications/subscribe`, {
+    const response = await fetch(`${API_URL}/notifications/subscribe`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1450,6 +1469,10 @@ async function initNotifications() {
       },
       body: JSON.stringify({ fcmToken: token, token: suapToken })
     });
+
+    if (!response.ok) {
+      throw new Error('Erro ao registrar no servidor');
+    }
 
     showToast('🔔 Notificações ativadas!');
     updateNotificationUI(true);
@@ -1459,7 +1482,7 @@ async function initNotifications() {
       console.log('📨 Foreground:', payload);
       new Notification(payload.notification.title, {
         body: payload.notification.body,
-        icon: payload.notification.icon
+        icon: payload.notification.icon || '/assets/icons/IF HUB - SEM FUNDO - 192x192.png'
       });
     });
 
@@ -1492,7 +1515,10 @@ async function unsubscribeNotifications() {
     const token = localStorage.getItem('suap_token');
     await fetch(`${API_URL}/notifications/unsubscribe`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Authorization': `Bearer ${token}` 
+      },
       body: JSON.stringify({ token })
     });
 
