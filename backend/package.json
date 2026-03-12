@@ -12,6 +12,7 @@
     "dotenv": "^16.6.1",
     "express": "^4.22.1",
     "express-session": "^1.19.0",
+    "firebase-admin": "^13.7.0",
     "node-cache": "^5.1.2",
     "node-cron": "^4.2.1",
     "node-fetch": "^3.3.2",
