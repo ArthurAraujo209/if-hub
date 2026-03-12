@@ -3,33 +3,31 @@ const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
 const axios = require('axios');
+const webpush = require('web-push');
+const cron = require('node-cron');
 
 // ===== CACHE =====
 const NodeCache = require('node-cache');
 const cache = new NodeCache({ stdTTL: 300 });
 
-// ===== NOTIFICAÇÕES PUSH =====
-const webpush = require('web-push');
-const cron = require('node-cron');
-
-// Configurar VAPID (coloque suas chaves no .env!)
+// ===== CONFIGURAR WEB PUSH =====
 webpush.setVapidDetails(
     process.env.VAPID_SUBJECT || 'mailto:contato@ifhub.com',
     process.env.VAPID_PUBLIC_KEY,
     process.env.VAPID_PRIVATE_KEY
 );
 
-// Armazena subscriptions: userId -> {subscription, lastNotas, lastAvaliacoes}
+// Armazena subscriptions: token -> {subscription, lastNotas, lastAvaliacoes}
 const subscriptions = new Map();
-// ==============================
 
+// ===== IMPORTS =====
 const authRoutes = require('./src/routes/auth');
 const apiRoutes = require('./src/routes/api');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// CORS
+// ===== MIDDLEWARES =====
 app.use(cors({
     origin: [
         'http://localhost:5500',
@@ -47,7 +45,7 @@ app.use(session({
     saveUninitialized: false
 }));
 
-// ===== ROTA PING =====
+// ===== ROTAS BÁSICAS =====
 app.get('/ping', (req, res) => {
     console.log("Pong! Eu estou acordado!");
     res.send("pong");
@@ -55,7 +53,7 @@ app.get('/ping', (req, res) => {
 
 // ===== ROTAS DE NOTIFICAÇÃO =====
 
-// 1. Inscrever para notificações
+// Inscrever para notificações
 app.post('/api/notifications/subscribe', async (req, res) => {
     try {
         const { subscription, token } = req.body;
@@ -64,17 +62,15 @@ app.post('/api/notifications/subscribe', async (req, res) => {
             return res.status(400).json({ erro: 'Dados incompletos' });
         }
 
-        const userId = token;
-        
-        subscriptions.set(userId, {
+        subscriptions.set(token, {
             subscription,
             lastCheck: new Date(),
             lastNotas: new Map(),
             lastAvaliacoes: new Set()
         });
 
-        console.log(`✅ Usuário inscrito: ${userId.substring(0, 20)}...`);
-        res.json({ success: true, message: 'Inscrito com sucesso!' });
+        console.log(`✅ Inscrito: ${token.substring(0, 20)}...`);
+        res.json({ success: true });
 
     } catch (err) {
         console.error('Erro subscribe:', err);
@@ -82,41 +78,34 @@ app.post('/api/notifications/subscribe', async (req, res) => {
     }
 });
 
-// 2. Cancelar inscrição
+// Cancelar inscrição
 app.post('/api/notifications/unsubscribe', (req, res) => {
     const { token } = req.body;
-    const userId = token;
-    
-    subscriptions.delete(userId);
-    console.log(`❌ Usuário removido: ${userId.substring(0, 20)}...`);
-    
+    subscriptions.delete(token);
+    console.log(`❌ Removido: ${token?.substring(0, 20)}...`);
     res.json({ success: true });
 });
 
-// 3. Verificar status da inscrição
+// Verificar status
 app.get('/api/notifications/status', (req, res) => {
     const token = req.headers.authorization?.replace('Bearer ', '');
-    const userId = token;
-    
     res.json({ 
-        subscribed: subscriptions.has(userId),
-        totalInscritos: subscriptions.size
+        subscribed: subscriptions.has(token),
+        total: subscriptions.size
     });
 });
 
-// ===== ROTAS DE TESTE (REMOVER DEPOIS) =====
+// ===== ROTAS DE TESTE =====
 
 // Testar notificação manual
 app.get('/api/test/notificacao', async (req, res) => {
-    console.log('🧪 TESTE: Enviando notificação manual...');
-    
     if (subscriptions.size === 0) {
         return res.json({ erro: 'Nenhum usuário inscrito' });
     }
 
     let enviadas = 0;
     
-    for (const [userId, userData] of subscriptions) {
+    for (const [token, userData] of subscriptions) {
         try {
             await webpush.sendNotification(userData.subscription, JSON.stringify({
                 title: '🧪 Teste IF HUB',
@@ -137,9 +126,9 @@ app.get('/api/test/notificacao', async (req, res) => {
 // Ver status das inscrições
 app.get('/api/test/status', (req, res) => {
     const status = [];
-    for (const [userId, data] of subscriptions) {
+    for (const [token, data] of subscriptions) {
         status.push({
-            userId: userId.substring(0, 20) + '...',
+            token: token.substring(0, 20) + '...',
             lastCheck: data.lastCheck,
             totalNotas: data.lastNotas.size,
             totalAvaliacoes: data.lastAvaliacoes.size
@@ -150,13 +139,11 @@ app.get('/api/test/status', (req, res) => {
 
 // Simular avaliação nova
 app.get('/api/test/simular-avaliacao', async (req, res) => {
-    console.log('🎭 SIMULANDO avaliação nova...');
-    
     if (subscriptions.size === 0) {
         return res.json({ erro: 'Nenhum usuário inscrito' });
     }
 
-    for (const [userId, userData] of subscriptions) {
+    for (const [token, userData] of subscriptions) {
         await webpush.sendNotification(userData.subscription, JSON.stringify({
             title: '📝 Nova Avaliação Agendada!',
             body: 'Prova de Matemática em 7 dias (SIMULAÇÃO)',
@@ -169,7 +156,7 @@ app.get('/api/test/simular-avaliacao', async (req, res) => {
     res.json({ simulado: true, para: subscriptions.size });
 });
 
-// ===== CRON JOB - VERIFICAÇÃO PERIÓDICA =====
+// ===== CRON JOB =====
 cron.schedule('*/30 * * * *', async () => {
     console.log('🔍 Verificando novidades...', new Date().toISOString());
     
@@ -178,19 +165,18 @@ cron.schedule('*/30 * * * *', async () => {
         return;
     }
 
-    for (const [userId, userData] of subscriptions) {
+    for (const [token, userData] of subscriptions) {
         try {
-            await verificarNovidades(userId, userData);
+            await verificarNovidades(token, userData);
         } catch (err) {
-            console.error(`Erro ${userId.substring(0, 20)}:`, err.message);
+            console.error(`Erro ${token.substring(0, 20)}:`, err.message);
         }
     }
 });
 
 // Função que verifica novidades no SUAP
-async function verificarNovidades(userId, userData) {
+async function verificarNovidades(token, userData) {
     const { SUAP_BASE_URL } = process.env;
-    const token = userId;
     
     const headers = {
         Authorization: `Bearer ${token}`,
@@ -200,7 +186,7 @@ async function verificarNovidades(userId, userData) {
     const anoAtual = new Date().getFullYear();
     let notificacoes = 0;
 
-    console.log(`\n🔍 [${new Date().toLocaleTimeString()}] Usuário: ${userId.substring(0, 20)}...`);
+    console.log(`\n🔍 [${new Date().toLocaleTimeString()}] Usuário: ${token.substring(0, 20)}...`);
 
     // ===== VERIFICAR NOTAS NOVAS =====
     try {
@@ -218,7 +204,6 @@ async function verificarNovidades(userId, userData) {
                 const notaAtual = disc[`nota_etapa_${etapa}`]?.nota;
                 const notaAnterior = userData.lastNotas.get(notaKey);
 
-                // Nota nova detectada
                 if (notaAtual !== null && notaAtual !== undefined && notaAnterior === undefined) {
                     console.log(`    🔔 NOTA NOVA: ${disc.disciplina} - ${etapa}ª: ${notaAtual}`);
                     

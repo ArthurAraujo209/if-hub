@@ -18,6 +18,25 @@
     <!-- Adicione antes do seu style.css -->
     <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
     <link rel="stylesheet" href="assets/css/style.css">
+
+    <!-- Firebase SDK -->
+        <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
+
+        <script>
+        // Configuração do seu projeto
+        const firebaseConfig = {
+            apiKey: "AIzaSyA1dkn0ftReTMChrrnYOmMRjtDUd_fDkz0",
+            authDomain: "if-smart.firebaseapp.com",
+            projectId: "if-smart",
+            storageBucket: "if-smart.firebasestorage.app",
+            messagingSenderId: "544575127389",
+            appId: "1:544575127389:web:a7f2863fa74b9e743bf2b4",
+            measurementId: "G-YGGK0YTKP1"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        </script>
 </head>
 
 <body>

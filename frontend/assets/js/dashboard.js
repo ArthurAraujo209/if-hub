@@ -1413,195 +1413,132 @@ function mudarPeriodoBoletim() {}
 
 
 // ==========================================
-// NOTIFICAÇÕES PUSH
+// NOTIFICAÇÕES FIREBASE
 // ==========================================
 
-const VAPID_PUBLIC_KEY = 'BF3gNzZD0R8kHDbLInuv0J_1qLUCg26c1YAeZDnCdNQEn5temWo9J5hsELxEpxiThe6IKC4d62B9uI1T2cLJNYk'; // COLE SUA VAPID PUBLIC KEY AQUI!
-
-// Helper: Converter VAPID key
-function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding)
-        .replace(/\-/g, '+')
-        .replace(/_/g, '/');
-    
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    
-    for (let i = 0; i < rawData.length; ++i) {
-        outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
-}
+const messaging = firebase.messaging();
 
 // Inicializar notificações
 async function initNotifications() {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        showToast('❌ Seu navegador não suporta notificações');
-        return;
-    }
-
-    try {
-        // 1. Registrar Service Worker
-        const registration = await navigator.serviceWorker.register('/service-worker.js');
-        console.log('SW registrado:', registration);
-
-        // 2. Pedir permissão
-        const permission = await Notification.requestPermission();
-        console.log('Permissão:', permission);
-
-        if (permission !== 'granted') {
-            showToast('⚠️ Permissão negada para notificações');
-            return;
-        }
-
-        // 3. Obter subscription
-        const subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-        });
-
-        console.log('Subscription:', subscription);
-
-        // 4. Enviar para backend
-        const token = localStorage.getItem('suap_token');
-        const response = await fetch(`${API_URL}/notifications/subscribe`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                subscription: subscription,
-                token: token
-            })
-        });
-
-        if (response.ok) {
-            showToast('🔔 Notificações ativadas!');
-            updateNotificationUI(true);
-        } else {
-            throw new Error('Erro ao registrar no servidor');
-        }
-
-    } catch (err) {
-        console.error('Erro notificações:', err);
-        showToast('❌ Erro ao ativar notificações');
-    }
-}
-
-// Verificar status das notificações
-async function checkNotificationStatus() {
-    if (!('serviceWorker' in navigator)) {
-        updateNotificationUI(false);
-        return;
-    }
-
-    try {
-        const registration = await navigator.serviceWorker.ready;
-        const subscription = await registration.pushManager.getSubscription();
-        
-        if (!subscription) {
-            updateNotificationUI(false);
-            return;
-        }
-
-        // Verifica no backend também
-        const token = localStorage.getItem('suap_token');
-        const response = await fetch(`${API_URL}/notifications/status`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        const status = await response.json();
-        
-        if (status.subscribed) {
-            console.log('✅ Notificações ativas');
-            updateNotificationUI(true);
-        } else {
-            updateNotificationUI(false);
-        }
-        
-    } catch (err) {
-        console.log('Status notificações:', err);
-        updateNotificationUI(false);
-    }
-}
-
-// Atualizar UI do botão
-function updateNotificationUI(isActive) {
-    const btn = document.getElementById('notification-btn');
-    if (!btn) return;
+  try {
+    console.log('🔔 Iniciando Firebase Messaging...');
     
-    if (isActive) {
-        btn.innerHTML = '<i class="fas fa-bell"></i><span>Notificações Ativas</span>';
-        btn.classList.add('active');
-        btn.onclick = unsubscribeNotifications;
-    } else {
-        btn.innerHTML = '<i class="fas fa-bell-slash"></i><span>Ativar Notificações</span>';
-        btn.classList.remove('active');
-        btn.onclick = initNotifications;
+    // Solicitar permissão
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      showToast('⚠️ Permissão negada');
+      return;
     }
+
+    // Obter token FCM
+    const token = await messaging.getToken({
+      vapidKey: 'SUA_VAPID_KEY_DO_FIREBASE' // Web Push Certificates → Key pair
+    });
+
+    if (!token) {
+      showToast('❌ Erro ao obter token');
+      return;
+    }
+
+    console.log('✅ FCM Token:', token);
+
+    // Enviar para backend
+    const suapToken = localStorage.getItem('suap_token');
+    await fetch(`${API_URL}/notifications/subscribe`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${suapToken}`
+      },
+      body: JSON.stringify({
+        fcmToken: token,
+        token: suapToken
+      })
+    });
+
+    showToast('🔔 Notificações ativadas!');
+    updateNotificationUI(true);
+
+    // Listener para mensagens em foreground
+    messaging.onMessage((payload) => {
+      console.log('📨 Mensagem recebida:', payload);
+      new Notification(payload.notification.title, {
+        body: payload.notification.body,
+        icon: payload.notification.icon || '/assets/icons/IF HUB - SEM FUNDO - 192x192.png',
+        data: payload.data
+      });
+    });
+
+  } catch (err) {
+    console.error('❌ Erro Firebase:', err);
+    showToast('❌ Erro: ' + err.message);
+  }
+}
+
+// Verificar status
+async function checkNotificationStatus() {
+  try {
+    const permission = Notification.permission;
+    if (permission !== 'granted') {
+      updateNotificationUI(false);
+      return;
+    }
+
+    const token = await messaging.getToken();
+    const isSubscribed = !!token;
+    
+    console.log('Status FCM:', isSubscribed ? 'Ativo' : 'Inativo');
+    updateNotificationUI(isSubscribed);
+
+  } catch (err) {
+    console.log('Erro check:', err);
+    updateNotificationUI(false);
+  }
 }
 
 // Cancelar notificações
 async function unsubscribeNotifications() {
-    try {
-        const registration = await navigator.serviceWorker.ready;
-        const subscription = await registration.pushManager.getSubscription();
-        
-        if (subscription) {
-            await subscription.unsubscribe();
-        }
-        
-        const token = localStorage.getItem('suap_token');
-        await fetch(`${API_URL}/notifications/unsubscribe`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ token: token })
-        });
-        
-        showToast('🔕 Notificações desativadas');
-        updateNotificationUI(false);
-        
-    } catch (err) {
-        console.error('Erro ao cancelar:', err);
-        showToast('❌ Erro ao desativar');
-    }
+  try {
+    await messaging.deleteToken();
+    
+    const token = localStorage.getItem('suap_token');
+    await fetch(`${API_URL}/notifications/unsubscribe`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ token: token })
+    });
+
+    showToast('🔕 Notificações desativadas');
+    updateNotificationUI(false);
+
+  } catch (err) {
+    console.error('Erro ao cancelar:', err);
+  }
 }
 
-// Toast notification
-function showToast(message, duration = 3000) {
-    const existing = document.querySelector('.toast');
-    if (existing) existing.remove();
-    
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.innerHTML = `
-        <i class="fas fa-info-circle"></i>
-        <span>${message}</span>
-    `;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => toast.classList.add('show'), 100);
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 300);
-    }, duration);
-}
-
-// Testar notificação manual
+// Testar notificação (envia do console do Firebase)
 async function testarNotificacao() {
-    if (Notification.permission === 'granted') {
-        new Notification('🧪 Teste IF HUB', {
-            body: 'Suas notificações estão funcionando!',
-            icon: '/assets/icons/IF HUB - SEM FUNDO - 192x192.png'
-        });
-    } else {
-        showToast('❌ Permissão não concedida');
-    }
+  // Só funciona se o backend enviar, ou use o console do Firebase
+  showToast('🧪 Use o Firebase Console → Cloud Messaging → Enviar mensagem de teste');
+}
+
+// UI do botão (mantém igual)
+function updateNotificationUI(isActive) {
+  const btn = document.getElementById('notification-btn');
+  if (!btn) return;
+  
+  if (isActive) {
+    btn.innerHTML = '<i class="fas fa-bell"></i><span>Notificações Ativas</span>';
+    btn.classList.add('active');
+    btn.onclick = unsubscribeNotifications;
+  } else {
+    btn.innerHTML = '<i class="fas fa-bell-slash"></i><span>Ativar Notificações</span>';
+    btn.classList.remove('active');
+    btn.onclick = initNotifications;
+  }
 }
 
 // ========== INICIALIZAÇÃO ==========
