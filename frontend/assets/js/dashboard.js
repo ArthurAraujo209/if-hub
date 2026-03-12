@@ -1,282 +1,131 @@
-// dashboard.js - Versão SIMPLIFICADA e FUNCIONAL
+// dashboard.js - Versão com dados carregados do JSON externo
 
 const API_URL = "https://if-hub-backend.onrender.com/api";
+const DATA_URL = "./assets/data/salas.json"; // Ajuste se necessário
 let dadosGlobais = null;
 let dadosAluno = null;
 let anoAtual = new Date().getFullYear();
 
-// Database de salas do Campus Santa Cruz
-const roomsDatabase = [
-  // Bloco A
-  {
-    id: "biblioteca",
-    name: "Biblioteca Central",
-    block: "B",
-    floor: "Térreo",
-    room: "101",
-    type: "biblioteca",
-    keywords: ["biblioteca", "livros", "estudo", "bibli"],
-  },
-  {
-    id: "aquario",
-    name: "Aquário do CC",
-    block: "B",
-    floor: "Térreo",
-    room: "102",
-    type: "administrativo",
-    keywords: ["Aquario","aquario", "portaria", "chaves", "bola"],
-  },
-  {
-    id: "sec-academica",
-    name: "Secretaria Acadêmica",
-    block: "A",
-    floor: "Térreo",
-    room: "A-102",
-    type: "administrativo",
-    keywords: ["secretaria", "matrícula", "secret"],
-  },
-  {
-    id: "direcao",
-    name: "Direção/Gabinete",
-    block: "A",
-    floor: "1º Andar",
-    room: "A-201",
-    type: "administrativo",
-    keywords: ["direção", "diretor", "gabinete"],
-  },
-  {
-    id: "sala-prof",
-    name: "Sala dos Professores",
-    block: "A",
-    floor: "1º Andar",
-    room: "A-202",
-    type: "administrativo",
-    keywords: ["professores", "docentes"],
-  },
-  {
-    id: "saude",
-    name: "Posto de Saúde",
-    block: "A",
-    floor: "Térreo",
-    room: "A-103",
-    type: "saúde",
-    keywords: ["saúde", "enfermaria", "médico"],
-  },
-
-  // Bloco B
-  {
-    id: "lab-info-1",
-    name: "Laboratório de Informática 236",
-    block: "B",
-    floor: "2° andar",
-    room: "236",
-    type: "laboratório",
-    keywords: ["lab", "informática", "computador", "info"],
-  },
-  {
-    id: "sala-201",
-    name: "Sala de Aula 201",
-    block: "B",
-    floor: "2º Andar",
-    room: "B-301",
-    type: "sala",
-    keywords: ["sala", "aula", "201"],
-  },
-  {
-    id: "sala-101",
-    name: "Sala de Aula 101",
-    block: "B",
-    floor: "1º Andar",
-    room: "B-201",
-    type: "sala",
-    keywords: ["101", "sala 101"],
-  },
-
-  // Bloco C
-  {
-    id: "lab-quimica",
-    name: "Laboratório de Química",
-    block: "C",
-    floor: "Térreo",
-    room: "C-101",
-    type: "laboratório",
-    keywords: ["química", "lab", "quimica"],
-  },
-  {
-    id: "lab-fisica",
-    name: "Laboratório de Física",
-    block: "C",
-    floor: "Térreo",
-    room: "C-102",
-    type: "laboratório",
-    keywords: ["física", "lab", "fisica"],
-  },
-  {
-    id: "auditorio",
-    name: "Auditório Central",
-    block: "C",
-    floor: "2º Andar",
-    room: "C-401",
-    type: "auditório",
-    keywords: ["auditório", "eventos", "palestras"],
-  },
-
-  // Bloco D
-  {
-    id: "lab-eletrica",
-    name: "Laboratório de Eletricidade",
-    block: "D",
-    floor: "Térreo",
-    room: "D-110",
-    type: "laboratório",
-    keywords: ["elétrica", "eletricidade"],
-  },
-  {
-    id: "lab-mecanica",
-    name: "Laboratório de Mecânica",
-    block: "D",
-    floor: "Térreo",
-    room: "D-111",
-    type: "laboratório",
-    keywords: ["mecânica", "mecanica"],
-  },
-
-  // Bloco F
-  {
-    id: "cantina",
-    name: "Cantina/Restaurante",
-    block: "F",
-    floor: "Térreo",
-    room: "F-002",
-    type: "alimentação",
-    keywords: ["cantina", "restaurante", "comida", "lanche"],
-  },
-  {
-    id: "saude",
-    name: "Área de Saúde",
-    block: "F",
-    floor: "Térreo",
-    room: "F-001",
-    type: "saude",
-    keywords: ["saude", "hospital", "setor saude"],
-  },
-
-  // Áreas Externas
-  {
-    id: "quadra",
-    name: "Quadra Poliesportiva",
-    block: "Externo",
-    floor: "-",
-    room: "Quadra",
-    type: "esporte",
-    keywords: ["quadra", "esporte", "futsal", "basquete", "volei", "handebol", "educacao fisica", "educação física"],
-  },
-  {
-    id: "areia",
-    name: "Quadra de Areia",
-    block: "Externo",
-    floor: "-",
-    room: "Areia",
-    type: "esporte",
-    keywords: ["areia", "vôlei", "futevôlei"],
-  },
-];
-
-// Dados dos blocos
-const buildingData = {
-  B: {
-    nome: "Bloco B",
-    descricao: "Salas de Aula e Centro de Convivência",
-    andares: {
-      Térreo: ["Centro de Convivência", "Biblioteca", "Banheiro"],
-      "1º Andar": ["Salas de Professores", "Banheiro dos Servidores"],
-      "2º Andar": ["Salas de Aula", "Banheiro"],
-    },
-    icon: "building",
-    cor: "var(--ios-accent-green)",
-  },
-  A: {
-    nome: "Bloco A",
-    descricao: "Administração e Laboratórios",
-    andares: {
-      Térreo: ["Secretarias", "Auditório", "Bancadas de estudo"],
-      "1º Andar": ["Laboratórios", "Banheiro dos Servidores"],
-      "2º Andar": ["Laboratórios", "Banheiro"],
-    },
-    icon: "flask",
-    cor: "var(--ios-accent-purple)",
-  },
-  5: {
-    nome: "Bloco 5",
-    descricao: "Mecânica e Refrigeração",
-    andares: {
-      Térreo: ["Oficina Mecânica"],
-      "1º Andar": ["Lab. Refrigeração"],
-    },
-    icon: "cogs",
-    cor: "var(--ios-accent-purple)",
-  },
-  1: {
-    nome: "Guarita",
-    descricao: "Entrada principal",
-    andares: { Térreo: ["Portaria"] },
-    icon: "shield-alt",
-    cor: "var(--ios-accent-blue)",
-  },
-  2: {
-    nome: "Cantina",
-    descricao: "Alimentação",
-    andares: { Térreo: ["Cantina", "Restaurante"] },
-    icon: "utensils",
-    cor: "var(--ios-accent-yellow)",
-  },
-  3: {
-    nome: "Almoxarifado",
-    descricao: "Armazenamento",
-    andares: { Térreo: ["Almoxarifado"] },
-    icon: "boxes",
-    cor: "var(--ios-accent-blue)",
-  },
-  areia: {
-    nome: "Quadra de Areia",
-    descricao: "Esportes de praia",
-    andares: { Externo: ["Vôlei de Praia"] },
-    icon: "volleyball-ball",
-    cor: "var(--ios-accent-orange)",
-  },
-  4: {
-    nome: "Espaço Multiuso",
-    descricao: "Atividades diversas",
-    andares: { Térreo: ["Ginástica"] },
-    icon: "table-tennis",
-    cor: "var(--ios-accent-orange)",
-  },
-  quadra: {
-    nome: "Quadra Poliesportiva",
-    descricao: "Esportes",
-    andares: { Externo: ["Basquete", "Futsal"] },
-    icon: "basketball-ball",
-    cor: "var(--ios-accent-orange)",
-  },
-  6: {
-    nome: "Piscina",
-    descricao: "Natação",
-    andares: { Externo: ["Piscina"] },
-    icon: "swimming-pool",
-    cor: "var(--ios-accent-blue)",
-  },
-};
+// Essas variáveis agora serão preenchidas após o carregamento do JSON
+let roomsDatabase = [];
+let buildingData = {};
 
 // ========== VARIÁVEIS GLOBAIS ==========
 let fuseRooms, fuseBuildings;
 let currentZoom = 1;
 let searchTimeout = null;
 
-// ========== FUNÇÕES DE BUSCA ==========
+// ========== CARREGAMENTO DO JSON ==========
+async function carregarDadosMapa() {
+  try {
+    console.log("📥 Carregando dados do mapa...");
+    const response = await fetch(DATA_URL);
+    if (!response.ok) throw new Error("Erro ao carregar JSON");
+    const dados = await response.json();
 
-// Inicializa o Fuse.js
+    // --- Converter salas para o formato antigo ---
+    roomsDatabase = dados.salas.map(sala => ({
+      id: sala.id,
+      name: sala.nome,
+      block: sala.bloco,
+      floor: sala.andar,
+      room: sala.numero,
+      type: sala.tipo,          // será usado no painel de detalhes
+      keywords: sala.keywords || []
+    }));
+
+    // --- Construir buildingData combinando blocos do JSON com os blocos personalizados ---
+    // Blocos personalizados que já existem no mapa 3D (Guarita, Cantina, etc.)
+    const blocosPersonalizados = {
+      1: {
+        nome: "Guarita",
+        descricao: "Entrada principal",
+        andares: { Térreo: ["Portaria"] },
+        icon: "shield-alt",
+        cor: "var(--ios-accent-blue)",
+      },
+      2: {
+        nome: "Cantina",
+        descricao: "Alimentação",
+        andares: { Térreo: ["Cantina", "Restaurante"] },
+        icon: "utensils",
+        cor: "var(--ios-accent-yellow)",
+      },
+      3: {
+        nome: "Almoxarifado",
+        descricao: "Armazenamento",
+        andares: { Térreo: ["Almoxarifado"] },
+        icon: "boxes",
+        cor: "var(--ios-accent-blue)",
+      },
+      4: {
+        nome: "Espaço Multiuso",
+        descricao: "Atividades diversas",
+        andares: { Térreo: ["Ginástica"] },
+        icon: "table-tennis",
+        cor: "var(--ios-accent-orange)",
+      },
+      5: {
+        nome: "Bloco 5",
+        descricao: "Mecânica e Refrigeração",
+        andares: {
+          Térreo: ["Oficina Mecânica"],
+          "1º Andar": ["Lab. Refrigeração"],
+        },
+        icon: "cogs",
+        cor: "var(--ios-accent-purple)",
+      },
+      6: {
+        nome: "Piscina",
+        descricao: "Natação",
+        andares: { Externo: ["Piscina"] },
+        icon: "swimming-pool",
+        cor: "var(--ios-accent-blue)",
+      },
+      areia: {
+        nome: "Quadra de Areia",
+        descricao: "Esportes de praia",
+        andares: { Externo: ["Vôlei de Praia"] },
+        icon: "volleyball-ball",
+        cor: "var(--ios-accent-orange)",
+      },
+      quadra: {
+        nome: "Quadra Poliesportiva",
+        descricao: "Esportes",
+        andares: { Externo: ["Basquete", "Futsal"] },
+        icon: "basketball-ball",
+        cor: "var(--ios-accent-orange)",
+      },
+    };
+
+    // Blocos do JSON (A, B, C, D, E, F)
+    const blocosJSON = {};
+    for (const [id, bloco] of Object.entries(dados.blocos)) {
+      blocosJSON[id] = {
+        nome: bloco.nome,
+        descricao: bloco.descricao,
+        andares: bloco.andares,
+        icon: bloco.icon,
+        cor: bloco.cor,        // usa a cor hexadecimal do JSON
+      };
+    }
+
+    // Mescla: os blocos do JSON sobrescrevem os personalizados com mesmo ID (caso existam)
+    buildingData = { ...blocosPersonalizados, ...blocosJSON };
+
+    console.log(`✅ ${roomsDatabase.length} salas e ${Object.keys(buildingData).length} blocos carregados.`);
+  } catch (error) {
+    console.error("❌ Erro ao carregar dados do mapa:", error);
+    // Em caso de erro, usa dados de fallback (opcional)
+    roomsDatabase = [];
+    buildingData = {};
+    showAlert("Erro ao carregar mapa. Verifique o arquivo de dados.");
+  }
+}
+
+// ========== FUNÇÕES DE BUSCA (Fuse) ==========
 function initializeFuse() {
-  console.log("Inicializando busca inteligente...");
+  console.log("🔍 Inicializando busca inteligente...");
 
   const fuseOptions = {
     includeScore: true,
@@ -309,38 +158,29 @@ function initializeFuse() {
     keys: ["nome", "descricao"],
   });
 
-  console.log("Busca inteligente pronta!");
+  console.log("✅ Busca inteligente pronta!");
 }
 
 // FUNÇÃO PRINCIPAL DE BUSCA (chamada pelo HTML)
 function performSmartSearch() {
-  console.log("Buscando...");
   const input = document.getElementById("room-search");
   if (!input) return;
 
   const query = input.value.trim();
 
   if (!query || query.length < 2) {
-    document
-      .getElementById("autocomplete-suggestions")
-      .classList.remove("show");
+    document.getElementById("autocomplete-suggestions").classList.remove("show");
     return;
   }
 
   if (!fuseRooms) initializeFuse();
 
-  // Busca salas e blocos
   const roomResults = fuseRooms.search(query);
   const buildingResults = fuseBuildings.search(query);
 
-  // Combina resultados
   const allResults = [
     ...roomResults.map((r) => ({ item: r.item, score: r.score, type: "room" })),
-    ...buildingResults.map((b) => ({
-      item: b.item,
-      score: b.score,
-      type: "building",
-    })),
+    ...buildingResults.map((b) => ({ item: b.item, score: b.score, type: "building" })),
   ]
     .sort((a, b) => (a.score || 1) - (b.score || 1))
     .slice(0, 8);
@@ -348,23 +188,16 @@ function performSmartSearch() {
   showSuggestions(allResults, query);
 }
 
-// Função para limpar pesquisa (nova funcionalidade para o botão)
+// Limpar pesquisa
 function clearSearch() {
   const input = document.getElementById("room-search");
   if (input) input.value = "";
-
   document.getElementById("autocomplete-suggestions").classList.remove("show");
-
-  // Fecha o painel de resultados se estiver aberto
   closeResultPanel();
-
-  // Remove destaques do mapa
-  document
-    .querySelectorAll(".building-3d")
-    .forEach((b) => b.classList.remove("active", "highlight"));
+  document.querySelectorAll(".building-3d").forEach((b) => b.classList.remove("active", "highlight"));
 }
 
-// Função para fechar o painel de resultados
+// Fechar painel de resultados
 function closeResultPanel() {
   const container = document.getElementById("search-result-container");
   if (container) {
@@ -373,52 +206,51 @@ function closeResultPanel() {
   }
 }
 
-// Mostra sugestões
+// Mostrar sugestões
 function showSuggestions(results, query) {
   const container = document.getElementById("autocomplete-suggestions");
   if (!container) return;
 
   if (results.length === 0) {
     container.innerHTML = `
-            <div style="padding: 20px; text-align: center; color: var(--ios-text-secondary);">
-                <i class="fas fa-search" style="font-size: 2rem; opacity: 0.5; margin-bottom: 10px;"></i>
-                <p>Nenhum resultado para "${escapeHtml(query)}"</p>
-                <small>Tente: bibli, lab, 101, cantina...</small>
-            </div>
-        `;
+      <div style="padding: 20px; text-align: center; color: var(--ios-text-secondary);">
+        <i class="fas fa-search" style="font-size: 2rem; opacity: 0.5; margin-bottom: 10px;"></i>
+        <p>Nenhum resultado para "${escapeHtml(query)}"</p>
+        <small>Tente: bibli, lab, 101, cantina...</small>
+      </div>
+    `;
     container.classList.add("show");
     return;
   }
 
   let html = "";
-
   results.forEach((result) => {
     if (result.type === "room") {
       const room = result.item;
       html += `
-                <div class="suggestion-item" onclick="selectRoom('${room.id}')">
-                    <i class="fas fa-door-open" style="color: var(--ios-accent-green); width: 30px;"></i>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600;">${highlightMatch(room.name, query)}</div>
-                        <div style="font-size: 0.8rem; color: var(--ios-text-secondary);">
-                            Bloco ${room.block} • ${room.room}
-                        </div>
-                    </div>
-                </div>
-            `;
+        <div class="suggestion-item" onclick="selectRoom('${room.id}')">
+          <i class="fas fa-door-open" style="color: var(--ios-accent-green); width: 30px;"></i>
+          <div style="flex: 1;">
+            <div style="font-weight: 600;">${highlightMatch(room.name, query)}</div>
+            <div style="font-size: 0.8rem; color: var(--ios-text-secondary);">
+              Bloco ${room.block} • ${room.room}
+            </div>
+          </div>
+        </div>
+      `;
     } else {
       const building = result.item;
       html += `
-                <div class="suggestion-item" onclick="selectBuilding('${building.id}')">
-                    <i class="fas fa-building" style="color: var(--ios-accent-blue); width: 30px;"></i>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600;">${highlightMatch(building.nome, query)}</div>
-                        <div style="font-size: 0.8rem; color: var(--ios-text-secondary);">
-                            ${building.descricao.substring(0, 40)}...
-                        </div>
-                    </div>
-                </div>
-            `;
+        <div class="suggestion-item" onclick="selectBuilding('${building.id}')">
+          <i class="fas fa-building" style="color: var(--ios-accent-blue); width: 30px;"></i>
+          <div style="flex: 1;">
+            <div style="font-weight: 600;">${highlightMatch(building.nome, query)}</div>
+            <div style="font-size: 0.8rem; color: var(--ios-text-secondary);">
+              ${building.descricao.substring(0, 40)}...
+            </div>
+          </div>
+        </div>
+      `;
     }
   });
 
@@ -426,32 +258,23 @@ function showSuggestions(results, query) {
   container.classList.add("show");
 }
 
-// FUNÇÃO CHAMADA PELO oninput (otimizada)
+// Manipulador de input com debounce
 function handleSearchInput() {
   const input = document.getElementById("room-search");
   if (!input) return;
 
   const query = input.value;
 
-  if (searchTimeout) {
-    clearTimeout(searchTimeout);
-  }
+  if (searchTimeout) clearTimeout(searchTimeout);
 
   if (query.length >= 2) {
-    searchTimeout = setTimeout(() => {
-      performSmartSearch();
-    }, 300);
+    searchTimeout = setTimeout(() => performSmartSearch(), 300);
   } else {
-    document
-      .getElementById("autocomplete-suggestions")
-      .classList.remove("show");
-
-    // Se o campo ficar vazio, não fecha os resultados automaticamente
-    // O usuário pode querer ver o resultado ainda
+    document.getElementById("autocomplete-suggestions").classList.remove("show");
   }
 }
 
-// Atualizar a função selectRoom para ter botão de fechar
+// Selecionar sala
 function selectRoom(roomId) {
   const room = roomsDatabase.find((r) => r.id === roomId);
   if (!room) return;
@@ -463,7 +286,7 @@ function selectRoom(roomId) {
   highlightBuilding(room.block);
 }
 
-// Atualizar a função selectBuilding para ter botão de fechar
+// Selecionar bloco
 function selectBuilding(buildingId) {
   const building = buildingData[buildingId];
   if (!building) return;
@@ -475,7 +298,7 @@ function selectBuilding(buildingId) {
   highlightBuilding(buildingId);
 }
 
-// Mostra detalhes da sala (ATUALIZADO COM BOTÃO FECHAR)
+// Mostrar detalhes da sala
 function showRoomDetails(room) {
   const container = document.getElementById("search-result-container");
   const title = document.getElementById("search-result-title");
@@ -484,50 +307,48 @@ function showRoomDetails(room) {
   if (!container) return;
 
   title.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <i class="fas fa-door-open" style="color: var(--ios-accent-green);"></i>
-                <span>${room.name}</span>
-                <span style="background: var(--gradient-primary); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem;">Bloco ${room.block}</span>
-            </div>
-            <button onclick="closeResultPanel()" class="close-panel" style="background: rgba(255,255,255,0.1); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `;
+    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <i class="fas fa-door-open" style="color: var(--ios-accent-green);"></i>
+        <span>${room.name}</span>
+        <span style="background: var(--gradient-primary); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem;">Bloco ${room.block}</span>
+      </div>
+      <button onclick="closeResultPanel()" class="close-panel" style="background: rgba(255,255,255,0.1); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  `;
 
   content.innerHTML = `
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
-            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
-                <i class="fas fa-door-closed"></i>
-                <div><strong>Sala</strong><br>${room.room}</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
-                <i class="fas fa-building"></i>
-                <div><strong>Bloco</strong><br>${room.block}</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
-                <i class="fas fa-layer-group"></i>
-                <div><strong>Andar</strong><br>${room.floor}</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
-                <i class="fas fa-tag"></i>
-                <div><strong>Tipo</strong><br>${room.type}</div>
-            </div>
-        </div>
-        <button class="ios-btn result-action-btn" onclick="resetMap()" style="margin-top: 20px;">
-            <i class="fas fa-sync-alt"></i> Resetar Visualização
-        </button>
-    `;
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+      <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
+        <i class="fas fa-door-closed"></i>
+        <div><strong>Sala</strong><br>${room.room}</div>
+      </div>
+      <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
+        <i class="fas fa-building"></i>
+        <div><strong>Bloco</strong><br>${room.block}</div>
+      </div>
+      <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
+        <i class="fas fa-layer-group"></i>
+        <div><strong>Andar</strong><br>${room.floor}</div>
+      </div>
+      <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
+        <i class="fas fa-tag"></i>
+        <div><strong>Tipo</strong><br>${room.type}</div>
+      </div>
+    </div>
+    <button class="ios-btn result-action-btn" onclick="resetMap()" style="margin-top: 20px;">
+      <i class="fas fa-sync-alt"></i> Resetar Visualização
+    </button>
+  `;
 
   container.style.display = "block";
   container.classList.add("show");
-
-  // Scroll suave até o resultado
   container.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
-// Mostra detalhes do bloco (ATUALIZADO COM BOTÃO FECHAR)
+// Mostrar detalhes do bloco
 function showBuildingDetails(buildingId, building) {
   const container = document.getElementById("search-result-container");
   const title = document.getElementById("search-result-title");
@@ -536,53 +357,46 @@ function showBuildingDetails(buildingId, building) {
   if (!container) return;
 
   title.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <i class="fas fa-${building.icon}" style="color: ${building.cor};"></i>
-                <span>${building.nome}</span>
-            </div>
-            <button onclick="closeResultPanel()" class="close-panel" style="background: rgba(255,255,255,0.1); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `;
+    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <i class="fas fa-${building.icon}" style="color: ${building.cor};"></i>
+        <span>${building.nome}</span>
+      </div>
+      <button onclick="closeResultPanel()" class="close-panel" style="background: rgba(255,255,255,0.1); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  `;
 
   let andaresHtml = "";
   for (const [andar, salas] of Object.entries(building.andares)) {
     andaresHtml += `
-            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 10px;">
-                <div style="font-weight: 600; color: var(--ios-accent-green); margin-bottom: 5px;">${andar}</div>
-                <div style="color: var(--ios-text-secondary);">${salas.join(" • ")}</div>
-            </div>
-        `;
+      <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 10px;">
+        <div style="font-weight: 600; color: var(--ios-accent-green); margin-bottom: 5px;">${andar}</div>
+        <div style="color: var(--ios-text-secondary);">${salas.join(" • ")}</div>
+      </div>
+    `;
   }
 
   content.innerHTML = `
-        <p style="color: var(--ios-text-secondary); margin-bottom: 20px;">${building.descricao}</p>
-        <h4 style="margin-bottom: 15px;">Andares</h4>
-        ${andaresHtml}
-        <button class="ios-btn result-action-btn" onclick="resetMap()" style="margin-top: 20px;">
-            <i class="fas fa-sync-alt"></i> Resetar Visualização
-        </button>
-    `;
+    <p style="color: var(--ios-text-secondary); margin-bottom: 20px;">${building.descricao}</p>
+    <h4 style="margin-bottom: 15px;">Andares</h4>
+    ${andaresHtml}
+    <button class="ios-btn result-action-btn" onclick="resetMap()" style="margin-top: 20px;">
+      <i class="fas fa-sync-alt"></i> Resetar Visualização
+    </button>
+  `;
 
   container.style.display = "block";
   container.classList.add("show");
-
-  // Scroll suave até o resultado
   container.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
-// Destaca bloco no mapa
+// Destacar bloco no mapa
 function highlightBuilding(buildingId) {
-  document
-    .querySelectorAll(".building-3d")
-    .forEach((b) => b.classList.remove("active", "highlight"));
-
+  document.querySelectorAll(".building-3d").forEach((b) => b.classList.remove("active", "highlight"));
   const building = document.querySelector(`[data-id="${buildingId}"]`);
-  if (building) {
-    building.classList.add("active", "highlight");
-  }
+  if (building) building.classList.add("active", "highlight");
 }
 
 // Funções de zoom
@@ -590,9 +404,7 @@ function zoomMap(factor) {
   currentZoom *= factor;
   currentZoom = Math.max(0.5, Math.min(3, currentZoom));
   const image = document.getElementById("campus-image");
-  if (image) {
-    image.style.transform = `scale(${currentZoom})`;
-  }
+  if (image) image.style.transform = `scale(${currentZoom})`;
 }
 
 function resetMap() {
@@ -600,9 +412,7 @@ function resetMap() {
   const image = document.getElementById("campus-image");
   if (image) image.style.transform = "scale(1)";
 
-  document
-    .querySelectorAll(".building-3d")
-    .forEach((b) => b.classList.remove("active", "highlight"));
+  document.querySelectorAll(".building-3d").forEach((b) => b.classList.remove("active", "highlight"));
 
   const container = document.getElementById("search-result-container");
   if (container) {
@@ -627,10 +437,7 @@ function highlightMatch(text, query) {
   if (!query) return escapeHtml(text);
   try {
     const regex = new RegExp(`(${escapeRegExp(query)})`, "gi");
-    return escapeHtml(text).replace(
-      regex,
-      '<mark style="background: rgba(48,209,88,0.3); padding: 2px; border-radius: 3px;">$1</mark>',
-    );
+    return escapeHtml(text).replace(regex, '<mark style="background: rgba(48,209,88,0.3); padding: 2px; border-radius: 3px;">$1</mark>');
   } catch (e) {
     return escapeHtml(text);
   }
@@ -1546,30 +1353,35 @@ function updateNotificationUI(isActive) {
 }
 
 // ========== INICIALIZAÇÃO ==========
-document.addEventListener("DOMContentLoaded", function () {
-    console.log("Inicializando aplicação...");
-    
-    carregarDados();
-    initializeFuse();
-    
-    // Verifica status das notificações ao carregar
-    setTimeout(checkNotificationStatus, 1000);
+document.addEventListener("DOMContentLoaded", async function () {
+  console.log("🚀 Inicializando aplicação...");
 
-    // Garante que as funções estão no escopo global
-    window.performSmartSearch = performSmartSearch;
-    window.handleSearchInput = handleSearchInput;
-    window.selectRoom = selectRoom;
-    window.selectBuilding = selectBuilding;
-    window.zoomMap = zoomMap;
-    window.resetMap = resetMap;
-    window.showSection = showSection;
-    window.toggleSidebar = toggleSidebar;
-    window.closeSidebar = closeSidebar;
-    window.logout = logout;
-    window.trocarAno = trocarAno;
-    window.initNotifications = initNotifications;
-    window.unsubscribeNotifications = unsubscribeNotifications;
-    window.testarNotificacao = testarNotificacao;
+  // Carrega dados acadêmicos primeiro (seus dados do aluno)
+  carregarDados();
 
-    console.log("Funções registradas globalmente!");
+  // Carrega dados do mapa (salas e blocos) e depois inicializa a busca
+  await carregarDadosMapa();
+  initializeFuse();
+
+  // Verifica status das notificações
+  setTimeout(checkNotificationStatus, 1000);
+
+  // Registra funções globais
+  window.performSmartSearch = performSmartSearch;
+  window.handleSearchInput = handleSearchInput;
+  window.selectRoom = selectRoom;
+  window.selectBuilding = selectBuilding;
+  window.zoomMap = zoomMap;
+  window.resetMap = resetMap;
+  window.showSection = showSection;
+  window.toggleSidebar = toggleSidebar;
+  window.closeSidebar = closeSidebar;
+  window.logout = logout;
+  window.trocarAno = trocarAno;
+  window.initNotifications = initNotifications;
+  window.unsubscribeNotifications = unsubscribeNotifications;
+  window.clearSearch = clearSearch;         // importante para o botão de limpar
+  window.closeResultPanel = closeResultPanel;
+
+  console.log("✅ Sistema pronto!");
 });
