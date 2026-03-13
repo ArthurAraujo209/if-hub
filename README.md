@@ -1,14 +1,5 @@
 IF HUB 🎓
 
-<div align="center">Centralizando informações acadêmicas e ferramentas úteis para estudantes do IFRN
-
-""Status" (https://img.shields.io/badge/status-em%20desenvolvimento-yellow)"
-""PWA" (https://img.shields.io/badge/PWA-ready-blue)"
-""Frontend" (https://img.shields.io/badge/frontend-HTML%20%7C%20CSS%20%7C%20JS-orange)"
-""License" (https://img.shields.io/badge/license-MIT-green)"
-
-</div>---
-
 📖 Sobre o Projeto
 
 O IF HUB é uma plataforma web criada para centralizar informações acadêmicas e ferramentas úteis para estudantes do IFRN Campus Santa Cruz.
