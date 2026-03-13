@@ -10,6 +10,10 @@ Além disso, o projeto foi desenvolvido como um Progressive Web App (PWA), permi
 
 ---
 
+Link na Web: https://if-hub.netlify.app
+
+---
+
 ✨ Funcionalidades
 
 - 📊 Dashboard do aluno
@@ -45,34 +49,9 @@ Arquitetura
 
 ---
 
-📂 Estrutura do Projeto
-
-if-hub
-│
-├── index.html
-├── dashboard.html
-│
-├── css/
-│   ├── style.css
-│   └── dashboard.css
-│
-├── js/
-│   ├── dashboard.js
-│   ├── api.js
-│   └── utils.js
-│
-├── assets/
-│   ├── icons/
-│   └── images/
-│
-├── manifest.json
-└── service-worker.js
-
----
-
 📡 API Utilizada
 
-O projeto consome dados de uma API do SUAP que retorna todos os dados
+O projeto consome dados de uma API do SUAP que retorna todos eles
 
 ---
 
@@ -99,12 +78,10 @@ O IF HUB foi criado com o objetivo de melhorar o acesso às informações acadê
 
 Futuras melhorias planejadas:
 
-- [ ] Sistema de login de alunos
 - [ ] Notificações acadêmicas
-- [ ] Sistema de horários
-- [ ] Integração com dados institucionais
 - [ ] Mais ferramentas para estudantes
 - [ ] Melhorias na interface
+- [ ] Melhorias de desempenho/otimização
 
 ---
 
@@ -116,7 +93,7 @@ Contribuições são sempre bem-vindas.
 
 👨‍💻 Autor
 
-Arthur Lima
+Arthur Lima Araújo 
 
 Estudante de Informática no IFRN
 Desenvolvedor Front-end
