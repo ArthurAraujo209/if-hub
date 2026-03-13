@@ -49,7 +49,7 @@ html {
 
 body {
     background: #000000d2;
-    background-image: url('https://santanatacao.wordpress.com/wp-content/uploads/2019/06/img_0326.jpeg');
+    background-image: url('../img/background.webp');
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;

@@ -47,7 +47,7 @@ const blocosPersonalizados = {
   4: {
     nome: "Espaço Multiuso",
     descricao: "Atividades diversas",
-    andares: { Térreo: ["Ginástica", "Eventos"] },
+    andares: { Térreo: ["Ginástica", "Eventos", "Aulas"] },
     icon: "table-tennis",
     cor: "var(--ios-accent-orange)",
   },
@@ -68,7 +68,7 @@ const blocosPersonalizados = {
   quadra: {
     nome: "Quadra Poliesportiva",
     descricao: "Esportes",
-    andares: { Externo: ["Basquete", "Futsal", "Handebol"] },
+    andares: { Externo: ["Basquete", "Futsal", "Handebol", "Banho"] },
     icon: "basketball-ball",
     cor: "var(--ios-accent-orange)",
   },

@@ -18,9 +18,9 @@
       "localizacao": "Estacionamento, Guarita, Jardinagem",
       "andares": {
         "Térreo": ["Portaria", "Estacionamento"],
-        "1º Piso": ["Administração", "Auditório", "Laboratórios de Informática"],
-        "2º Piso": ["Salas de Aula", "Laboratórios de Biologia/Química", "Matemática"],
-        "3º Piso": ["Laboratórios de Informática", "Física", "Eletrônica"]
+        "1º Piso": ["Administração", "Auditório", "Laboratórios de Informática", "Banheiros"],
+        "2º Piso": ["Salas de Aula", "Laboratórios de Biologia/Química", "Matemática", "Banheiros - Servidores"],
+        "3º Piso": ["Laboratórios de Informática", "Física", "Eletrônica", "Banheiros"]
       }
     },
     "B": {
@@ -31,9 +31,9 @@
       "icon": "building",
       "localizacao": "Campo de Futebol e Terreno",
       "andares": {
-        "Térreo": ["Protocolo", "Biblioteca", "Centros Acadêmicos"],
-        "1º Andar": ["Direção", "Coordenações", "Salas de Professores"],
-        "2º Andar": ["Salas de Aula", "Mini-auditórios", "Laboratório de Informática"]
+        "Térreo": ["Protocolo", "Biblioteca", "Centros Acadêmicos", "Banheiros"],
+        "1º Andar": ["Direção", "Coordenações", "Salas de Professores", "Banheiros - Servidores"],
+        "2º Andar": ["Salas de Aula", "Mini-auditórios", "Laboratório de Informática", "Banheiros"]
       }
     },
     "C": {
@@ -1028,7 +1028,7 @@
     },
     {
       "id": "208-gremio",
-      "nome": "Grêmio Estudantil",
+      "nome": "Grêmio Estudantil (Desativado)",
       "bloco": "B",
       "andar": "1º Andar",
       "numero": "208",
