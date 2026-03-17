@@ -2737,6 +2737,9 @@ img {
         display: flex !important;
         z-index: 10000;
     }
+    .sem-nada {
+        height: 110px;
+    }
 }
 
 /* Ajuste para o overlay do sidebar não bloquear cliques no desktop */
@@ -2753,8 +2756,4 @@ img {
 /* Corrigir possível sobreposição do autocomplete */
 .autocomplete-suggestions {
     z-index: 10001;
-}
-
-.sem-nada {
-    height: 110px;
 }
