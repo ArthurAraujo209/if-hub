@@ -1382,9 +1382,11 @@ function preencherAvaliacoes(data) {
 
 function formatarData(dataStr) {
   if (!dataStr) return "Data não definida";
+
   try {
-    const data = new Date(dataStr);
-    if (isNaN(data.getTime())) return dataStr;
+    const [ano, mes, dia] = dataStr.split("T")[0].split("-");
+    const data = new Date(ano, mes - 1, dia);
+
     return data.toLocaleDateString("pt-BR", {
       weekday: "long",
       day: "2-digit",
