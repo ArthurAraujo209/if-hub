@@ -1087,59 +1087,58 @@ function preencherBoletim(data) {
   }
 
   const html = `
-        <table class="ios-table">
-            <thead>
-                <tr>
-                    <th>Disciplina</th>
-                    <th style="text-align: center;">1ª Etapa</th>
-                    <th style="text-align: center;">2ª Etapa</th>
-                    <th style="text-align: center;">3ª Etapa</th>
-                    <th style="text-align: center;">4ª Etapa</th>
-                    <th style="text-align: center;">Média</th>
-                    <th style="text-align: center;">Situação</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${boletim
-                  .map((d) => {
-                    const n1 = d.nota_etapa_1?.nota || "--";
-                    const n2 = d.nota_etapa_2?.nota || "--";
-                    const n3 = d.nota_etapa_3?.nota || "--";
-                    const n4 = d.nota_etapa_4?.nota || "--";
-                    const media =
-                      d.media_disciplina || d.media_final_disciplina || "--";
-
-                    const n1Num = parseFloat(n1) || 0;
-                    const n2Num = parseFloat(n2) || 0;
-                    const n3Num = parseFloat(n3) || 0;
-                    const n4Num = parseFloat(n4) || 0;
-
-                    let situacaoClass = "tag-cursando";
-                    if (d.situacao === "Aprovado")
-                      situacaoClass = "tag-aprovado";
-                    else if (d.situacao === "Reprovado")
-                      situacaoClass = "tag-reprovado";
-
-                    return `
-                        <tr>
-                            <td>
-                                <div class="disciplina-info">
-                                    <h4>${d.disciplina || "Disciplina"}</h4>
-                                    <p>Faltas: ${d.numero_faltas || 0} | Freq: ${d.percentual_carga_horaria_frequentada || 0}%</p>
-                                </div>
-                            </td>
-                            <td style="text-align: center;"><span class="nota-badge ${n1Num >= 60 ? "nota-aprovado" : n1Num >= 40 ? "nota-recuperacao" : "nota-reprovado"}">${n1}</span></td>
-                            <td style="text-align: center;"><span class="nota-badge ${n2Num >= 60 ? "nota-aprovado" : n2Num >= 40 ? "nota-recuperacao" : "nota-reprovado"}">${n2}</span></td>
-                            <td style="text-align: center;"><span class="nota-badge ${n3Num >= 60 ? "nota-aprovado" : n3Num >= 40 ? "nota-recuperacao" : "nota-reprovado"}">${n3}</span></td>
-                            <td style="text-align: center;"><span class="nota-badge ${n4Num >= 60 ? "nota-aprovado" : n4Num >= 40 ? "nota-recuperacao" : "nota-reprovado"}">${n4}</span></td>
-                            <td style="text-align: center; font-weight: 700; font-size: 1.1rem;">${media}</td>
-                            <td style="text-align: center;"><span class="situacao-badge ${situacaoClass}">${d.situacao || "Cursando"}</span></td>
-                        </tr>
-                    `;
-                  })
-                  .join("")}
-            </tbody>
-        </table>
+        <div class="table-responsive">
+          <table class="ios-table">
+              <thead>
+                  <tr>
+                      <th>Disciplina</th>
+                      <th style="text-align: center;">1ª Etapa</th>
+                      <th style="text-align: center;">2ª Etapa</th>
+                      <th style="text-align: center;">3ª Etapa</th>
+                      <th style="text-align: center;">4ª Etapa</th>
+                      <th style="text-align: center;">Média</th>
+                      <th style="text-align: center;">Situação</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  ${boletim
+                    .map((d) => {
+                      const n1 = d.nota_etapa_1?.nota || "--";
+                      const n2 = d.nota_etapa_2?.nota || "--";
+                      const n3 = d.nota_etapa_3?.nota || "--";
+                      const n4 = d.nota_etapa_4?.nota || "--";
+                      const media =
+                        d.media_disciplina || d.media_final_disciplina || "--";
+                      const n1Num = parseFloat(n1) || 0;
+                      const n2Num = parseFloat(n2) || 0;
+                      const n3Num = parseFloat(n3) || 0;
+                      const n4Num = parseFloat(n4) || 0;
+                      let situacaoClass = "tag-cursando";
+                      if (d.situacao === "Aprovado")
+                        situacaoClass = "tag-aprovado";
+                      else if (d.situacao === "Reprovado")
+                        situacaoClass = "tag-reprovado";
+                      return `
+                          <tr>
+                              <td>
+                                  <div class="disciplina-info">
+                                      <h4>${d.disciplina || "Disciplina"}</h4>
+                                      <p>Faltas: ${d.numero_faltas || 0} | Freq: ${d.percentual_carga_horaria_frequentada || 0}%</p>
+                                  </div>
+                              </td>
+                              <td style="text-align: center;"><span class="nota-badge ${n1Num >= 60 ? "nota-aprovado" : n1Num >= 40 ? "nota-recuperacao" : "nota-reprovado"}">${n1}</span></td>
+                              <td style="text-align: center;"><span class="nota-badge ${n2Num >= 60 ? "nota-aprovado" : n2Num >= 40 ? "nota-recuperacao" : "nota-reprovado"}">${n2}</span></td>
+                              <td style="text-align: center;"><span class="nota-badge ${n3Num >= 60 ? "nota-aprovado" : n3Num >= 40 ? "nota-recuperacao" : "nota-reprovado"}">${n3}</span></td>
+                              <td style="text-align: center;"><span class="nota-badge ${n4Num >= 60 ? "nota-aprovado" : n4Num >= 40 ? "nota-recuperacao" : "nota-reprovado"}">${n4}</span></td>
+                              <td style="text-align: center; font-weight: 700; font-size: 1.1rem;">${media}</td>
+                              <td style="text-align: center;"><span class="situacao-badge ${situacaoClass}">${d.situacao || "Cursando"}</span></td>
+                          </tr>
+                      `;
+                    })
+                    .join("")}
+              </tbody>
+          </table>
+        </div>
     `;
 
   container.innerHTML = html;

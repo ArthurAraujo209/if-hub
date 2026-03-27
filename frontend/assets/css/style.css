@@ -537,10 +537,26 @@ body {
 }
 
 /* Boletim Table */
+
+.table-responsive {
+    width: 100%;             /* Ocupa a largura total do pai */
+    overflow-x: auto;        /* Ativa o scroll horizontal se a tabela for maior */
+    -webkit-overflow-scrolling: touch; /* Deixa o scroll "lisinho" no iPhone/iOS */
+    margin-bottom: 1rem;
+}
+
+.table-responsive::-webkit-scrollbar {
+    display: none; /* Esconde a barra no Chrome/Safari */
+}
+.table-responsive {
+    scrollbar-width: none; /* Esconde no Firefox */
+}
+
 .ios-table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0 8px;
+    min-width: 600px;
 }
 
 .ios-table th {
