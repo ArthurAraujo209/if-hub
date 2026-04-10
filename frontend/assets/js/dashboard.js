@@ -591,6 +591,9 @@ function showSection(sectionName, event) {
 }
 
 // --- LÓGICA DE GESTO "HOLD & DRAG" (Refinado) ---
+// --- LÓGICA DE GESTO "HOLD & DRAG" (Refinado e Otimizado) ---
+let draggedOverItem = null;
+
 menuItems.forEach(item => {
     item.addEventListener('touchstart', (e) => {
         // Tempo ligeiramente maior para considerar o segurar (350ms)
@@ -598,13 +601,27 @@ menuItems.forEach(item => {
             isHolding = true;
             indicator.classList.add('holding'); // Bolha infla e ganha refração
             if (navigator.vibrate) navigator.vibrate([15]); // Vibração rápida
-        }, 350); 
+            draggedOverItem = null; // reseta ao iniciar novo arraste
+        }, 350);
     });
 
     item.addEventListener('touchend', () => {
         clearTimeout(holdTimer);
+        
+        // Se estava segurando e passou por algum item, ativa a seção correspondente
+        if (isHolding && draggedOverItem) {
+            const onclickAttr = draggedOverItem.getAttribute('onclick');
+            if (onclickAttr) {
+                const section = onclickAttr.match(/'([^']+)'/)[1];
+                showSection(section);
+                if (navigator.vibrate) navigator.vibrate(10); // feedback tátil de confirmação
+            }
+        }
+        
+        // Reset do estado
         isHolding = false;
         indicator.classList.remove('holding'); // Bolha volta ao normal
+        draggedOverItem = null;
     });
 
     item.addEventListener('touchmove', (e) => {
@@ -614,13 +631,10 @@ menuItems.forEach(item => {
             const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
             const menuBtn = targetEl?.closest('.mobile-menu-item');
 
-            if (menuBtn && !menuBtn.classList.contains('active')) {
-                // Extrai o nome da seção do atributo onclick
-                const onclickAttr = menuBtn.getAttribute('onclick');
-                const section = onclickAttr.match(/'([^']+)'/)[1];
-                
-                showSection(section); // Muda a seção
-                if (navigator.vibrate) navigator.vibrate(8); // Vibração suave de "passagem"
+            if (menuBtn) {
+                draggedOverItem = menuBtn;
+                // Apenas move a bolha, NÃO troca de seção
+                updateIndicator(menuBtn);
             }
         }
     }, { passive: true });
