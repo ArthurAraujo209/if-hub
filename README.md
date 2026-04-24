@@ -10,7 +10,7 @@ Além disso, o projeto foi desenvolvido como um Progressive Web App (PWA), permi
 
 ---
 
-Link na Web: https://if-hub.netlify.app
+Link na Web: https://simplifrn.vercel.app
 
 ---
 

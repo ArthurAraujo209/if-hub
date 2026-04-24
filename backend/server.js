@@ -34,7 +34,7 @@ app.use(cors({
     origin: [
         'http://localhost:5500',
         'https://if-hub-frontend.onrender.com',
-        'https://if-hub.netlify.app'
+        'https://simplifrn.vercel.app'
     ],
     credentials: true
 }));
