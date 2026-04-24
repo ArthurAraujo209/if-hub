@@ -31,7 +31,7 @@
     --gradient-orange: linear-gradient(135deg, #ff9f0a 0%, #d48000 100%);
     --gradient-red: linear-gradient(135deg, #ff453a 0%, #d63930 100%);
     --gradient-teal: linear-gradient(135deg, #64d2ff 0%, #4aa8d1 100%);
-}
+    }
 
 * {
     margin: 0;
