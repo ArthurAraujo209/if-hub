@@ -109,7 +109,7 @@ app.get('/api/test/notificacao', async (req, res) => {
     
     for (const [token, userData] of subscriptions) {
         const sucesso = await enviarFCM(userData.fcmToken, {
-            title: '🧪 Teste IF HUB',
+            title: '🧪 Teste SIMPLIF',
             body: 'Suas notificações estão funcionando! 🎉',
             url: '/dashboard.html'
         });
@@ -268,7 +268,7 @@ async function enviarFCM(fcmToken, data) {
             },
             webpush: {
                 fcmOptions: {
-                    link: 'https://if-hub.netlify.app' + data.url
+                    link: 'https://simplifrn.vercel.app' + data.url
                 },
                 notification: {
                     icon: 'https://if-hub.netlify.app/assets/icons/IF HUB - SEM FUNDO - 192x192.png',
