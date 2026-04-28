@@ -1,4 +1,4 @@
-const CACHE_NAME = 'if-smart-v20';
+const CACHE_NAME = 'simplifrn-v1';
 
 const urlsToCache = [
   '/',
@@ -90,31 +90,31 @@ self.addEventListener('fetch', event => {
   }
 
   // Assets -> CACHE FIRST
-event.respondWith(
-  caches.match(event.request)
-    .then(cachedResponse => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(cachedResponse => {
 
-      if (cachedResponse) return cachedResponse;
+        if (cachedResponse) return cachedResponse;
 
-      return fetch(event.request)
-        .then(response => {
+        return fetch(event.request)
+          .then(response => {
 
-          if (response && response.status === 200) {
+            if (response && response.status === 200) {
 
-            const responseClone = response.clone(); // ← Você esqueceu os () aqui btw!
+              const responseClone = response.clone();
 
-            caches.open(CACHE_NAME)
-              .then(cache => cache.put(event.request, responseClone));
+              caches.open(CACHE_NAME)
+                .then(cache => cache.put(event.request, responseClone));
 
-          }
+            }
 
-          return response;
+            return response;
 
-        });
-    })
-);
+          });
+      })
+  );
 
-
+}); // ← fecha o addEventListener('fetch') corretamente
 
 // 🔔 PUSH NOTIFICATIONS
 self.addEventListener('push', event => {
@@ -125,7 +125,7 @@ self.addEventListener('push', event => {
     data = event.data.json();
   } catch (e) {
     data = {
-      title: 'IF HUB',
+      title: 'SimpliFRN',
       body: event.data?.text() || 'Nova atualização!'
     };
   }
@@ -133,9 +133,9 @@ self.addEventListener('push', event => {
   const options = {
     body: data.body || 'Você tem uma nova notificação',
     icon: '/icons/icon-192.png',
-    badge: '/icons/icon-72.png', // ícone menor para badge
+    badge: '/icons/icon-72.png',
     tag: data.tag || 'default',
-    requireInteraction: true, // não some até clicar
+    requireInteraction: true,
     data: {
       url: data.url || '/dashboard.html'
     },
@@ -143,42 +143,38 @@ self.addEventListener('push', event => {
       { action: 'open', title: 'Abrir' },
       { action: 'dismiss', title: 'Dispensar' }
     ],
-    vibrate: [200, 100, 200] // padrão de vibração
+    vibrate: [200, 100, 200]
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'IF HUB', options)
+    self.registration.showNotification(data.title || 'SimpliFRN', options)
   );
 });
 
 // 👆 CLIQUE NA NOTIFICAÇÃO
 self.addEventListener('notificationclick', event => {
   console.log('🔔 Clique na notificação:', event.action);
-  
+
   event.notification.close();
 
   const urlToOpen = event.notification.data?.url || '/dashboard.html';
 
-  // Se clicou em "Dispensar", só fecha
   if (event.action === 'dismiss') {
     return;
   }
 
-  // Abre/foca a janela do app
   event.waitUntil(
-    clients.matchAll({ 
-      type: 'window', 
-      includeUncontrolled: true 
+    clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true
     }).then(clientList => {
-      
-      // Tenta focar janela existente
+
       for (const client of clientList) {
         if (client.url.includes(urlToOpen) && 'focus' in client) {
           return client.focus();
         }
       }
-      
-      // Se não achou, abre nova
+
       if (clients.openWindow) {
         return clients.openWindow(urlToOpen);
       }
@@ -189,6 +185,4 @@ self.addEventListener('notificationclick', event => {
 // 🔔 FECHAR NOTIFICAÇÃO (sem clicar)
 self.addEventListener('notificationclose', event => {
   console.log('🔕 Notificação fechada sem interação');
-});
-
 });
