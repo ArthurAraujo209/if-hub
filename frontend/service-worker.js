@@ -125,7 +125,7 @@ self.addEventListener('push', event => {
     data = event.data.json();
   } catch (e) {
     data = {
-      title: 'SimpliFRN',
+      title: 'Simplif',
       body: event.data?.text() || 'Nova atualização!'
     };
   }
@@ -147,7 +147,7 @@ self.addEventListener('push', event => {
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'SimpliFRN', options)
+    self.registration.showNotification(data.title || 'Simplif', options)
   );
 });
 
