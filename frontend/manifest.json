@@ -11,13 +11,13 @@
   "lang": "pt-BR",
   "icons": [
     {
-      "src": "/assets/icons/IF HUB - SEM FUNDO - 192x192.png",
+      "src": "/assets/icons/SIMPLIF - Icon Sem Fundo 192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/assets/icons/IF HUB - SEM FUNDO - 512x512.png",
+      "src": "/assets/icons/SIMPLIF - Icon Sem Fundo 512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

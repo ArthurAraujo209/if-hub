@@ -9,8 +9,8 @@ const urlsToCache = [
   '/dashboard.js',
   '/auth.js',
   '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+   '/assets/icons/SIMPLIF - Icon 192x192.png',
+  '/assets/icons/SIMPLIF - Icon 512x512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap'
 ];
@@ -132,8 +132,8 @@ self.addEventListener('push', event => {
 
   const options = {
     body: data.body || 'Você tem uma nova notificação',
-    icon: '/icons/icon-192.png',
-    badge: '/icons/icon-72.png',
+    icon: '/assets/icons/SIMPLIF - Icon 192x192.png',
+    badge: '/assets/icons/SIMPLIF - Icon 192x192.png',
     tag: data.tag || 'default',
     requireInteraction: true,
     data: {

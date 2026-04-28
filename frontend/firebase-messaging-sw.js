@@ -18,7 +18,7 @@ messaging.onBackgroundMessage((payload) => {
   
   self.registration.showNotification(payload.notification.title, {
     body: payload.notification.body,
-    icon: payload.notification.icon || '/assets/icons/IF HUB - SEM FUNDO - 192x192.png',
+    icon: payload.notification.icon || '/assets/icons/SIMPLIF - Icon Sem Fundo 192x192.png',
     data: payload.data
   });
 });
