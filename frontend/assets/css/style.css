@@ -16,7 +16,7 @@
     --ios-bg-secondary: #12121a;
     --ios-text-primary: #d8d8d8;
     --ios-text-secondary: rgba(199, 199, 199, 0.65);
-    --ios-accent-green: #30d158;
+    --ios-accent-green: #359830;
     --ios-accent-blue: #0a84ff;
     --ios-accent-purple: #bf5af2;
     --ios-accent-orange: #ff9f0a;
@@ -25,7 +25,7 @@
     --ios-accent-yellow: #ffd60a;
 
     /* Gradients iOS Style (mantido) */
-    --gradient-primary: linear-gradient(135deg, #30d158 0%, #28b94d 100%);
+    --gradient-primary: linear-gradient(135deg, #359830 0%, #359830 100%);
     --gradient-blue: linear-gradient(135deg, #0a84ff 0%, #0066cc 100%);
     --gradient-purple: linear-gradient(135deg, #bf5af2 0%, #994fd1 100%);
     --gradient-orange: linear-gradient(135deg, #ff9f0a 0%, #d48000 100%);
@@ -49,13 +49,7 @@ html {
 }
 
 body {
-    background: #000000d2;
-    background-image: url('../img/background.webp');
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-blend-mode: overlay;
-    background-attachment: fixed;
+    background: #2B2B2B;
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;
@@ -80,7 +74,7 @@ body {
     top: 0;
     width: 300px;
     height: 100vh;
-    background: rgba(10, 10, 15, 0.459); /* mais opaco para compensar blur reduzido */
+    background: #202020;
     border-right: 1px solid var(--glass-border);
     z-index: 1000;
     display: flex;
