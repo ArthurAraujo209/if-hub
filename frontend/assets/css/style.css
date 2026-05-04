@@ -49,7 +49,7 @@ html {
 }
 
 body {
-    background: #2B2B2B;
+    background: linear-gradient(135deg, #7D7D7D 0%, #171717 100%);
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;

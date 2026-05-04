@@ -271,8 +271,8 @@ async function enviarFCM(fcmToken, data) {
                     link: 'https://simplifrn.vercel.app' + data.url
                 },
                 notification: {
-                    icon: 'https://if-hub.netlify.app/assets/icons/IF HUB - SEM FUNDO - 192x192.png',
-                    badge: 'https://if-hub.netlify.app/assets/icons/badge-72x72.png'
+                    icon: 'https://simplifrn.vercel.app/assets/icons/IF HUB - SEM FUNDO - 192x192.png',
+                    badge: 'https://simplifrn.vercel.app/assets/icons/badge-72x72.png'
                 }
             }
         });
