@@ -95,8 +95,8 @@ Contribuições são sempre bem-vindas.
 
 Arthur Lima Araújo & Equipe
 
-Estudantes de Informática no IFRN
-Desenvolvedores Front-end
+- Estudantes de Informática no IFRN
+- Desenvolvedores Front-end
 
 GitHub
 https://github.com/ArthurAraujo209
