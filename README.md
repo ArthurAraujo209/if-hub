@@ -1,4 +1,4 @@
-IF HUB 🎓
+SIMPLIF 🎓
 
 📖 Sobre o Projeto
 
