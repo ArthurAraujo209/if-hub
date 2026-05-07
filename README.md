@@ -2,7 +2,7 @@ IF HUB 🎓
 
 📖 Sobre o Projeto
 
-O IF HUB é uma plataforma web criada para centralizar informações acadêmicas e ferramentas úteis para estudantes do IFRN Campus Santa Cruz.
+O SIMPLIF é uma plataforma web criada para centralizar informações acadêmicas e ferramentas úteis para estudantes do IFRN Campus Santa Cruz.
 
 A ideia do projeto é reunir em um único lugar recursos importantes para os alunos, como dashboards, informações do campus e ferramentas acadêmicas, tornando o acesso às informações mais rápido, organizado e moderno.
 
@@ -57,7 +57,7 @@ O projeto consome dados de uma API do SUAP que retorna todos eles
 
 📱 Progressive Web App (PWA)
 
-O IF HUB pode ser instalado diretamente no celular ou computador.
+O SIMPLIF pode ser instalado diretamente no celular ou computador.
 
 Benefícios:
 
@@ -70,7 +70,7 @@ Benefícios:
 
 🎯 Objetivo do Projeto
 
-O IF HUB foi criado com o objetivo de melhorar o acesso às informações acadêmicas do IFRN, oferecendo uma plataforma simples, rápida e centralizada para os estudantes.
+O SIMPLIF foi criado com o objetivo de melhorar o acesso às informações acadêmicas do IFRN, oferecendo uma plataforma simples, rápida e centralizada para os estudantes.
 
 ---
 
@@ -93,10 +93,10 @@ Contribuições são sempre bem-vindas.
 
 👨‍💻 Autor
 
-Arthur Lima Araújo 
+Arthur Lima Araújo & Equipe
 
-Estudante de Informática no IFRN
-Desenvolvedor Front-end
+Estudantes de Informática no IFRN
+Desenvolvedores Front-end
 
 GitHub
 https://github.com/ArthurAraujo209
