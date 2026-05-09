@@ -49,7 +49,8 @@
             </div>
         </div>
 
-        <div class="user-card" onclick="showSection('perfil')">
+        <!-- user-card: hidden visually but kept for JS data population -->
+        <div class="user-card" id="user-card-data" onclick="showSection('perfil')" style="display:none;">
             <div class="user-avatar" id="sidebar-avatar">
                 <span id="sidebar-avatar-text">A</span>
             </div>
@@ -60,43 +61,87 @@
         </div>
 
         <ul class="nav-menu">
-            <li class="nav-item"><a class="nav-link active" onclick="showSection('dashboard'); return false;"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
-            <li class="nav-item"><a class="nav-link" onclick="showSection('boletim'); return false;"><i class="fas fa-file-alt"></i><span>Boletim</span></a></li>
-            <li class="nav-item"><a class="nav-link" onclick="showSection('horarios'); return false;"><i class="fas fa-clock"></i><span>Horários</span></a></li>
-            <li class="nav-item"><a class="nav-link" onclick="showSection('turmas'); return false;"><i class="fas fa-users"></i><span>Turmas</span></a></li>
-            <li class="nav-item"><a class="nav-link" onclick="showSection('mapa'); return false;"><i class="fas fa-map-marked-alt"></i><span>Mapa Campus</span></a></li>
-            <li class="nav-item"><a class="nav-link" onclick="showSection('avaliacoes'); return false;"><i class="fas fa-clipboard-list"></i><span>Avaliações</span></a></li>
-            <li class="nav-item"><a class="nav-link" onclick="showSection('periodos'); return false;"><i class="fas fa-calendar-alt"></i><span>Períodos</span></a></li>
-            <li class="nav-item"><a class="nav-link" onclick="showSection('perfil'); return false;"><i class="fas fa-user"></i><span>Perfil</span></a></li>
+            <li class="nav-item">
+                <a class="nav-link active" onclick="showSection('dashboard'); return false;">
+                    <i class="fas fa-graduation-cap"></i><span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item"><a class="nav-link" onclick="showSection('boletim'); return false;"><span>Boletim</span></a></li>
+            <li class="nav-item"><a class="nav-link" onclick="showSection('horarios'); return false;"><span>Horários</span></a></li>
+            <li class="nav-item"><a class="nav-link" onclick="showSection('turmas'); return false;"><span>Turmas</span></a></li>
+            <li class="nav-item"><a class="nav-link" onclick="showSection('mapa'); return false;"><span>Mapa do Campus</span></a></li>
+            <li class="nav-item"><a class="nav-link" onclick="showSection('avaliacoes'); return false;"><span>Avaliações</span></a></li>
+            <li class="nav-item"><a class="nav-link" onclick="showSection('periodos'); return false;"><span>Periodos</span></a></li>
+            <li class="nav-item"><a class="nav-link" onclick="showSection('perfil'); return false;"><span>Perfil</span></a></li>
         </ul>
-        <div class="sem-nada">
-          
+
+        <div class="sem-nada"></div>
+
+        <!-- Bottom action buttons -->
+        <div class="sidebar-bottom-actions">
+            <button class="sidebar-action-btn" id="sidebar-theme-btn" title="Configurações de Tema">
+                <i class="fas fa-palette"></i>
+            </button>
+            <button class="sidebar-action-btn" onclick="showSection('perfil')" title="Meu Perfil">
+                <i class="fas fa-user"></i>
+            </button>
+            <button class="sidebar-action-btn sidebar-action-logout" onclick="logout()" title="Sair da Conta">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
         </div>
-        
     </nav>
 
     <!-- Main Content -->
     <main class="main-content expanded" id="mainContent">
-        <!-- Header com navegação e botão toggle -->
+
+        <!-- Header com navegação -->
         <div class="ios-header">
-            <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebarDesktop()" title="Ocultar/Mostrar menu">
-                <i class="fas fa-bars"></i>
-            </button>
-            <h1 class="header-title" id="page-title">
-                <i class="fas fa-home"></i> Dashboard
-            </h1>
-            <!-- Nova navegação no header -->
-            <div class="header-nav">
-                <a class="header-nav-link active" onclick="showSection('dashboard'); return false;" title="Dashboard"><i class="fas fa-home"></i></a>
-                <a class="header-nav-link" onclick="showSection('boletim'); return false;" title="Boletim"><i class="fas fa-file-alt"></i></a>
-                <a class="header-nav-link" onclick="showSection('horarios'); return false;" title="Horários"><i class="fas fa-clock"></i></a>
-                <a class="header-nav-link" onclick="showSection('avaliacoes'); return false;" title="Avaliações"><i class="fas fa-clipboard-list"></i></a>
-                <a class="header-nav-link" onclick="showSection('mapa'); return false;" title="Mapa"><i class="fas fa-map-marked-alt"></i></a>
+
+            <!-- LEFT: Toggle + Greeting -->
+            <div class="header-left">
+                <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebarDesktop()" title="Ocultar/Mostrar menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <!-- Desktop: greeting -->
+                <h1 class="header-greeting">
+                    Olá <span id="header-nome">...</span>!
+                </h1>
+                <!-- Mobile: page title (updated by JS) -->
+                <h1 class="header-title" id="page-title">
+                    <i class="fas fa-home"></i> Dashboard
+                </h1>
             </div>
-            <div class="header-controls">
-                <span style="color: var(--ios-text-secondary); font-size: 0.9rem; font-weight: 600;">Ano Letivo:</span>
-                <select id="ano-select" onchange="trocarAno(this.value)" class="ios-select"><option></option></select>
+
+            <!-- CENTER: Navigation pill group -->
+            <div class="header-nav" id="header-nav-group">
+                <a class="header-nav-link active" onclick="showSection('dashboard'); return false;" title="Dashboard">
+                    <i class="fas fa-home"></i>
+                </a>
+                <a class="header-nav-link" onclick="showSection('boletim'); return false;" title="Boletim">
+                    <i class="fas fa-file-alt"></i>
+                </a>
+                <a class="header-nav-link" onclick="showSection('horarios'); return false;" title="Horários">
+                    <i class="fas fa-clock"></i>
+                </a>
+                <a class="header-nav-link" onclick="showSection('avaliacoes'); return false;" title="Avaliações">
+                    <i class="fas fa-clipboard-list"></i>
+                </a>
             </div>
+
+            <!-- RIGHT: Search + Year + Clock -->
+            <div class="header-right">
+                <button class="header-search-btn" onclick="showSection('mapa'); return false;" title="Buscar">
+                    <i class="fas fa-search"></i>
+                </button>
+                <div class="header-year-wrap">
+                    <span class="header-year-label">Ano letivo:</span>
+                    <select id="ano-select" onchange="trocarAno(this.value)" class="ios-select-inline">
+                        <option></option>
+                    </select>
+                </div>
+                <span class="header-clock" id="header-clock">Sex - 00:00</span>
+            </div>
+
         </div>
 
         <!-- Alerts -->
@@ -186,7 +231,6 @@
 
         <!-- MAPA SECTION -->
         <section id="mapa-section" class="content-section">
-            <!-- Painel de Busca de Salas com Autocomplete Inteligente -->
             <div class="ios-panel" style="margin-bottom: 24px">
                 <div class="panel-header"><div class="panel-title"><i class="fas fa-search-location"></i> Localizar Sala ou Bloco</div></div>
                 <div class="map-search-box">
@@ -196,14 +240,12 @@
                     </div>
                     <button class="ios-btn" onclick="clearSearch()" style="padding: 16px 24px" title="Limpar pesquisa"><i class="fas fa-times"></i></button>
                 </div>
-                <!-- Container de Resultados da Pesquisa -->
                 <div class="search-result-container" id="search-result-container">
                     <div class="search-result-title" id="search-result-title"></div>
                     <div class="search-result-content" id="search-result-content"></div>
                 </div>
             </div>
 
-            <!-- Mapa Interativo -->
             <div class="ios-panel" style="padding: 0; overflow: hidden; position: relative">
                 <div class="panel-header" style="padding: 20px 24px; margin: 0">
                     <div class="panel-title"><i class="fas fa-map-marked-alt"></i> Mapa do Campus 3D</div>
@@ -211,7 +253,6 @@
                 <div class="map-spiderman-container" id="map-container" style="border-radius: 0 0 24px 24px">
                     <img src="assets/img/campus-satellite.webp" alt="Campus IFRN" class="map-base-image" id="campus-image" />
                     <div class="map-overlay"></div>
-                    <!-- BLOCOS PRINCIPAIS -->
                     <div class="building-3d tipo-lab" data-id="A" data-nome="Bloco A" data-andares="3" style="left: 39%; top: 28%; width: 18%; height: 20%" onclick="selectBuilding('A')">
                         <div class="building-top" style="width:100%;height:100%;border-color:var(--ios-accent-purple);"><span>A</span></div>
                         <div class="building-face front" style="width:100%"></div><div class="building-face side" style="width:60px;height:100%"></div>
@@ -262,7 +303,6 @@
                 </div>
             </div>
 
-            <!-- Atalhos rápidos -->
             <div class="quick-links" style="margin-top: 16px; margin-bottom: 16px">
                 <button class="quick-link" onclick="filterByCategory('lab')" style="background: var(--glass-bg)"><i class="fas fa-flask"></i><span>Laboratórios</span></button>
                 <button class="quick-link" onclick="filterByCategory('biblioteca')"><i class="fas fa-book"></i><span>Bibliotecas</span></button>
@@ -270,7 +310,6 @@
                 <button class="quick-link" onclick="filterByCategory('alimentacao')"><i class="fas fa-utensils"></i><span>Alimentação</span></button>
             </div>
 
-            <!-- Informações do Campus -->
             <div class="ios-panel">
                 <div class="panel-header"><div class="panel-title"><i class="fas fa-info-circle"></i> Informações do Campus</div></div>
                 <div class="profile-grid">
@@ -328,6 +367,7 @@
         </section>
     </main>
 
+    <!-- Mobile bottom dock -->
     <nav class="mobile-menu" id="mobileMenu">
         <div class="nav-indicator" id="navIndicator"></div>
         <a href="#" class="mobile-menu-item active" data-index="0" onclick="showSection('dashboard', event); return false;"><i class="fas fa-home"></i><span>Início</span></a>
@@ -339,9 +379,43 @@
 
     <script src="assets/js/dashboard.js"></script>
     <script>
+        // ── Live Clock ──────────────────────────────────────────────────
+        function updateHeaderClock() {
+            const now = new Date();
+            const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+            const day = days[now.getDay()];
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const el = document.getElementById('header-clock');
+            if (el) el.textContent = `${day} - ${h}:${m}`;
+        }
+        updateHeaderClock();
+        setInterval(updateHeaderClock, 15000);
+
+        // ── Mirror sidebar-nome → header-nome (first name only) ─────────
+        (function mirrorName() {
+            const sidebarNome = document.getElementById('sidebar-nome');
+            const headerNome  = document.getElementById('header-nome');
+            if (!sidebarNome || !headerNome) return;
+            function sync() {
+                const full = sidebarNome.textContent.trim();
+                if (full && full !== 'Carregando...') {
+                    headerNome.textContent = full.split(' ')[0];
+                }
+            }
+            // Observe mutations so it updates as soon as the JS fills in the name
+            new MutationObserver(sync).observe(sidebarNome, {
+                childList: true, characterData: true, subtree: true
+            });
+            sync(); // run once in case it's already filled
+        })();
+
+        // ── Service Worker ──────────────────────────────────────────────
         if ("serviceWorker" in navigator) {
             window.addEventListener("load", () => {
-                navigator.serviceWorker.register("/service-worker.js").then(reg => console.log("Service Worker registrado com sucesso!", reg)).catch(err => console.log("Erro ao registrar Service Worker:", err));
+                navigator.serviceWorker.register("/service-worker.js")
+                    .then(reg => console.log("SW registrado", reg))
+                    .catch(err => console.log("Erro SW", err));
             });
         }
     </script>
