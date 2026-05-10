@@ -12,10 +12,10 @@
     --indicator-glass: rgba(255, 255, 255, 0.15);
 
     /* Color Palette */
-    --ios-bg: #0a0a0f;
-    --ios-bg-secondary: #12121a;
+    --ios-bg: #515151;
+    --ios-bg-secondary: #202020;
     --ios-text-primary: #d8d8d8;
-    --ios-text-secondary: rgba(199, 199, 199, 0.65);
+    --ios-text-secondary: rgba(255, 255, 255, 0.65);
     --ios-accent-green: #359830;
     --ios-accent-blue: #0a84ff;
     --ios-accent-purple: #bf5af2;
@@ -31,11 +31,42 @@
     --gradient-orange: linear-gradient(135deg, #ff9f0a 0%, #d48000 100%);
     --gradient-red: linear-gradient(135deg, #ff453a 0%, #d63930 100%);
     --gradient-teal: linear-gradient(135deg, #64d2ff 0%, #4aa8d1 100%);
+
+    --surface-bg: var(--ios-bg-secondary);
+    --surface-bg-soft: var(--glass-bg);
+    --surface-bg-elevated: var(--glass-bg-elevated);
+    --surface-bg-hover: var(--glass-bg-hover);
+    --surface-border: var(--glass-border);
+    --surface-border-strong: var(--glass-border-strong);
+    --surface-shadow: var(--glass-shadow);
+    --surface-shadow-elevated: var(--glass-shadow-elevated);
+    --overlay-bg: rgba(10, 10, 15, 0.75);
+    --modal-bg: var(--glass-bg-elevated);
+    --modal-border: var(--glass-border);
+    --input-bg: var(--glass-bg);
+    --input-border: var(--glass-border);
+    --card-bg: var(--glass-bg);
+    --card-border: var(--glass-border);
+    --pill-bg: var(--glass-bg-hover);
+    --pill-border: var(--glass-border);
+    --mobile-bg: var(--glass-bg);
+    --mobile-border: var(--glass-border);
+    --nav-active-bg: var(--ios-bg);
+    --nav-active-shadow: rgba(10, 132, 255, 0.3);
+    --glass-highlight: #ffffff44;
+    --accent-green-bg: rgba(48, 209, 88, 0.15);
+    --accent-green-border: rgba(48, 209, 88, 0.3);
+    --accent-blue-bg: rgba(10, 132, 255, 0.15);
+    --accent-blue-border: rgba(10, 132, 255, 0.3);
+    --accent-orange-bg: rgba(255, 159, 10, 0.15);
+    --accent-orange-border: rgba(255, 159, 10, 0.3);
+    --accent-red-bg: rgba(255, 69, 58, 0.15);
+    --accent-red-border: rgba(255, 69, 58, 0.3);
 }
 
 body.theme-light {
-    --ios-bg: #f3f5f8;
-    --ios-bg-secondary: #ffffff;
+    --ios-bg: #e0e0e0;
+    --ios-bg-secondary: #c3c3c3;
     --ios-text-primary: #1f2937;
     --ios-text-secondary: rgba(55, 65, 81, 0.7);
     --glass-bg: rgba(255, 255, 255, 0.92);
@@ -44,6 +75,7 @@ body.theme-light {
     --glass-border: rgba(15, 23, 42, 0.08);
     --glass-border-strong: rgba(15, 23, 42, 0.16);
     --glass-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+    --nav-active-bg: #e0e0e0;
     --ios-accent-green: #1f7a2f;
     --ios-accent-blue: #0f63c8;
     --ios-accent-purple: #7c3aed;
@@ -51,10 +83,11 @@ body.theme-light {
     --ios-accent-red: #dc2626;
     --ios-accent-teal: #0f766e;
     --ios-accent-yellow: #ca8a04;
+    --overlay-bg: rgba(15, 23, 42, 0.18);
 }
 
 body.theme-contrast {
-    --ios-bg: #030303;
+    --ios-bg: #181818;
     --ios-bg-secondary: #111111;
     --ios-text-primary: #f7f7f7;
     --ios-text-secondary: rgba(255, 255, 255, 0.7);
@@ -63,6 +96,7 @@ body.theme-contrast {
     --glass-border: rgba(255, 255, 255, 0.18);
     --glass-border-strong: rgba(255, 255, 255, 0.3);
     --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+    --nav-active-bg: #181818;
     --ios-accent-green: #7cff00;
     --ios-accent-blue: #34d6ff;
     --ios-accent-purple: #b26cff;
@@ -83,6 +117,7 @@ body.theme-forest {
     --glass-border: rgba(145, 210, 155, 0.16);
     --glass-border-strong: rgba(145, 210, 155, 0.28);
     --glass-shadow: 0 14px 38px rgba(0, 0, 0, 0.35);
+    --nav-active-bg: #081b11;
     --ios-accent-green: #5bba63;
     --ios-accent-blue: #3b9fd1;
     --ios-accent-purple: #8a57c9;
@@ -103,6 +138,7 @@ body.theme-ocean {
     --glass-border: rgba(173, 222, 255, 0.16);
     --glass-border-strong: rgba(173, 222, 255, 0.3);
     --glass-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+    --nav-active-bg: #071927;
     --ios-accent-green: #4fd1c5;
     --ios-accent-blue: #38bdf8;
     --ios-accent-purple: #8b5cf6;
@@ -123,6 +159,7 @@ body.theme-solarized {
     --glass-border: rgba(88, 110, 117, 0.12);
     --glass-border-strong: rgba(88, 110, 117, 0.22);
     --glass-shadow: 0 14px 40px rgba(0, 0, 0, 0.08);
+    --nav-active-bg: #fdf6e3;
     --ios-accent-green: #2aa198;
     --ios-accent-blue: #268bd2;
     --ios-accent-purple: #6c71c4;
@@ -130,6 +167,7 @@ body.theme-solarized {
     --ios-accent-red: #dc322f;
     --ios-accent-teal: #2aa198;
     --ios-accent-yellow: #b58900;
+    --overlay-bg: rgba(15, 23, 42, 0.18);
 }
 
 * {
@@ -148,7 +186,7 @@ html {
 }
 
 body {
-    background: rgb(81, 81, 81);
+    background: var(--ios-bg);
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;
@@ -165,7 +203,7 @@ body {
     top: 0;
     width: 300px;
     height: 100vh;
-    background: #202020;
+    background: var(--ios-bg-secondary);
     z-index: 1000;
     display: flex;
     flex-direction: column;
@@ -238,7 +276,7 @@ body {
 
 .nav-link.active {
     color: var(--ios-text-primary);
-    background: rgba(125, 125, 125, 0.5);
+    background: var(--nav-active-bg);
     border: none;
     border-radius: 0px 24px 0px 24px 0px;
     box-shadow: none;
@@ -274,7 +312,7 @@ body {
 }
 
 .nav-link.active i {
-    color: white;
+    color: var(--ios-text-primary);
     display: flex;
 }
 
@@ -312,8 +350,8 @@ body {
 }
 
 .sidebar-action-btn.sidebar-action-logout:hover {
-    background: rgba(255, 69, 58, 0.15);
-    border-color: rgba(255, 69, 58, 0.3);
+    background: var(--accent-red-bg);
+    border-color: var(--accent-red-border);
     color: var(--ios-accent-red);
 }
 
@@ -356,7 +394,7 @@ body {
     inset: 0;
     z-index: 0;
     border-radius: 25px;
-    box-shadow: inset 0 0 5px 0px #ffffff44;
+    box-shadow: inset 0 0 5px 0px var(--glass-highlight);
 }
 
 .ios-header::after {
@@ -430,9 +468,9 @@ body {
 }
 
 .header-nav-link.active {
-    background: rgb(175, 175, 175);
-    color: white;
-    box-shadow: 0 2px 10px rgba(10, 132, 255, 0.3);
+    background: var(--nav-active-bg);
+    color: var(--ios-text-primary);
+    box-shadow: 0 2px 10px rgba(53, 53, 53, 0.3);
     border-radius: 25px;
 }
 
@@ -461,6 +499,7 @@ body {
     justify-content: center;
     transition: all 0.2s ease;
     flex-shrink: 0;
+    z-index: 9999;
 }
 
 .header-search-btn:hover {
@@ -472,7 +511,7 @@ body {
 .spotlight-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(10, 10, 15, 0.75);
+    background: var(--overlay-bg);
     backdrop-filter: blur(18px);
     z-index: 10010;
     display: none;
@@ -496,9 +535,9 @@ body {
     width: min(100%, 960px);
     max-height: min(100vh - 48px, 860px);
     overflow: auto;
-    background: rgba(18, 18, 23, 0.96);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+    background: var(--modal-bg);
+    border: 1px solid var(--modal-border);
+    box-shadow: var(--surface-shadow-elevated);
     border-radius: 28px;
     padding: 28px;
 }
@@ -516,6 +555,7 @@ body {
 .spotlight-label {
     font-size: 1.35rem;
     margin-bottom: 6px;
+    color: var(--ios-text-primary);
 }
 
 .theme-picker-header p,
@@ -528,8 +568,8 @@ body {
 .spotlight-close {
     width: 42px;
     height: 42px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
     color: var(--ios-text-primary);
     border-radius: 50%;
     cursor: pointer;
@@ -554,15 +594,15 @@ body {
     padding: 18px;
     min-height: 170px;
     cursor: pointer;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--card-border);
     transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--card-bg);
 }
 
 .theme-card:hover,
 .theme-card.active {
     transform: translateY(-2px);
-    border-color: rgba(56, 189, 248, 0.45);
+    border-color: var(--ios-accent-blue);
     box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
 }
 
@@ -570,6 +610,10 @@ body {
     margin-top: auto;
     color: var(--ios-text-secondary);
     font-size: 0.92rem;
+}
+
+.theme-card strong{
+    color: var(--ios-text-secondary);
 }
 
 .theme-swatch {
@@ -611,8 +655,8 @@ body {
 .spotlight-input {
     flex: 1;
     min-width: 220px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
     color: var(--ios-text-primary);
     padding: 18px 22px;
     border-radius: 20px;
@@ -621,7 +665,7 @@ body {
 }
 
 .spotlight-input::placeholder {
-    color: rgba(255, 255, 255, 0.55);
+    color: var(--ios-text-secondary);
 }
 
 .spotlight-hint {
@@ -643,14 +687,14 @@ body {
     align-items: flex-start;
     padding: 16px 18px;
     border-radius: 18px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
     cursor: pointer;
     transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .spotlight-item:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--glass-bg-hover);
     transform: translateY(-1px);
 }
 
@@ -661,7 +705,7 @@ body {
     border-radius: 16px;
     display: grid;
     place-items: center;
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--glass-bg);
     color: var(--ios-accent-blue);
     font-size: 1.2rem;
 }
@@ -674,6 +718,7 @@ body {
     font-weight: 700;
     font-size: 1rem;
     margin-bottom: 4px;
+    color: var(--ios-text-secondary);
 }
 
 .spotlight-item-subtitle,
@@ -691,8 +736,8 @@ body {
 }
 
 .spotlight-pill {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--pill-bg);
+    border: 1px solid var(--pill-border);
     border-radius: 999px;
     padding: 6px 12px;
     font-size: 0.78rem;
@@ -751,7 +796,7 @@ body.spotlight-open .header-right {
 .ios-select-inline {
     background: transparent;
     border: none;
-    color: white;
+    color: var(--ios-text-primary);
     font-weight: 700;
     font-size: 0.9rem;
     cursor: pointer;
@@ -778,7 +823,7 @@ body.spotlight-open .header-right {
     background: var(--glass-bg-elevated);
     border: 1px solid var(--glass-border);
     border-radius: 12px;
-    color: white;
+    color: var(--ios-text-primary);
     font-weight: 600;
     font-size: 0.9rem;
     cursor: pointer;
@@ -911,6 +956,7 @@ body.spotlight-open .header-right {
     font-weight: 700;
     letter-spacing: -0.021em;
     line-height: 1.2;
+    color: var(--ios-text-primary);
 }
 
 .stat-value.small {
@@ -997,6 +1043,7 @@ body.spotlight-open .header-right {
     align-items: center;
     gap: 12px;
     letter-spacing: -0.021em;
+    color: var(--ios-text-secondary);
 }
 
 /* ══════════════════════════════════════════
@@ -1033,13 +1080,13 @@ body.spotlight-open .header-right {
 
 .ios-table td {
     padding: 18px 16px;
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--glass-bg);
     border: none;
     transition: all 0.2s;
 }
 
 .ios-table tr:hover td {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--glass-bg-hover);
 }
 
 .ios-table tr td:first-child {
@@ -1071,21 +1118,21 @@ body.spotlight-open .header-right {
     font-weight: 700;
     font-size: 0.9rem;
     backdrop-filter: blur(3px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--glass-border);
 }
 
 .nota-aprovado {
-    background: rgba(48, 209, 88, 0.15);
+    background: var(--accent-green-bg);
     color: var(--ios-accent-green);
 }
 
 .nota-recuperacao {
-    background: rgba(255, 159, 10, 0.15);
+    background: var(--accent-orange-bg);
     color: var(--ios-accent-orange);
 }
 
 .nota-reprovado {
-    background: rgba(255, 69, 58, 0.15);
+    background: var(--accent-red-bg);
     color: var(--ios-accent-red);
 }
 
@@ -1103,25 +1150,25 @@ body.spotlight-open .header-right {
 }
 
 .tag-aprovado {
-    background: rgba(48, 209, 88, 0.15);
+    background: var(--accent-green-bg);
     color: var(--ios-accent-green);
-    border: 1px solid rgba(48, 209, 88, 0.3);
+    border: 1px solid var(--accent-green-border);
     padding: 4px;
     border-radius: 25px;
 }
 
 .tag-reprovado {
-    background: rgba(255, 69, 58, 0.15);
+    background: var(--accent-red-bg);
     color: var(--ios-accent-red);
-    border: 1px solid rgba(255, 69, 58, 0.3);
+    border: 1px solid var(--accent-red-border);
     padding: 4px;
     border-radius: 25px;
 }
 
 .tag-cursando {
-    background: rgba(10, 132, 255, 0.15);
+    background: var(--accent-blue-bg);
     color: var(--ios-accent-blue);
-    border: 1px solid rgba(10, 132, 255, 0.3);
+    border: 1px solid var(--accent-blue-border);
     padding: 4px;
     border-radius: 25px;
 }
@@ -1148,7 +1195,7 @@ body.spotlight-open .header-right {
     position: relative;
     margin-bottom: 20px;
     padding: 24px;
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--glass-bg);
     border-radius: 20px;
     border: 1px solid var(--glass-border);
     transition: transform 0.2s;
@@ -1156,7 +1203,7 @@ body.spotlight-open .header-right {
 
 .timeline-item:hover {
     transform: translateX(5px);
-    background: rgba(255, 255, 255, 0.05) !important;
+    background: var(--glass-bg-hover) !important;
 }
 
 .timeline-date {
@@ -1186,7 +1233,7 @@ body.spotlight-open .header-right {
    HORÁRIOS
 ══════════════════════════════════════════ */
 .dia-card {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--glass-bg);
     border-radius: 20px;
     padding: 24px;
     margin-bottom: 16px;
@@ -1247,12 +1294,12 @@ body.spotlight-open .header-right {
 }
 
 .tag-tarde {
-    background: rgba(255, 159, 10, 0.15);
+    background: var(--accent-orange-bg);
     color: var(--ios-accent-orange);
 }
 
 .tag-noite {
-    background: rgba(10, 132, 255, 0.15);
+    background: var(--accent-blue-bg);
     color: var(--ios-accent-blue);
 }
 
@@ -1270,10 +1317,10 @@ body.spotlight-open .header-right {
 .ios-input {
     flex: 1;
     padding: 16px 20px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--glass-border);
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
     border-radius: 14px;
-    color: white;
+    color: var(--ios-text-primary);
     font-size: 1rem;
     outline: none;
     transition: all 0.2s;
@@ -1294,7 +1341,7 @@ body.spotlight-open .header-right {
     background: var(--gradient-primary);
     border: none;
     border-radius: 14px;
-    color: white;
+    color: var(--ios-text-primary);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -1381,14 +1428,14 @@ body.spotlight-open .header-right {
     position: absolute;
     background: var(--glass-bg-elevated);
     backdrop-filter: blur(5px);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    border: 2px solid var(--glass-border-strong);
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
     font-size: 0.9rem;
-    color: white;
+    color: var(--ios-text-primary);
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     transition: all 0.2s;
@@ -1401,8 +1448,8 @@ body.spotlight-open .header-right {
 
 .building-face {
     position: absolute;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
 }
 
 .building-face.front {
@@ -1619,7 +1666,7 @@ body.spotlight-open .header-right {
 
 .periodo-card {
     background: var(--gradient-primary);
-    color: white;
+    color: var(--ios-text-primary);
     padding: 28px 20px;
     border-radius: 20px;
     text-align: center;
@@ -1650,7 +1697,7 @@ body.spotlight-open .header-right {
 }
 
 .periodo-card.active {
-    border-color: white;
+    border-color: var(--ios-accent-green);
     box-shadow: 0 0 0 2px rgba(48, 209, 88, 0.3), 0 6px 25px rgba(48, 209, 88, 0.3);
 }
 
@@ -1690,7 +1737,7 @@ body.spotlight-open .header-right {
 .turma-badge {
     display: inline-block;
     background: var(--gradient-primary);
-    color: white;
+    color: var(--ios-text-primary);
     padding: 6px 14px;
     border-radius: 8px;
     font-size: 0.8rem;
@@ -1771,10 +1818,10 @@ body.spotlight-open .header-right {
     right: 15px;
     height: 75px;
     width: 70%;
-    background: #d9d9d930;
+    background: var(--mobile-bg);
     backdrop-filter: blur(10px) saturate(200%);
     -webkit-backdrop-filter: blur(10px) saturate(200%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--mobile-border);
     padding: 8px;
     border-radius: 100px;
     z-index: 9999;
@@ -1791,10 +1838,10 @@ body.spotlight-open .header-right {
     right: 10px;
     height: 75px;
     width: 75px;
-    background: #d9d9d930;
+    background: var(--mobile-bg);
     backdrop-filter: blur(10px) saturate(200%);
     -webkit-backdrop-filter: blur(10px) saturate(200%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--mobile-border);
     padding: 8px;
     border-radius: 100px;
     z-index: 9999;
@@ -1828,7 +1875,7 @@ body.spotlight-open .header-right {
     backdrop-filter: blur(10px) saturate(250%);
     -webkit-backdrop-filter: blur(10px) saturate(250%);
     background: var(--indicator-hold);
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.4);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), inset 0 1px 3px var(--glass-highlight);
 }
 
 .mobile-menu-item {
@@ -1839,7 +1886,7 @@ body.spotlight-open .header-right {
     align-items: center;
     gap: 4px;
     padding: 10px 0;
-    color: #999;
+    color: var(--ios-text-secondary);
     text-decoration: none;
     font-size: 0.65rem;
     font-weight: 600;
@@ -1853,7 +1900,7 @@ body.spotlight-open .header-right {
 }
 
 .mobile-menu-item.active {
-    color: white;
+    color: var(--ios-text-primary);
 }
 
 .mobile-menu-item.active i {
@@ -1877,7 +1924,7 @@ body.spotlight-open .header-right {
     display: none;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: var(--ios-text-primary);
     font-size: 1.2rem;
     cursor: pointer;
     transition: all 0.2s;
@@ -2117,7 +2164,7 @@ body.spotlight-open .header-right {
     border-radius: 30px;
     font-size: 0.85rem;
     font-weight: 600;
-    color: white;
+    color: var(--ios-text-primary);
 }
 
 .search-result-content {
@@ -2389,7 +2436,7 @@ body.spotlight-open .header-right {
     background: var(--glass-bg);
     backdrop-filter: blur(5px);
     border: 1px solid var(--glass-border);
-    color: white;
+    color: var(--ios-text-primary);
     padding: 16px 24px;
     border-radius: 16px;
     font-weight: 500;
@@ -2429,7 +2476,7 @@ body.spotlight-open .header-right {
 
 #notification-btn.active {
     background: var(--gradient-primary);
-    color: white;
+    color: var(--ios-text-primary);
     border-color: transparent;
 }
 
