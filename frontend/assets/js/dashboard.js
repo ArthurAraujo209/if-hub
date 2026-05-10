@@ -14,6 +14,48 @@ let buildingData = {};
 let fuseRooms, fuseBuildings;
 let currentZoom = 1;
 let searchTimeout = null;
+let spotlightIndex = [];
+let spotlightFuse = null;
+let selectedSpotlightTheme = 'dark';
+
+const appThemes = [
+  {
+    id: 'dark',
+    name: 'Escuro',
+    description: 'Visão noturna suave com contraste natural.',
+    palette: ['#0a0a0f', '#12121a', '#359830', '#0a84ff'],
+  },
+  {
+    id: 'light',
+    name: 'Claro',
+    description: 'Fundo claro, alto contraste e toque limpo.',
+    palette: ['#f3f5f8', '#ffffff', '#0f63c8', '#1f7a2f'],
+  },
+  {
+    id: 'contrast',
+    name: 'Alto Contraste',
+    description: 'Cores fortes e leitura rápida em qualquer luz.',
+    palette: ['#030303', '#ffffff', '#7cff00', '#34d6ff'],
+  },
+  {
+    id: 'forest',
+    name: 'Floresta',
+    description: 'Tom natural com verde profundo e ambiente acolhedor.',
+    palette: ['#081b11', '#102516', '#5bba63', '#3b9fd1'],
+  },
+  {
+    id: 'ocean',
+    name: 'Oceano',
+    description: 'Visual fresco para navegação leve e moderna.',
+    palette: ['#071927', '#0d2d45', '#4fd1c5', '#38bdf8'],
+  },
+  {
+    id: 'solarized',
+    name: 'Solarizado',
+    description: 'Tons suaves para foco prolongado e leitura confortável.',
+    palette: ['#fdf6e3', '#f5e9d2', '#2aa198', '#268bd2'],
+  },
+];
 
 // ========== CARREGAMENTO DO JSON ==========
 async function carregarDadosMapa() {
@@ -108,6 +150,7 @@ async function carregarDadosMapa() {
     buildingData = { ...blocosPersonalizados, ...blocosJSON };
 
     console.log(`✅ ${roomsDatabase.length} salas e ${Object.keys(buildingData).length} blocos carregados.`);
+    buildSpotlightIndex();
   } catch (error) {
     console.error("❌ Erro ao carregar dados do mapa:", error);
     // Em caso de erro, usa dados de fallback (opcional)
@@ -523,6 +566,36 @@ function updateIndicator(el) {
 window.addEventListener('load', () => {
     const activeItem = document.querySelector('.mobile-menu-item.active');
     if (activeItem) updateIndicator(activeItem);
+    loadThemeFromStorage();
+    renderThemeTiles();
+
+    const headerSearchButton = document.querySelector('.header-search-btn');
+    if (headerSearchButton) {
+        headerSearchButton.addEventListener('click', (event) => {
+            event.preventDefault();
+            openSpotlight();
+        });
+    }
+
+    const mobileSearchButton = document.querySelector('.mobile-search');
+    if (mobileSearchButton) {
+        mobileSearchButton.addEventListener('click', (event) => {
+            event.preventDefault();
+            openSpotlight();
+        });
+    }
+});
+
+window.addEventListener('keydown', (event) => {
+    const isCommand = event.metaKey || event.ctrlKey;
+    if (isCommand && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        openSpotlight();
+    }
+    if (event.key === 'Escape') {
+        closeSpotlight();
+        closeThemePicker();
+    }
 });
 
 // --- FUNÇÃO DE NAVEGAÇÃO COMPLETA (Original + Efeito) ---
@@ -652,16 +725,19 @@ function toggleSidebar() {
   const sidebar = document.getElementById("sidebar");
   const overlay = document.getElementById("sidebar-overlay");
   const icon = document.getElementById("menu-toggle-icon");
+  const mobileMenu = document.getElementById("mobileMenu");
 
   sidebar.classList.toggle("open");
   if (sidebar.classList.contains("open")) {
     overlay.style.display = "block";
     icon.classList.remove("fa-bars");
     icon.classList.add("fa-arrow-left");
+    mobileMenu.style.display = "none";
   } else {
     overlay.style.display = "none";
     icon.classList.remove("fa-arrow-left");
     icon.classList.add("fa-bars");
+    mobileMenu.style.display = "flex";
   }
 }
 
@@ -669,11 +745,337 @@ function closeSidebar() {
   const sidebar = document.getElementById("sidebar");
   const overlay = document.getElementById("sidebar-overlay");
   const icon = document.getElementById("menu-toggle-icon");
+  const mobileMenu = document.getElementById("mobileMenu");
 
   sidebar.classList.remove("open");
   overlay.style.display = "none";
   icon.classList.remove("fa-arrow-left");
   icon.classList.add("fa-bars");
+  mobileMenu.style.display = "flex";
+}
+
+function openThemePicker() {
+  const overlay = document.getElementById('theme-picker-overlay');
+  if (!overlay) return;
+  overlay.removeAttribute('hidden');
+  selectedSpotlightTheme = localStorage.getItem('simplif_theme') || 'dark';
+  renderThemeTiles();
+}
+
+function closeThemePicker() {
+  const overlay = document.getElementById('theme-picker-overlay');
+  if (!overlay) return;
+  overlay.setAttribute('hidden', '');
+}
+
+function renderThemeTiles() {
+  const container = document.getElementById('themeGrid');
+  if (!container) return;
+
+  container.innerHTML = appThemes
+    .map((theme) => `
+      <div class="theme-card ${theme.id === selectedSpotlightTheme ? 'active' : ''}" onclick="selectTheme('${theme.id}')">
+        <div class="theme-swatch">
+          <span style="background: ${theme.palette[0]};"></span>
+          <span style="background: ${theme.palette[1]};"></span>
+          <span style="background: ${theme.palette[2]};"></span>
+          <span style="background: ${theme.palette[3]};"></span>
+        </div>
+        <div>
+          <strong>${theme.name}</strong>
+          <p>${theme.description}</p>
+        </div>
+      </div>
+    `)
+    .join('');
+}
+
+function selectTheme(themeId) {
+  selectedSpotlightTheme = themeId;
+  renderThemeTiles();
+  applyTheme(themeId);
+}
+
+function applyTheme(themeId) {
+  document.body.classList.remove('theme-light', 'theme-contrast', 'theme-forest', 'theme-ocean', 'theme-solarized', 'theme-dark');
+  if (themeId !== 'dark') document.body.classList.add(`theme-${themeId}`);
+  localStorage.setItem('simplif_theme', themeId);
+}
+
+function loadThemeFromStorage() {
+  const saved = localStorage.getItem('simplif_theme') || 'dark';
+  selectedSpotlightTheme = saved;
+  applyTheme(saved);
+}
+
+function openSpotlight() {
+  const overlay = document.getElementById('spotlight-overlay');
+  const input = document.getElementById('spotlight-search');
+  if (!overlay || !input) return;
+
+  overlay.removeAttribute('hidden');
+  document.body.classList.add('spotlight-open');
+  buildSpotlightIndex();
+  input.value = '';
+  updateSpotlightSearch();
+  setTimeout(() => input.focus(), 50);
+}
+
+function closeSpotlight() {
+  const overlay = document.getElementById('spotlight-overlay');
+  const input = document.getElementById('spotlight-search');
+  if (!overlay) return;
+
+  overlay.setAttribute('hidden', '');
+  document.body.classList.remove('spotlight-open');
+  if (input) input.value = '';
+}
+
+function buildSpotlightIndex() {
+  const items = [];
+
+  const sections = [
+    { id: 'dashboard', type: 'section', title: 'Dashboard', subtitle: 'Visão geral', icon: 'home', tags: ['dashboard', 'início', 'home'] },
+    { id: 'boletim', type: 'section', title: 'Boletim', subtitle: 'Notas e médias', icon: 'file-alt', tags: ['boletim', 'notas', 'media'] },
+    { id: 'horarios', type: 'section', title: 'Horários', subtitle: 'Aulas e cronograma', icon: 'clock', tags: ['horários', 'aulas', 'cronograma'] },
+    { id: 'turmas', type: 'section', title: 'Turmas', subtitle: 'Disciplinas e horários', icon: 'users', tags: ['turmas', 'disciplinas', 'cursos'] },
+    { id: 'mapa', type: 'section', title: 'Mapa do Campus', subtitle: 'Localize salas e blocos', icon: 'map-marked-alt', tags: ['mapa', 'campus', 'salas', 'blocos'] },
+    { id: 'avaliacoes', type: 'section', title: 'Avaliações', subtitle: 'Provas e trabalhos', icon: 'clipboard-list', tags: ['avaliações', 'provas', 'trabalhos', 'notas'] },
+    { id: 'periodos', type: 'section', title: 'Períodos', subtitle: 'Cronograma acadêmico', icon: 'calendar-alt', tags: ['períodos', 'ano', 'semestre'] },
+    { id: 'perfil', type: 'section', title: 'Perfil', subtitle: 'Informações pessoais', icon: 'user', tags: ['perfil', 'conta'] },
+  ];
+
+  items.push(...sections);
+
+  const actions = [
+    { id: 'action_boletim', type: 'action', title: 'Ver boletim completo', subtitle: 'Abrir área de notas', icon: 'file-alt', action: 'boletim', tags: ['boletim', 'notas', 'ver'] },
+    { id: 'action_horarios', type: 'action', title: 'Ver horários da semana', subtitle: 'Abrir agenda de aulas', icon: 'clock', action: 'horarios', tags: ['horários', 'agenda', 'aulas'] },
+    { id: 'action_mapa', type: 'action', title: 'Ir para o mapa', subtitle: 'Buscar salas e blocos', icon: 'map-marked-alt', action: 'mapa', tags: ['mapa', 'salas', 'blocos'] },
+    { id: 'action_perfil', type: 'action', title: 'Ver meu perfil', subtitle: 'Informações do aluno', icon: 'user', action: 'perfil', tags: ['perfil', 'dados', 'conta'] },
+  ];
+
+  items.push(...actions);
+
+  if (roomsDatabase.length > 0) {
+    items.push(...roomsDatabase.map((room) => ({
+      id: `room_${room.id}`,
+      type: 'room',
+      title: room.name,
+      subtitle: `Bloco ${room.block} • Sala ${room.room}`,
+      icon: 'door-open',
+      action: 'room',
+      data: room.id,
+      tags: [room.name, room.block, room.room, ...room.keywords],
+    })));
+  }
+
+  if (Object.keys(buildingData).length > 0) {
+    items.push(...Object.entries(buildingData).map(([id, building]) => ({
+      id: `building_${id}`,
+      type: 'building',
+      title: building.nome,
+      subtitle: building.descricao || 'Bloco do campus',
+      icon: building.icon || 'building',
+      action: 'building',
+      data: id,
+      tags: [building.nome, building.descricao || '', ...Object.keys(building.andares || {})],
+    })));
+  }
+
+  if (dadosGlobais) {
+    const boletim = safeArray(dadosGlobais.boletim);
+    boletim.forEach((disciplina) => {
+      if (!disciplina.disciplina) return;
+      items.push({
+        id: `disciplina_${disciplina.disciplina}`,
+        type: 'disciplina',
+        title: disciplina.disciplina,
+        subtitle: `Média: ${disciplina.media_final_disciplina || disciplina.media_disciplina || '--'} • ${disciplina.situacao || 'Cursando'}`,
+        icon: 'book',
+        action: 'boletim',
+        data: disciplina.disciplina,
+        tags: [disciplina.disciplina, disciplina.situacao || '', 'matéria', 'disciplina'],
+      });
+    });
+
+    const avaliacoes = safeArray(dadosGlobais.avaliacoes?.proximas);
+    avaliacoes.forEach((avaliacao, index) => {
+      items.push({
+        id: `avaliacao_${index}`,
+        type: 'avaliacao',
+        title: avaliacao.descricao || 'Avaliação',
+        subtitle: `${avaliacao.componente_curricular || ''} • ${avaliacao.data || ''}`,
+        icon: 'clipboard-list',
+        action: 'avaliacoes',
+        data: avaliacao,
+        tags: [avaliacao.descricao || '', avaliacao.componente_curricular || '', 'prova', 'avaliação'],
+      });
+    });
+
+    const turmas = safeArray(dadosGlobais.turmas);
+    turmas.forEach((turma) => {
+      if (!turma.nome_componente) return;
+      items.push({
+        id: `turma_${turma.nome_componente}`,
+        type: 'turma',
+        title: turma.nome_componente,
+        subtitle: turma.horarios_de_aula ? `Horários: ${turma.horarios_de_aula}` : 'Turma cadastrada',
+        icon: 'users',
+        action: 'turmas',
+        data: turma,
+        tags: [turma.nome_componente, turma.horarios_de_aula || '', 'turma'],
+      });
+      if (turma.horarios_de_aula) {
+        const codes = turma.horarios_de_aula.split(' / ');
+        codes.forEach((code) => {
+          items.push({
+            id: `horario_${turma.nome_componente}_${code}`,
+            type: 'horario',
+            title: `${turma.nome_componente} - ${code}`,
+            subtitle: 'Horário de aula',
+            icon: 'clock',
+            action: 'horarios',
+            data: turma,
+            tags: [turma.nome_componente, code, 'horário', 'aula'],
+          });
+        });
+      }
+    });
+
+    const periodos = safeArray(dadosGlobais.periodos);
+    periodos.forEach((periodo) => {
+      items.push({
+        id: `periodo_${periodo.ano_letivo || periodo.nome}`,
+        type: 'periodo',
+        title: periodo.nome || `Ano ${periodo.ano_letivo}`,
+        subtitle: periodo.ano_letivo ? `Ano letivo ${periodo.ano_letivo}` : 'Período acadêmico',
+        icon: 'calendar-alt',
+        action: 'periodos',
+        data: periodo,
+        tags: [periodo.nome || '', periodo.ano_letivo || '', 'período', 'ano'],
+      });
+    });
+  }
+
+  spotlightIndex = items;
+  spotlightFuse = new Fuse(spotlightIndex, {
+    includeScore: true,
+    threshold: 0.35,
+    ignoreLocation: true,
+    keys: [
+      { name: 'title', weight: 2 },
+      { name: 'subtitle', weight: 1 },
+      { name: 'tags', weight: 1 },
+    ],
+  });
+}
+
+function updateSpotlightSearch() {
+  const input = document.getElementById('spotlight-search');
+  const resultsContainer = document.getElementById('spotlight-results');
+  if (!input || !resultsContainer) return;
+
+  const query = input.value.trim();
+  let results = [];
+
+  if (!query) {
+    results = spotlightIndex
+      .filter((item) => item.type === 'section' || item.type === 'action')
+      .slice(0, 6);
+  } else if (spotlightFuse) {
+    results = spotlightFuse.search(query).slice(0, 10).map((result) => result.item);
+  }
+
+  renderSpotlightResults(results, query);
+}
+
+function renderSpotlightResults(results, query = '') {
+  const container = document.getElementById('spotlight-results');
+  if (!container) return;
+
+  if (!results.length) {
+    container.innerHTML = `
+      <div class="spotlight-empty">
+        <i class="fas fa-search"></i>
+        <div>Nenhum resultado encontrado.</div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = results
+    .map((item, index) => {
+      const title = highlightMatch(item.title, query);
+      const subtitle = highlightMatch(item.subtitle || '', query);
+      const badges = item.tags ? item.tags.slice(0, 3).map((tag) => `<span class="spotlight-pill">${escapeHtml(tag)}</span>`).join('') : '';
+      return `
+        <div class="spotlight-item" onclick="executeSpotlightItem(${index})">
+          <div class="spotlight-item-icon"><i class="fas fa-${item.icon}"></i></div>
+          <div class="spotlight-item-content">
+            <div class="spotlight-item-title">${title}</div>
+            <div class="spotlight-item-subtitle">${subtitle}</div>
+            <div class="spotlight-tag">${badges}</div>
+          </div>
+        </div>
+      `;
+    })
+    .join('');
+
+  container.querySelectorAll('.spotlight-item').forEach((item, index) => {
+    item.addEventListener('click', () => executeSpotlightItem(index));
+  });
+}
+
+function executeSpotlightItem(index) {
+  const query = document.getElementById('spotlight-search')?.value || '';
+  const results = query && spotlightFuse ? spotlightFuse.search(query).slice(0, 10).map((r) => r.item) : spotlightIndex;
+  const selected = results[index] || spotlightIndex[index];
+  if (!selected) return;
+
+  closeSpotlight();
+
+  switch (selected.type) {
+    case 'section':
+    case 'action':
+      showSection(selected.action || selected.id);
+      break;
+    case 'room':
+      showSection('mapa');
+      selectRoom(selected.data);
+      break;
+    case 'building':
+      showSection('mapa');
+      selectBuilding(selected.data);
+      break;
+    case 'disciplina':
+      showSection('boletim');
+      break;
+    case 'avaliacao':
+      showSection('avaliacoes');
+      break;
+    case 'turma':
+      showSection('turmas');
+      break;
+    case 'horario':
+      showSection('horarios');
+      break;
+    case 'periodo':
+      showSection('periodos');
+      break;
+    default:
+      if (selected.action) showSection(selected.action);
+      break;
+  }
+}
+
+function handleSpotlightKeydown(event) {
+  const key = event.key;
+  if (key === 'Enter') {
+    event.preventDefault();
+    const query = event.target.value.trim();
+    const results = query && spotlightFuse ? spotlightFuse.search(query).slice(0, 10).map((r) => r.item) : spotlightIndex;
+    if (results.length) executeSpotlightItem(0);
+  }
 }
 
 async function logout() {
@@ -782,6 +1184,7 @@ async function carregarDadosAno(ano) {
     preencherBoletim(dadosGlobais);
     preencherHorarios(dadosGlobais);
     preencherTurmas(dadosGlobais);
+    buildSpotlightIndex();
   } catch (error) {
     console.error("Erro:", error);
     showAlert("Erro ao carregar dados: " + error.message);
