@@ -2,9 +2,13 @@
   "name": "suap-oauth-fullstack",
   "version": "1.0.0",
   "description": "SUAP OAuth2 Fullstack App",
-  "main": "backend/server.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node backend/server.js"
+    "start": "node server.js",
+    "dev": "NODE_ENV=development node server.js",
+    "start:backend": "NODE_ENV=development node server.js",
+    "seed:campus": "node seed-campus.js",
+    "setup": "node seed-campus.js && npm start"
   },
   "dependencies": {
     "axios": "^1.13.5",

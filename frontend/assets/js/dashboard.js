@@ -1,10 +1,14 @@
 // dashboard.js - Versão com dados carregados do JSON externo
 
-const API_URL = "https://if-hub-backend.onrender.com/api";
+// Detectar ambiente automaticamente
+const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_URL = isDev ? "http://localhost:3000/api" : "https://if-hub-backend.onrender.com/api";
 const DATA_URL = "./assets/data/salas.json"; // Ajuste se necessário
 let dadosGlobais = null;
 let dadosAluno = null;
 let anoAtual = new Date().getFullYear();
+
+console.log(`🌍 Dashboard usando API_URL: ${API_URL}`);
 
 // Essas variáveis agora serão preenchidas após o carregamento do JSON
 let roomsDatabase = [];

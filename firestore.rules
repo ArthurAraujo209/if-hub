@@ -1,0 +1,68 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===== CAMPUS (leitura pública) =====
+    match /campus/{campusId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ===== USUÁRIOS =====
+    match /usuarios/{userId} {
+      // Usuário pode ler/atualizar seu próprio documento
+      allow read: if request.auth.uid == userId;
+      allow update: if request.auth.uid == userId && !modifiedFields(['role', 'campus_admin', 'uid']);
+      
+      // Admin pode ler/atualizar qualquer usuário
+      allow read, update: if isAdmin();
+      allow create, delete: if isAdmin();
+
+      // ===== PREFERÊNCIAS (subcoleção) =====
+      match /preferencias/{document=**} {
+        allow read, write: if request.auth.uid == userId;
+      }
+    }
+
+    // ===== MAPAS =====
+    match /mapas/{campusId} {
+      // Qualquer usuário pode ler mapas de qualquer campus
+      allow read: if request.auth != null;
+      
+      // Admin ou campus_admin do campus pode escrever
+      allow write: if isAdmin() || isCampusAdmin(campusId);
+    }
+
+    // ===== SALAS (subcoleção em mapas) =====
+    match /mapas/{campusId}/salas/{salaId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin() || isCampusAdmin(campusId);
+    }
+
+    // ===== NOTIFICAÇÕES (subcoleção em usuários) =====
+    match /usuarios/{userId}/notificacoes/{notificacaoId} {
+      allow read: if request.auth.uid == userId;
+      allow write: if request.auth.uid == userId;
+    }
+
+    // ===== FUNÇÕES AUXILIARES =====
+    
+    // Verifica se o usuário é admin
+    function isAdmin() {
+      return request.auth != null && 
+             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Verifica se o usuário é campus_admin do campus especificado
+    function isCampusAdmin(campusId) {
+      return request.auth != null && 
+             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.campus_admin == campusId;
+    }
+
+    // Verifica se campos específicos foram modificados
+    function modifiedFields(fields) {
+      return resource == null || 
+             request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+  }
+}

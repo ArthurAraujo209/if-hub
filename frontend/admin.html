@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IF-Hub — Painel Admin</title>
+  <link rel="shortcut icon" href="/assets/icons/Icone Preto sem fundo.svg" type="image/x-icon">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Cache de tema para evitar flash -->
+  <script>
+    try {
+      const tema = JSON.parse(localStorage.getItem('pref_tema')) || 'dark';
+      document.documentElement.setAttribute('data-theme', tema);
+    } catch {}
+  </script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:        #0a0a0f;
+      --bg2:       #12121a;
+      --card:      rgba(255,255,255,0.05);
+      --border:    rgba(255,255,255,0.1);
+      --text:      #ffffff;
+      --text2:     rgba(255,255,255,0.6);
+      --accent:    #00d4ff;
+      --success:   #43e97b;
+      --danger:    #f5576c;
+      --warning:   #fee140;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ===== Loading / Acesso Negado ===== */
+    #loading, #acesso-negado {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      color: var(--text2);
+    }
+
+    #acesso-negado { display: none; }
+    #acesso-negado i { font-size: 48px; color: var(--danger); }
+
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== Layout principal ===== */
+    #admin-app { display: none; }
+
+    header {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 { font-size: 18px; font-weight: 600; }
+    header span { font-size: 13px; color: var(--text2); }
+
+    .btn-logout {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text2);
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+    nav.tabs {
+      display: flex;
+      gap: 4px;
+      padding: 16px 24px 0;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+    }
+
+    nav.tabs button {
+      background: transparent;
+      border: none;
+      color: var(--text2);
+      padding: 10px 20px;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    nav.tabs button.ativo {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-bottom-color: var(--bg);
+      margin-bottom: -1px;
+    }
+
+    main { padding: 24px; max-width: 1000px; margin: 0 auto; }
+
+    .secao { display: none; }
+    .secao.ativo { display: block; }
+
+    h2 { font-size: 20px; font-weight: 600; margin-bottom: 20px; }
+
+    /* ===== Cards ===== */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .card-header h3 { font-size: 16px; font-weight: 600; }
+
+    .badge {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    .badge-ativo   { background: rgba(67,233,123,0.15); color: var(--success); }
+    .badge-inativo { background: rgba(245,87,108,0.15); color: var(--danger); }
+
+    .feature-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+
+    .tag {
+      background: rgba(0,212,255,0.1);
+      color: var(--accent);
+      border: 1px solid rgba(0,212,255,0.2);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+    }
+
+    /* ===== Botões ===== */
+    .btn {
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .btn-primary { background: var(--accent); color: #000; }
+    .btn-primary:hover { opacity: 0.85; }
+
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { opacity: 0.85; }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text2);
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+    /* ===== Formulários ===== */
+    label { display: block; font-size: 13px; color: var(--text2); margin-bottom: 6px; }
+
+    input, select, textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      margin-bottom: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+
+    textarea { resize: vertical; min-height: 200px; font-family: monospace; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    /* ===== Tabela de usuários ===== */
+    .tabela { width: 100%; border-collapse: collapse; }
+
+    .tabela th, .tabela td {
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .tabela th { color: var(--text2); font-weight: 500; }
+
+    /* ===== Toast ===== */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--success);
+      color: #000;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      display: none;
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="spinner"></div>
+  <p>Verificando permissões...</p>
+</div>
+
+<!-- Acesso negado -->
+<div id="acesso-negado">
+  <i class="fa fa-lock"></i>
+  <h2>Acesso negado</h2>
+  <p>Você não tem permissão para acessar o painel administrativo.</p>
+  <br>
+  <a href="/dashboard.html" style="color: var(--accent)">← Voltar ao app</a>
+</div>
+
+<!-- App Admin -->
+<div id="admin-app">
+
+  <header>
+    <h1>🛡️ Painel Admin — IF-Hub</h1>
+    <div style="display:flex;align-items:center;gap:16px">
+      <span id="admin-nome"></span>
+      <button class="btn-logout" onclick="fazerLogout()">Sair</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="ativo" onclick="mostrarSecao('campus', this)">
+      <i class="fa fa-school"></i> Campus
+    </button>
+    <button onclick="mostrarSecao('mapas', this)">
+      <i class="fa fa-map"></i> Mapas
+    </button>
+    <button onclick="mostrarSecao('usuarios', this)" id="tab-usuarios">
+      <i class="fa fa-users"></i> Usuários
+    </button>
+  </nav>
+
+  <main>
+
+    <!-- ===== SEÇÃO: CAMPUS ===== -->
+    <section id="secao-campus" class="secao ativo">
+      <h2>Gerenciar Campus</h2>
+      <div id="lista-campus">Carregando...</div>
+    </section>
+
+    <!-- ===== SEÇÃO: MAPAS ===== -->
+    <section id="secao-mapas" class="secao">
+      <h2>Gerenciar Mapas</h2>
+
+      <div class="card">
+        <label>Campus</label>
+        <select id="select-campus-mapa">
+          <option value="">Selecione um campus...</option>
+        </select>
+
+        <label>JSON das salas</label>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:8px">
+          Formato: <code>[{"id":"A101","nome":"Sala A101","bloco":"A","andar":"1º Piso","tipo":"sala_aula","x":45.2,"y":30.1}]</code>
+        </p>
+        <textarea id="json-salas" placeholder='[{"id":"A101","nome":"Sala A101","bloco":"A","andar":"1º Piso","tipo":"sala_aula","x":45,"y":30}]'></textarea>
+
+        <label>URL da imagem do mapa (opcional)</label>
+        <input type="url" id="imagem-mapa" placeholder="https://...">
+
+        <div class="btn-group">
+          <button class="btn btn-ghost" onclick="carregarMapaAtual()">
+            <i class="fa fa-download"></i> Carregar mapa atual
+          </button>
+          <button class="btn btn-primary" onclick="salvarMapa()">
+            <i class="fa fa-save"></i> Salvar mapa
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SEÇÃO: USUÁRIOS (apenas superadmin) ===== -->
+    <section id="secao-usuarios" class="secao">
+      <h2>Gerenciar Usuários</h2>
+      <div id="lista-usuarios">Carregando...</div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Toast de notificação -->
+<div id="toast"></div>
+
+<script type="module">
+  import { auth, db, onAuthStateChanged, signOut, doc, getDoc } from './assets/js/firebase-init.js';
+
+  const API = 'https://if-hub-backend.onrender.com'; // ← ajuste se necessário
+
+  let adminUser = null;
+  let idToken   = null;
+
+  // ===================================================
+  // Auth check
+  // ===================================================
+  onAuthStateChanged(auth, async (user) => {
+    console.log('🔐 onAuthStateChanged disparado');
+    
+    if (!user) {
+      console.error('❌ Nenhum usuário autenticado');
+      window.location.href = '/index.html';
+      return;
+    }
+
+    console.log('✅ Usuário autenticado:', user.uid);
+
+    try {
+      console.log('🔄 Buscando token...');
+      idToken = await user.getIdToken();
+      console.log('✅ Token obtido');
+
+      console.log('🔄 Buscando documento do usuário no Firestore...');
+      console.log('   UID:', user.uid);
+      const usuarioSnap = await getDoc(doc(db, 'usuarios', user.uid));
+      
+      if (!usuarioSnap.exists()) {
+        console.error('❌ Documento não existe em usuarios/', user.uid);
+        throw new Error('Usuário não encontrado no Firestore');
+      }
+
+      console.log('✅ Documento encontrado');
+      adminUser = usuarioSnap.data();
+      console.log('👤 Dados do usuário:', adminUser);
+      console.log('   Role:', adminUser.role);
+
+      if (adminUser.role !== 'admin' && adminUser.role !== 'admin_campus') {
+        console.warn('⛔ Usuário não tem role de admin');
+        console.warn('   Role atual:', adminUser.role);
+        console.warn('   Exigido: admin ou admin_campus');
+        document.getElementById('loading').style.display       = 'none';
+        document.getElementById('acesso-negado').style.display = 'flex';
+        return;
+      }
+
+      console.log('✅ Usuário autorizado!');
+
+      // Esconder aba de usuários para admin_campus
+      if (adminUser.role === 'admin_campus') {
+        document.getElementById('tab-usuarios').style.display = 'none';
+      }
+
+      document.getElementById('admin-nome').textContent = adminUser.nome;
+      document.getElementById('loading').style.display  = 'none';
+      document.getElementById('admin-app').style.display = 'block';
+
+      console.log('🚀 Carregando dados do admin...');
+      carregarCampi();
+      popularSelectCampus();
+
+    } catch (err) {
+      console.error('❌ ERRO NO AUTH CHECK:');
+      console.error('   Mensagem:', err.message);
+      console.error('   Stack:', err.stack);
+      window.location.href = '/index.html';
+    }
+  });
+
+  // ===================================================
+  // Helpers
+  // ===================================================
+  async function headers() {
+    idToken = await auth.currentUser.getIdToken(true);
+    return { 'Authorization': `Bearer ${idToken}`, 'Content-Type': 'application/json' };
+  }
+
+  function toast(msg, cor = 'var(--success)') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.style.background = cor;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 3000);
+  }
+
+  // ===================================================
+  // CAMPUS
+  // ===================================================
+  async function carregarCampi() {
+    const res  = await fetch(`${API}/admin/campus`, { headers: await headers() });
+    const campi = await res.json();
+
+    document.getElementById('lista-campus').innerHTML = campi.map(c => `
+      <div class="card">
+        <div class="card-header">
+          <h3>${c.nome} <small style="color:var(--text2);font-size:12px">(${c.id})</small></h3>
+          <span class="badge ${c.ativo ? 'badge-ativo' : 'badge-inativo'}">
+            ${c.ativo ? 'Ativo' : 'Inativo'}
+          </span>
+        </div>
+
+        <div class="feature-tags">
+          ${(c.features || []).map(f => `<span class="tag">${f}</span>`).join('') || '<span style="color:var(--text2);font-size:13px">Nenhuma feature</span>'}
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-ghost" onclick="editarFeatures('${c.id}', '${(c.features||[]).join(',')}')">
+            <i class="fa fa-edit"></i> Editar features
+          </button>
+          ${adminUser.role === 'admin' ? `
+          <button class="btn ${c.ativo ? 'btn-danger' : 'btn-primary'}"
+                  onclick="toggleCampus('${c.id}', ${!c.ativo})">
+            <i class="fa ${c.ativo ? 'fa-ban' : 'fa-check'}"></i>
+            ${c.ativo ? 'Desativar' : 'Ativar'}
+          </button>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.editarFeatures = async function(campus_id, featuresStr) {
+    const todas = ['dashboard', 'horarios', 'notas', 'avaliacoes', 'mapa'];
+    const atuais = featuresStr ? featuresStr.split(',') : [];
+
+    const selecionadas = todas.filter(f => {
+      return confirm(`Feature "${f}" — está ${atuais.includes(f) ? 'ATIVA' : 'INATIVA'}. Deseja ${atuais.includes(f) ? 'DESATIVAR' : 'ATIVAR'}?`)
+        ? !atuais.includes(f)
+        : atuais.includes(f);
+    });
+
+    // Alternativa mais simples: usar prompt
+    const novas = prompt(
+      `Features do campus "${campus_id}":\n` +
+      `Disponíveis: ${todas.join(', ')}\n\n` +
+      `Atuais: ${atuais.join(', ')}\n\n` +
+      `Digite as features separadas por vírgula:`,
+      atuais.join(', ')
+    );
+
+    if (novas === null) return;
+
+    const featuresArray = novas.split(',').map(f => f.trim()).filter(Boolean);
+
+    const res = await fetch(`${API}/admin/campus/${campus_id}/features`, {
+      method: 'PUT',
+      headers: await headers(),
+      body: JSON.stringify({ features: featuresArray }),
+    });
+
+    if (res.ok) { toast('✅ Features atualizadas!'); carregarCampi(); }
+    else toast('❌ Erro ao atualizar', 'var(--danger)');
+  };
+
+  window.toggleCampus = async function(campus_id, ativo) {
+    const res = await fetch(`${API}/admin/campus/${campus_id}/status`, {
+      method: 'PUT',
+      headers: await headers(),
+      body: JSON.stringify({ ativo }),
+    });
+
+    if (res.ok) { toast(`Campus ${ativo ? 'ativado' : 'desativado'}!`); carregarCampi(); }
+    else toast('❌ Erro', 'var(--danger)');
+  };
+
+  // ===================================================
+  // MAPAS
+  // ===================================================
+  async function popularSelectCampus() {
+    const res  = await fetch(`${API}/admin/campus`, { headers: await headers() });
+    const campi = await res.json();
+    const select = document.getElementById('select-campus-mapa');
+    select.innerHTML = '<option value="">Selecione um campus...</option>' +
+      campi.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+  }
+
+  window.carregarMapaAtual = async function() {
+    const campus_id = document.getElementById('select-campus-mapa').value;
+    if (!campus_id) { alert('Selecione um campus primeiro'); return; }
+
+    const res  = await fetch(`${API}/admin/mapas/${campus_id}`, { headers: await headers() });
+    const mapa = await res.json();
+
+    document.getElementById('json-salas').value  = JSON.stringify(mapa.salas || [], null, 2);
+    document.getElementById('imagem-mapa').value = mapa.imagem_url || '';
+    toast('Mapa carregado!');
+  };
+
+  window.salvarMapa = async function() {
+    const campus_id  = document.getElementById('select-campus-mapa').value;
+    const jsonText   = document.getElementById('json-salas').value;
+    const imagem_url = document.getElementById('imagem-mapa').value;
+
+    if (!campus_id) { alert('Selecione um campus'); return; }
+
+    let salas;
+    try {
+      salas = JSON.parse(jsonText);
+    } catch {
+      alert('❌ JSON inválido! Verifique a formatação.');
+      return;
+    }
+
+    const res = await fetch(`${API}/admin/mapas/${campus_id}`, {
+      method: 'PUT',
+      headers: await headers(),
+      body: JSON.stringify({ salas, imagem_url: imagem_url || null }),
+    });
+
+    if (res.ok) toast('✅ Mapa salvo com sucesso!');
+    else toast('❌ Erro ao salvar mapa', 'var(--danger)');
+  };
+
+  // ===================================================
+  // USUÁRIOS (apenas superadmin)
+  // ===================================================
+  window.carregarUsuarios = async function() {
+    if (adminUser.role !== 'admin') return;
+
+    const res = await fetch(`${API}/admin/usuarios`, { headers: await headers() });
+    const usuarios = await res.json();
+
+    document.getElementById('lista-usuarios').innerHTML = `
+      <table class="tabela">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Matrícula</th>
+            <th>Campus</th>
+            <th>Role</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${usuarios.map(u => `
+            <tr>
+              <td>${u.nome}</td>
+              <td>${u.matricula}</td>
+              <td>${u.campus_id}</td>
+              <td><span class="tag">${u.role}</span></td>
+              <td>
+                <button class="btn btn-ghost" style="padding:4px 12px;font-size:12px"
+                        onclick="alterarRole('${u.uid}', '${u.nome}')">
+                  Editar role
+                </button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  };
+
+  window.alterarRole = async function(uid, nome) {
+    const roles = ['user', 'admin_campus', 'admin'];
+    const novaRole = prompt(`Role atual do usuário "${nome}".\n\nNovas opções: ${roles.join(', ')}\n\nDigite a nova role:`);
+    if (!novaRole || !roles.includes(novaRole)) { alert('Role inválida'); return; }
+
+    let campus_admin = null;
+    if (novaRole === 'admin_campus') {
+      campus_admin = prompt('Digite o campus_id que este admin vai gerenciar (ex: santa-cruz):');
+      if (!campus_admin) return;
+    }
+
+    const res = await fetch(`${API}/admin/usuarios/${uid}/role`, {
+      method: 'PUT',
+      headers: await headers(),
+      body: JSON.stringify({ role: novaRole, campus_admin }),
+    });
+
+    if (res.ok) { toast('✅ Role atualizada!'); carregarUsuarios(); }
+    else toast('❌ Erro ao atualizar role', 'var(--danger)');
+  };
+
+  // ===================================================
+  // Navegação entre seções
+  // ===================================================
+  window.mostrarSecao = function(secao, btn) {
+    document.querySelectorAll('.secao').forEach(s => s.classList.remove('ativo'));
+    document.querySelectorAll('nav.tabs button').forEach(b => b.classList.remove('ativo'));
+
+    document.getElementById(`secao-${secao}`).classList.add('ativo');
+    if (btn) btn.classList.add('ativo');
+
+    // Carregar dados da seção ao abrir
+    if (secao === 'usuarios' && adminUser?.role === 'admin') window.carregarUsuarios();
+  };
+
+  // ===================================================
+  // Logout
+  // ===================================================
+  window.fazerLogout = async function() {
+    await signOut(auth);
+    window.location.href = '/index.html';
+  };
+</script>
+</body>
+</html>
