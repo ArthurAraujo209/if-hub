@@ -4,7 +4,7 @@
   "description": "Portal acadêmico com integração SUAP",
   "start_url": "/dashboard.html",
   "scope": "/",
-  "display": "fullscreen",
+  "display": "standalone",
   "background_color": "#0a0a0f",
   "theme_color": "#0a0a0f",
   "orientation": "portrait",
