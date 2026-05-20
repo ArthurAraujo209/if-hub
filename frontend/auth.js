@@ -2,7 +2,7 @@ async function carregarDados() {
   try {
     // Detectar URL do backend dinamicamente
     const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const backendURL = isDev ? 'http://localhost:3000' : 'https://if-hub-backend.onrender.com';
+    const backendURL = isDev ? 'https://if-hub-backend.onrender.com' : 'http://localhost:3000';
     
     const res = await fetch(`${backendURL}/api/aluno`);
     const data = await res.json();
