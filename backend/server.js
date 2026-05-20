@@ -2,9 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
 
-const envPath = fs.existsSync(path.join(__dirname, '.env.local'))
-  ? path.join(__dirname, '.env.local')
-  : path.join(__dirname, '.env');
+const envPath = fs.existsSync(path.join(__dirname, '.env'))
+  ? path.join(__dirname, '.env')
+  : path.join(__dirname, '.env.local');
 
 dotenv.config({ path: envPath });
 console.log(`🔧 Carregando variáveis de ambiente de: ${envPath}`);
