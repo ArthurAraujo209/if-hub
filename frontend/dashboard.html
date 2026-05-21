@@ -420,6 +420,17 @@
         <i class="fas fa-search " style="color: var(--ios-text-secondary);"></i>
     </button>
 
+    <!-- GSAP para animações da navbar -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <!-- Garante que o navIndicator seja posicionado via transform (GSAP) -->
+    <style>
+        #navIndicator {
+            transform-origin: center center;
+            will-change: transform, width;
+            /* GSAP vai controlar x via transform: translateX — remove qualquer left/--x legado */
+            left: 0 !important;
+        }
+    </style>
     <script src="assets/js/dashboard.js"></script>
     <script>
         // ── Live Clock ──────────────────────────────────────────────────
