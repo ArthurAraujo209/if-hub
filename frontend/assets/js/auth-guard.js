@@ -46,47 +46,6 @@ onAuthStateChanged(auth, async (user) => {
   console.log('   Email:', user.email);
   console.log('   Provider:', user.providerData);
 
-  // Função auxiliar: tentar buscar usuário com retry
-  async function buscarUsuarioComRetry(uid, maxTentativas = 15, delayMs = 800) {
-    console.log('🔍 INICIANDO BUSCA DE USUÁRIO');
-    console.log('   Procurando por UID:', uid);
-    console.log('   Coleção: usuarios');
-    console.log('   Tentativas: até', maxTentativas, 'com delays progressivos');
-    console.log('   Delay inicial:', delayMs, 'ms');
-    
-    for (let tentativa = 1; tentativa <= maxTentativas; tentativa++) {
-      try {
-        console.log(`\n   [${tentativa}/${maxTentativas}] Tentando buscar...`);
-        const usuarioSnap = await getDoc(doc(db, 'usuarios', uid));
-        
-        if (usuarioSnap.exists()) {
-          console.log(`   ✅ ENCONTRADO NA TENTATIVA ${tentativa}!`);
-          console.log('   Dados:', usuarioSnap.data());
-          return usuarioSnap.data();
-        }
-        
-        console.log(`   ❌ Documento não existe ainda`);
-        
-        if (tentativa < maxTentativas) {
-          const proximoDelay = delayMs * tentativa; // Aumentar delay progressivamente
-          console.log(`   ⏳ Aguardando ${proximoDelay}ms antes de tentar novamente...`);
-          console.log(`   Tempo total decorrido: ${(delayMs * (tentativa - 1) + proximoDelay) / 1000}s`);
-          await new Promise(resolve => setTimeout(resolve, proximoDelay));
-        }
-      } catch (err) {
-        console.error(`   ❌ ERRO na tentativa ${tentativa}:`, err.message);
-        console.error('      Código:', err.code);
-        if (tentativa === maxTentativas) throw err;
-        const proximoDelay = delayMs * tentativa;
-        console.log(`   ⏳ Aguardando ${proximoDelay}ms antes de tentar novamente...`);
-        await new Promise(resolve => setTimeout(resolve, proximoDelay));
-      }
-    }
-    
-    console.log('❌ FALHA APÓS', maxTentativas, 'TENTATIVAS - Documento não foi encontrado no Firestore');
-    return null;
-  }
-
   try {
     // Buscar dados do usuário no Firestore com retry
     console.log('🔍 Iniciando busca de usuário...');
