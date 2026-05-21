@@ -544,32 +544,102 @@ function parseHorario(codigo) {
   };
 }
 
-// --- CONFIGURAÇÕES TÉCNICAS DO MENU ---
-const indicator = document.getElementById('navIndicator');
-const menuItems = document.querySelectorAll('.mobile-menu-item');
-let isHolding = false;
-let holdTimer;
+// ============================================================
+// NAVBAR MOBILE — iOS 26 Liquid Glass Bubble (GSAP)
+// ============================================================
 
-// Função para mover a bolha
-function updateIndicator(el) {
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
+const indicator  = document.getElementById('navIndicator');
+const menuItems  = document.querySelectorAll('.mobile-menu-item');
+
+// Estado do drag
+let _isDragging      = false;
+let _dragStartX      = 0;
+let _currentItem     = null;   // item sob a bolha durante arraste
+let _touchMoved      = false;  // distingue tap de swipe
+
+// ── Helpers ─────────────────────────────────────────────────
+
+/** Retorna { left, width } do item relativo ao menu pai */
+function _itemGeometry(el) {
+    const rect     = el.getBoundingClientRect();
     const menuRect = el.parentElement.getBoundingClientRect();
-    
-    // Calcula a posição X
-    const left = rect.left - menuRect.left;
-    
-    // 1. Atualiza a largura
-    indicator.style.width = `${rect.width}px`;
-    
-    // 2. O SEGREDO: Em vez de style.transform, mudamos a Variável CSS
-    indicator.style.setProperty('--x', `${left}px`);
+    return { left: rect.left - menuRect.left, width: rect.width };
 }
 
-// Inicializa no carregamento
+/** Move a bolha suavemente para o item — sem animação de bounce (durante drag) */
+function _slideBubbleTo(el, instant = false) {
+    if (!el) return;
+    const { left, width } = _itemGeometry(el);
+    if (instant) {
+        gsap.set(indicator, { x: left, width });
+    } else {
+        gsap.to(indicator, {
+            x: left,
+            width,
+            duration: 0.32,
+            ease: 'power3.out',
+        });
+    }
+}
+
+/** Animação de toque: bolha expande e retorna — efeito "squish" iOS */
+function _bubbleTap(el) {
+    const { left, width } = _itemGeometry(el);
+
+    // Garante posição correta antes de animar
+    gsap.set(indicator, { x: left, width });
+
+    gsap.timeline()
+        // 1. Expande suavemente ao pressionar
+        .to(indicator, {
+            scaleX: 1.18,
+            scaleY: 0.82,
+            duration: 0.12,
+            ease: 'power2.out',
+        })
+        // 2. Dá um rebote overshoot
+        .to(indicator, {
+            scaleX: 0.94,
+            scaleY: 1.06,
+            duration: 0.18,
+            ease: 'power2.inOut',
+        })
+        // 3. Assenta no lugar com spring suave
+        .to(indicator, {
+            scaleX: 1,
+            scaleY: 1,
+            duration: 0.26,
+            ease: 'elastic.out(1, 0.5)',
+        });
+}
+
+/** Move a bolha para o item alvo com animação de navegação normal (click / tap) */
+function _navigateBubbleTo(el) {
+    if (!el) return;
+    const { left, width } = _itemGeometry(el);
+
+    gsap.to(indicator, {
+        x: left,
+        width,
+        duration: 0.42,
+        ease: 'power4.out',
+    });
+
+    // Squish leve ao chegar
+    gsap.timeline({ delay: 0.1 })
+        .to(indicator, { scaleX: 1.1, scaleY: 0.88, duration: 0.14, ease: 'power2.out' })
+        .to(indicator, { scaleX: 1,   scaleY: 1,    duration: 0.28, ease: 'elastic.out(1, 0.45)' });
+}
+
+// ── Inicialização ────────────────────────────────────────────
+
 window.addEventListener('load', () => {
     const activeItem = document.querySelector('.mobile-menu-item.active');
-    if (activeItem) updateIndicator(activeItem);
+    if (activeItem) {
+        const { left, width } = _itemGeometry(activeItem);
+        gsap.set(indicator, { x: left, width, scaleX: 1, scaleY: 1 });
+    }
+
     loadThemeFromStorage();
     renderThemeTiles();
 
@@ -602,118 +672,132 @@ window.addEventListener('keydown', (event) => {
     }
 });
 
-// --- FUNÇÃO DE NAVEGAÇÃO COMPLETA (Original + Efeito) ---
-function showSection(sectionName, event) {
-    // 1. Previne comportamento padrão se for chamado por evento
-    if (event) {
-        event.preventDefault();
-    }
+// ── Função de Navegação ──────────────────────────────────────
 
-    // 2. Menu Mobile (bolha)
-    menuItems.forEach((item) => item.classList.remove("active"));
-    
+function showSection(sectionName, event) {
+    if (event) event.preventDefault();
+
+    // Atualiza classe active
+    menuItems.forEach(item => item.classList.remove('active'));
+
     let activeItem;
     if (event && event.currentTarget && event.currentTarget.classList.contains('mobile-menu-item')) {
         activeItem = event.currentTarget;
     } else {
-        // Encontra o item pelo nome da seção se vier do drag
-        activeItem = Array.from(menuItems).find(item => 
-            item.getAttribute("onclick") && item.getAttribute("onclick").includes(sectionName)
+        activeItem = Array.from(menuItems).find(item =>
+            item.getAttribute('onclick') && item.getAttribute('onclick').includes(sectionName)
         );
     }
 
     if (activeItem) {
-        activeItem.classList.add("active");
-        updateIndicator(activeItem); // Move a bolha
+        activeItem.classList.add('active');
+        // Só faz a animação de nav se não for chamado pelo drag (drag anima em tempo real)
+        if (!_isDragging) {
+            _navigateBubbleTo(activeItem);
+        }
     }
 
-    // 3. Atualiza sidebar (links principais)
-    document.querySelectorAll(".sidebar .nav-link").forEach(link => link.classList.remove("active"));
-    const sidebarLink = Array.from(document.querySelectorAll(".sidebar .nav-link")).find(link => {
-        const onclick = link.getAttribute("onclick");
+    // Atualiza sidebar
+    document.querySelectorAll('.sidebar .nav-link').forEach(link => link.classList.remove('active'));
+    const sidebarLink = Array.from(document.querySelectorAll('.sidebar .nav-link')).find(link => {
+        const onclick = link.getAttribute('onclick');
         return onclick && onclick.includes(sectionName);
     });
-    if (sidebarLink) sidebarLink.classList.add("active");
+    if (sidebarLink) sidebarLink.classList.add('active');
 
-    // 4. Atualiza header-nav
-    document.querySelectorAll(".header-nav-link").forEach(link => link.classList.remove("active"));
-    const headerLink = Array.from(document.querySelectorAll(".header-nav-link")).find(link => {
-        const onclick = link.getAttribute("onclick");
+    // Atualiza header-nav
+    document.querySelectorAll('.header-nav-link').forEach(link => link.classList.remove('active'));
+    const headerLink = Array.from(document.querySelectorAll('.header-nav-link')).find(link => {
+        const onclick = link.getAttribute('onclick');
         return onclick && onclick.includes(sectionName);
     });
-    if (headerLink) headerLink.classList.add("active");
+    if (headerLink) headerLink.classList.add('active');
 
-    // 5. Troca de Seções e Títulos (Sua lógica original)
-    document.querySelectorAll(".content-section").forEach((s) => s.classList.remove("active"));
+    // Troca de seção
+    document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
     const targetSection = document.getElementById(`${sectionName}-section`);
-    if (targetSection) targetSection.classList.add("active");
+    if (targetSection) targetSection.classList.add('active');
 
     const titles = {
         dashboard: '<i class="fas fa-home"></i> Dashboard',
-        boletim: '<i class="fas fa-file-alt"></i> Boletim',
-        horarios: '<i class="fas fa-clock"></i> Horários',
-        turmas: '<i class="fas fa-users"></i> Turmas',
-        mapa: '<i class="fas fa-map-marked-alt"></i> Mapa do Campus',
-        avaliacoes: '<i class="fas fa-clipboard-list"></i> Avaliações',
-        periodos: '<i class="fas fa-calendar-alt"></i> Períodos',
-        perfil: '<i class="fas fa-user"></i> Perfil',
+        boletim:   '<i class="fas fa-file-alt"></i> Boletim',
+        horarios:  '<i class="fas fa-clock"></i> Horários',
+        turmas:    '<i class="fas fa-users"></i> Turmas',
+        mapa:      '<i class="fas fa-map-marked-alt"></i> Mapa do Campus',
+        avaliacoes:'<i class="fas fa-clipboard-list"></i> Avaliações',
+        periodos:  '<i class="fas fa-calendar-alt"></i> Períodos',
+        perfil:    '<i class="fas fa-user"></i> Perfil',
     };
-    const pageTitle = document.getElementById("page-title");
-    if (pageTitle) pageTitle.innerHTML = titles[sectionName] || titles["dashboard"];
+    const pageTitle = document.getElementById('page-title');
+    if (pageTitle) pageTitle.innerHTML = titles[sectionName] || titles['dashboard'];
 
-    // Fecha sidebar no mobile se estiver aberta
-    if (window.innerWidth <= 1024) {
-        closeSidebar();
-    }
+    if (window.innerWidth <= 1024) closeSidebar();
 }
 
-// --- LÓGICA DE GESTO "HOLD & DRAG" (Refinado) ---
-// --- LÓGICA DE GESTO "HOLD & DRAG" (Refinado e Otimizado) ---
-let draggedOverItem = null;
+// ── Gestos Touch na Navbar ───────────────────────────────────
 
 menuItems.forEach(item => {
+
+    // ── touchstart: anima bolha IMEDIATAMENTE ao toque ──────
     item.addEventListener('touchstart', (e) => {
-        // Tempo ligeiramente maior para considerar o segurar (350ms)
-        holdTimer = setTimeout(() => {
-            isHolding = true;
-            indicator.classList.add('holding'); // Bolha infla e ganha refração
-            if (navigator.vibrate) navigator.vibrate([15]); // Vibração rápida
-            draggedOverItem = null; // reseta ao iniciar novo arraste
-        }, 350);
-    });
+        _touchMoved  = false;
+        _isDragging  = false;
+        _currentItem = item;
+        _dragStartX  = e.touches[0].clientX;
 
-    item.addEventListener('touchend', () => {
-        clearTimeout(holdTimer);
-        
-        // Se estava segurando e passou por algum item, ativa a seção correspondente
-        if (isHolding && draggedOverItem) {
-            const onclickAttr = draggedOverItem.getAttribute('onclick');
-            if (onclickAttr) {
-                const section = onclickAttr.match(/'([^']+)'/)[1];
-                showSection(section);
-                if (navigator.vibrate) navigator.vibrate(10); // feedback tátil de confirmação
-            }
-        }
-        
-        // Reset do estado
-        isHolding = false;
-        indicator.classList.remove('holding'); // Bolha volta ao normal
-        draggedOverItem = null;
-    });
+        // Feedback tátil imediato: bolha "respira" no item tocado
+        _bubbleTap(item);
+    }, { passive: true });
 
+    // ── touchmove: arrasta a bolha em tempo real ─────────────
     item.addEventListener('touchmove', (e) => {
-        if (isHolding) {
-            const touch = e.touches[0];
-            // Detecta onde o dedo está passando
-            const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
-            const menuBtn = targetEl?.closest('.mobile-menu-item');
+        const touch = e.touches[0];
+        const deltaX = Math.abs(touch.clientX - _dragStartX);
 
-            if (menuBtn) {
-                draggedOverItem = menuBtn;
-                // Apenas move a bolha, NÃO troca de seção
-                updateIndicator(menuBtn);
-            }
+        // Considera drag se moveu > 6px na horizontal
+        if (deltaX > 6) {
+            _touchMoved = true;
+            _isDragging = true;
         }
+
+        if (!_isDragging) return;
+
+        // Descobre qual item está sob o dedo
+        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+        const hoveredItem = el?.closest('.mobile-menu-item');
+
+        if (hoveredItem && hoveredItem !== _currentItem) {
+            _currentItem = hoveredItem;
+            // Desliza instantaneamente para o novo item (sem spring — fica fluido)
+            _slideBubbleTo(hoveredItem, false);
+
+            // Vibração sutil a cada item novo
+            if (navigator.vibrate) navigator.vibrate(6);
+        }
+    }, { passive: true });
+
+    // ── touchend: snap para item mais próximo ou toca ────────
+    item.addEventListener('touchend', (e) => {
+        if (_isDragging && _currentItem) {
+            // Finaliza no item que estava sob o dedo
+            const onclickAttr = _currentItem.getAttribute('onclick');
+            if (onclickAttr) {
+                const match = onclickAttr.match(/'([^']+)'/);
+                if (match) {
+                    const section = match[1];
+                    showSection(section);
+                    if (navigator.vibrate) navigator.vibrate(10);
+                }
+            }
+            // Animação de snap final com squish
+            _navigateBubbleTo(_currentItem);
+        } else if (!_touchMoved) {
+            // Tap simples — a animação de tap já foi executada no touchstart
+            // showSection é chamado pelo onclick do elemento
+        }
+
+        _isDragging  = false;
+        _currentItem = null;
     }, { passive: true });
 });
 
