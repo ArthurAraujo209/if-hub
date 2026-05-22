@@ -1210,6 +1210,51 @@ async function trocarAno(novoAno) {
   esconderLoading();
 }
 
+async function fetchComRefresh(url, options = {}) {
+  let token = localStorage.getItem("suap_token");
+
+  let response = await fetch(url, {
+    ...options,
+    headers: { ...options.headers, Authorization: `Bearer ${token}` },
+  });
+
+  if (response.status === 401) {
+    // Token expirado — tenta renovar via Firebase UID
+    const { auth } = await import('./assets/js/firebase-init.js');
+    const user = auth.currentUser;
+
+    if (!user) {
+      window.location.href = "/index.html";
+      return null;
+    }
+
+    const backendBase = API_URL.replace('/api', '');
+    const refreshRes = await fetch(`${backendBase}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid: user.uid }),
+    });
+
+    if (!refreshRes.ok) {
+      localStorage.removeItem("suap_token");
+      window.location.href = "/index.html";
+      return null;
+    }
+
+    const data = await refreshRes.json();
+    localStorage.setItem("suap_token", data.suap_token);
+    token = data.suap_token;
+
+    // Repete a requisição original com o novo token
+    response = await fetch(url, {
+      ...options,
+      headers: { ...options.headers, Authorization: `Bearer ${token}` },
+    });
+  }
+
+  return response;
+}
+
 async function carregarDadosAluno() {
   const token = localStorage.getItem("suap_token");
   if (!token) {
@@ -1218,11 +1263,9 @@ async function carregarDadosAluno() {
   }
 
   try {
-    const response = await fetch(`${API_URL}/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await fetchComRefresh(`${API_URL}/me`);
 
-    if (response.status === 401) {
+    if (!response || response.status === 401) {
       localStorage.removeItem("suap_token");
       window.location.href = "/index.html";
       return;
@@ -1239,15 +1282,10 @@ async function carregarDadosAluno() {
 }
 
 async function carregarDadosAno(ano) {
-  const token = localStorage.getItem("suap_token");
-  if (!token) return;
-
   try {
-    const response = await fetch(`${API_URL}/dashboard/${ano}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await fetchComRefresh(`${API_URL}/dashboard/${ano}`);
 
-    if (response.status === 401) {
+    if (!response || response.status === 401) {
       localStorage.removeItem("suap_token");
       showAlert("Sessão expirada. Faça login novamente.");
       setTimeout(() => (window.location.href = "/index.html"), 2000);

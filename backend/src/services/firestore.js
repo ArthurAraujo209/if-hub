@@ -48,6 +48,7 @@ module.exports = {
         role: 'user',
         campus_admin: null,
         suap_token: dados.suap_token,
+        refresh_token: dados.refresh_token || null,
         criado_em: admin.firestore.FieldValue.serverTimestamp(),
         ultimo_login: admin.firestore.FieldValue.serverTimestamp(),
         preferencias: {
@@ -68,6 +69,7 @@ module.exports = {
         nome: dados.nome,
         campus_id: dados.campus_id,
         suap_token: dados.suap_token,
+        refresh_token: dados.refresh_token || null,
         ultimo_login: admin.firestore.FieldValue.serverTimestamp(),
       };
       

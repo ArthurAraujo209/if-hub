@@ -129,6 +129,7 @@ router.get('/callback', async (req, res) => {
     );
 
     const suapToken = tokenRes.data.access_token;
+    const refreshToken = tokenRes.data.refresh_token;
     console.log('   ✅ Token SUAP recebido:', `${suapToken.substring(0, 30)}...`);
     
     const headers = { Authorization: `Bearer ${suapToken}`, Accept: 'application/json' };
@@ -186,6 +187,7 @@ router.get('/callback', async (req, res) => {
       matricula,
       campus_id,
       suap_token: suapToken,
+      refresh_token: refreshToken,
     });
     console.log('   ✅ Usuário criado/atualizado:', usuario);
 
@@ -236,6 +238,55 @@ router.get('/callback', async (req, res) => {
   console.log('═════════════════════════════════════════\n');
 });
 
+
+// ===================================================
+// ROTA: Refresh Token SUAP
+// ===================================================
+router.post('/refresh', async (req, res) => {
+  const { uid } = req.body;
+
+  if (!uid) {
+    return res.status(400).json({ erro: 'UID obrigatório' });
+  }
+
+  try {
+    const usuario = await firestore.buscarUsuario(uid);
+
+    if (!usuario?.refresh_token) {
+      return res.status(401).json({ erro: 'Sem refresh token salvo. Faça login novamente.' });
+    }
+
+    const tokenRes = await axios.post(
+      `${SUAP_BASE_URL}/o/token/`,
+      querystring.stringify({
+        grant_type: 'refresh_token',
+        refresh_token: usuario.refresh_token,
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+      }),
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+    );
+
+    const novoToken = tokenRes.data.access_token;
+    const novoRefresh = tokenRes.data.refresh_token;
+
+    console.log('🔄 Token renovado para:', uid);
+
+    await firestore.criarOuAtualizarUsuario(uid, {
+      nome: usuario.nome,
+      matricula: usuario.matricula,
+      campus_id: usuario.campus_id,
+      suap_token: novoToken,
+      refresh_token: novoRefresh,
+    });
+
+    res.json({ suap_token: novoToken });
+
+  } catch (err) {
+    console.error('❌ Erro ao renovar token:', err.message);
+    res.status(401).json({ erro: 'Token expirado. Faça login novamente.' });
+  }
+});
 
 // ===================================================
 // ROTA: Logout
