@@ -37,6 +37,7 @@ onAuthStateChanged(auth, async (user) => {
   if (!user) {
     // Não está logado — redirecionar para login
     console.log('🔒 Não autenticado — redirecionando para login');
+    await new Promise(resolve => setTimeout(resolve, 10000));
     window.location.href = '/index.html';
     return;
   }
