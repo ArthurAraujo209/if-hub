@@ -37,7 +37,6 @@ onAuthStateChanged(auth, async (user) => {
   if (!user) {
     // Não está logado — redirecionar para login
     console.log('🔒 Não autenticado — redirecionando para login');
-    await new Promise(resolve => setTimeout(resolve, 10000));
     window.location.href = '/index.html';
     return;
   }
@@ -82,6 +81,7 @@ onAuthStateChanged(auth, async (user) => {
         // permission-denied = token expirado, não adianta tentar mais vezes
         if (err.code === 'permission-denied') {
           console.error('   🔒 Permissão negada — sessão expirada. Redirecionando...');
+          await new Promise(resolve => setTimeout(resolve, 10000));
           window.location.href = '/index.html';
           return null;
         }
