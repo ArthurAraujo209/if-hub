@@ -77,6 +77,14 @@ onAuthStateChanged(auth, async (user) => {
       } catch (err) {
         console.error(`   ❌ ERRO na tentativa ${tentativa}:`, err.message);
         console.error('      Código:', err.code);
+
+        // permission-denied = token expirado, não adianta tentar mais vezes
+        if (err.code === 'permission-denied') {
+          console.error('   🔒 Permissão negada — sessão expirada. Redirecionando...');
+          window.location.href = '/index.html';
+          return null;
+        }
+
         if (tentativa === maxTentativas) throw err;
         const proximoDelay = delayMs * tentativa;
         console.log(`   ⏳ Aguardando ${proximoDelay}ms antes de tentar novamente...`);
@@ -89,6 +97,16 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   try {
+    // Renovar ID Token do Firebase antes de qualquer operação no Firestore
+    // Isso evita erros de permission-denied após 1 hora de sessão
+    console.log('🔄 Renovando ID Token do Firebase...');
+    try {
+      await user.getIdToken(true); // true = força renovação
+      console.log('   ✅ ID Token renovado com sucesso');
+    } catch (tokenErr) {
+      console.warn('   ⚠️ Não foi possível renovar token:', tokenErr.message);
+    }
+
     // Buscar dados do usuário no Firestore com retry
     console.log('🔍 Iniciando busca de usuário...');
     const usuario = await buscarUsuarioComRetry(user.uid);
