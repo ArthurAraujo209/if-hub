@@ -289,6 +289,30 @@ router.post('/refresh', async (req, res) => {
 });
 
 // ===================================================
+// ROTA: Gerar novo Custom Token (renovação de sessão)
+// ===================================================
+router.post('/token', async (req, res) => {
+  const { uid } = req.body;
+  if (!uid) return res.status(400).json({ erro: 'UID obrigatório' });
+
+  try {
+    const usuario = await firestore.buscarUsuario(uid);
+    if (!usuario) return res.status(404).json({ erro: 'Usuário não encontrado' });
+
+    const customToken = await admin.auth().createCustomToken(uid, {
+      campus_id: usuario.campus_id,
+      role: usuario.role || 'user',
+    });
+
+    console.log('🔑 Novo Custom Token gerado para:', uid);
+    res.json({ firebase_token: customToken });
+  } catch (err) {
+    console.error('❌ Erro ao gerar token:', err.message);
+    res.status(500).json({ erro: 'Erro ao gerar token' });
+  }
+});
+
+// ===================================================
 // ROTA: Logout
 // ===================================================
 router.get('/logout', (req, res) => {

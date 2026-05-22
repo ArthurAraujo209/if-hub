@@ -78,12 +78,31 @@ onAuthStateChanged(auth, async (user) => {
         console.error(`   ❌ ERRO na tentativa ${tentativa}:`, err.message);
         console.error('      Código:', err.code);
 
-        // permission-denied = token expirado, não adianta tentar mais vezes
         if (err.code === 'permission-denied') {
-          console.error('   🔒 Permissão negada — sessão expirada. Redirecionando...');
-          await new Promise(resolve => setTimeout(resolve, 10000));
-          window.location.href = '/index.html';
-          return null;
+          console.error('   🔒 Custom Token expirado — renovando sessão...');
+          try {
+            const backendURL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+              ? 'http://localhost:3000'
+              : 'https://if-hub-backend.onrender.com';
+
+            const tokenRes = await fetch(`${backendURL}/auth/token`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ uid: user.uid }),
+            });
+
+            if (!tokenRes.ok) throw new Error('Falha ao obter novo token');
+
+            const { firebase_token } = await tokenRes.json();
+            const { signInWithCustomToken } = await import('./firebase-init.js');
+            await signInWithCustomToken(auth, firebase_token);
+            console.log('   ✅ Sessão renovada, continuando...');
+            continue;
+          } catch (renewErr) {
+            console.error('   ❌ Não foi possível renovar sessão:', renewErr.message);
+            window.location.href = '/index.html';
+            return null;
+          }
         }
 
         if (tentativa === maxTentativas) throw err;
@@ -98,16 +117,6 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   try {
-    // Renovar ID Token do Firebase antes de qualquer operação no Firestore
-    // Isso evita erros de permission-denied após 1 hora de sessão
-    console.log('🔄 Renovando ID Token do Firebase...');
-    try {
-      await user.getIdToken(true); // true = força renovação
-      console.log('   ✅ ID Token renovado com sucesso');
-    } catch (tokenErr) {
-      console.warn('   ⚠️ Não foi possível renovar token:', tokenErr.message);
-    }
-
     // Buscar dados do usuário no Firestore com retry
     console.log('🔍 Iniciando busca de usuário...');
     const usuario = await buscarUsuarioComRetry(user.uid);
