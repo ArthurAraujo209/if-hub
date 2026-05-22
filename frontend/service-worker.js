@@ -1,4 +1,4 @@
-const CACHE_NAME = 'simplifrn-v13';
+const CACHE_NAME = 'simplifrn-v14';
 
 const urlsToCache = [
   '/',

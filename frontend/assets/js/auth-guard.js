@@ -33,6 +33,13 @@ onAuthStateChanged(auth, async (user) => {
   console.log('═════════════════════════════════════════');
   console.log('🔐 AUTH STATE CHANGED');
   console.log('═════════════════════════════════════════');
+
+  if (err.code === 'permission-denied') {
+  console.error('   🔒 Permissão negada — sessão expirada. Redirecionando...');
+  await new Promise(resolve => setTimeout(resolve, 10000)); // ← adiciona isso
+  window.location.href = '/index.html';
+  return null;
+}
   
   if (!user) {
     // Não está logado — redirecionar para login
