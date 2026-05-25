@@ -30,6 +30,22 @@ export async function carregarUsuarios(forcarReload = false) {
 
     snap.forEach((docSnap) => {
       const data = docSnap.data();
+      
+      // Converter timestamps do Firestore para Date
+      const parseTimestamp = (ts) => {
+        if (!ts) return null;
+        if (ts.toDate && typeof ts.toDate === 'function') {
+          return ts.toDate(); // Firebase Timestamp
+        }
+        if (typeof ts === 'string') {
+          return new Date(ts);
+        }
+        if (ts instanceof Date) {
+          return ts;
+        }
+        return null;
+      };
+      
       usuariosCache.push({
         uid: docSnap.id,
         nome: data.nome || 'Desconhecido',
@@ -38,8 +54,8 @@ export async function carregarUsuarios(forcarReload = false) {
         matricula: data.matricula || null,
         foto_url: data.foto_url || null,
         campus_id: data.campus_id || null,
-        criado_em: data.criado_em ? new Date(data.criado_em) : null,
-        ultimo_login: data.ultimo_login ? new Date(data.ultimo_login) : null,
+        criado_em: parseTimestamp(data.criado_em),
+        ultimo_login: parseTimestamp(data.ultimo_login),
       });
     });
 

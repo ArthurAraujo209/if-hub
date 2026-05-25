@@ -19,7 +19,9 @@ module.exports = {
   },
 
   async atualizarCampus(campus_id, dados) {
+    console.log(`🔄 Atualizando campus ${campus_id} com dados:`, dados);
     await db().collection('campus').doc(campus_id).update(dados);
+    console.log(`✅ Campus ${campus_id} atualizado com sucesso`);
   },
 
   // ===== USUÁRIOS =====

@@ -1309,6 +1309,14 @@ async function carregarDadosAno(ano) {
     preencherAvaliacoes(dadosGlobais);
     preencherBoletim(dadosGlobais);
     preencherHorarios(dadosGlobais);
+    
+    // 🔍 Validar campus antes de preencher turmas
+    const campusAtivo = await validarCampus(dadosAluno?.campus_id);
+    if (!campusAtivo && dadosGlobais.turmas) {
+      console.warn(`⚠️ Campus ${dadosAluno?.campus_id} está desativado. Removendo horários...`);
+      dadosGlobais.turmas = dadosGlobais.turmas.map(t => ({ ...t, horarios_de_aula: null }));
+    }
+    
     preencherTurmas(dadosGlobais);
     buildSpotlightIndex();
   } catch (error) {
