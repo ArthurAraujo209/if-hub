@@ -10,7 +10,7 @@
   <!-- Cache de tema para evitar flash -->
   <script>
     try {
-      const tema = JSON.parse(localStorage.getItem('pref_tema')) || 'dark';
+      const tema = localStorage.getItem('pref_tema') || 'dark';
       document.documentElement.setAttribute('data-theme', tema);
     } catch {}
   </script>

@@ -1,13 +1,11 @@
-const CACHE_NAME = 'simplifrn-v23';
+const CACHE_NAME = 'simplifrn-v25';
 
 const urlsToCache = [
   '/',
   '/index.html',
   '/dashboard.html',
+  '/admin.html',
   '/callback.html',
-  '/style.css',
-  '/dashboard.js',
-  '/auth.js',
   '/manifest.json',
   '/assets/icons/SIMPLIF - Icon 192x192.png',
   '/assets/icons/SIMPLIF - Icon 512x512.png',

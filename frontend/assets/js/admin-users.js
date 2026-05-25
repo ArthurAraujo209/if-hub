@@ -3,7 +3,7 @@
  * Busca, filtra, exibe fotos e dados detalhados
  */
 
-import { db, collection, getDocs, query, where } from './firebase-init.js';
+import { db, collection, getDocs } from './firebase-init.js';
 
 /**
  * Cache de usuários para evitar chamadas repetidas
