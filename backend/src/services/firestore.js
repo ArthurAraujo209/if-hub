@@ -42,12 +42,16 @@ module.exports = {
       
       const novoUsuario = {
         uid,
-        nome: dados.nome,
-        matricula: dados.matricula,
-        campus_id: dados.campus_id,
+        nome: dados.nome || 'Usuário',
+        matricula: dados.matricula || null,
+        email_academico: dados.email_academico || null,
+        foto_url: dados.foto_url || null,
+        cpf: dados.cpf || null,
+        data_nascimento: dados.data_nascimento || null,
+        campus_id: dados.campus_id || null,
         role: 'user',
         campus_admin: null,
-        suap_token: dados.suap_token,
+        suap_token: dados.suap_token || null,
         refresh_token: dados.refresh_token || null,
         criado_em: admin.firestore.FieldValue.serverTimestamp(),
         ultimo_login: admin.firestore.FieldValue.serverTimestamp(),
@@ -66,9 +70,14 @@ module.exports = {
       console.log('   🔄 Login subsequente - atualizando documento existente...');
       
       const atualizacao = {
-        nome: dados.nome,
-        campus_id: dados.campus_id,
-        suap_token: dados.suap_token,
+        nome: dados.nome || 'Usuário',
+        matricula: dados.matricula || null,
+        email_academico: dados.email_academico || null,
+        foto_url: dados.foto_url || null,
+        cpf: dados.cpf || null,
+        data_nascimento: dados.data_nascimento || null,
+        campus_id: dados.campus_id || null,
+        suap_token: dados.suap_token || null,
         refresh_token: dados.refresh_token || null,
         ultimo_login: admin.firestore.FieldValue.serverTimestamp(),
       };

@@ -170,11 +170,17 @@ router.get('/callback', async (req, res) => {
     const matricula = dadosPessoal?.identificacao || dadosAluno?.matricula || 'desconhecido';
     const nome = dadosPessoal?.nome_usual || dadosPessoal?.nome || dadosAluno?.nome_aluno || 'Usuário';
     const campus_id = identificarCampus(dadosAluno);
+    const email_academico = dadosAluno?.email || 'desconhecido';
+    const foto_url = dadosPessoal?.foto || dadosAluno?.url_foto_75x100 || null;
+    const cpf = dadosPessoal?.cpf || null;
+    const data_nascimento = dadosPessoal?.data_nascimento || null;
 
     console.log('\n📊 Dados consolidados:');
     console.log('   Aluno:', nome);
     console.log('   Matrícula:', matricula);
     console.log('   Campus:', campus_id);
+    console.log('   Email Acadêmico:', email_academico);
+    console.log('   Foto:', foto_url ? '✅ Encontrada' : '❌ Não encontrada');
 
     // 3. Criar UID estável para o Firebase
     const firebaseUID = `suap_${matricula}`;
@@ -186,6 +192,10 @@ router.get('/callback', async (req, res) => {
       nome,
       matricula,
       campus_id,
+      email_academico,
+      foto_url,
+      cpf,
+      data_nascimento,
       suap_token: suapToken,
       refresh_token: refreshToken,
     });
