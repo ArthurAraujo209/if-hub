@@ -37,10 +37,9 @@ export async function carregarUsuarios(forcarReload = false) {
         email_academico: data.email_academico || null,
         matricula: data.matricula || null,
         foto_url: data.foto_url || null,
-        campus_preferido: data.campus_preferido || null,
-        created_at: data.created_at ? new Date(data.created_at) : null,
-        last_login: data.last_login ? new Date(data.last_login) : null,
-        updated_at: data.updated_at ? new Date(data.updated_at) : null,
+        campus_id: data.campus_id || null,
+        criado_em: data.criado_em ? new Date(data.criado_em) : null,
+        ultimo_login: data.ultimo_login ? new Date(data.ultimo_login) : null,
       });
     });
 
@@ -76,7 +75,7 @@ export function buscaUsuarios(termo, usuarios = usuariosCache) {
  */
 export function filtrarPorCampus(campus, usuarios = usuariosCache) {
   if (!campus || campus === '') return usuarios;
-  return usuarios.filter(u => u.campus_preferido === campus);
+  return usuarios.filter(u => u.campus_id === campus);
 }
 
 /**
@@ -142,7 +141,7 @@ export function renderizarTabela(usuarios) {
 
   usuarios.forEach(usuario => {
     const fotoHtml = renderizarFoto(usuario);
-    const ultimoAcesso = formatarData(usuario.last_login);
+    const ultimoAcesso = formatarData(usuario.ultimo_login);
     
     html += `
       <tr>
@@ -159,8 +158,8 @@ export function renderizarTabela(usuarios) {
         <td>${escapeHtml(usuario.email_academico || 'N/A')}</td>
         <td>${escapeHtml(usuario.matricula || 'N/A')}</td>
         <td>
-          ${usuario.campus_preferido 
-            ? `<span class="tag" style="background: rgba(0,212,255,0.1);">${escapeHtml(usuario.campus_preferido)}</span>`
+          ${usuario.campus_id 
+            ? `<span class="tag" style="background: rgba(0,212,255,0.1);">${escapeHtml(usuario.campus_id)}</span>`
             : '<span style="color: var(--text2); font-size: 12px;">Não definido</span>'
           }
         </td>
@@ -201,7 +200,6 @@ export function renderizarDetalhesUsuario(usuario) {
         <div style="flex: 1;">
           <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 4px;">${escapeHtml(usuario.nome)}</h3>
           <p style="color: var(--text2); font-size: 13px; margin-bottom: 12px;">${escapeHtml(usuario.email)}</p>
-          ${usuario.role ? `<span class="badge badge-${usuario.role === 'admin' ? 'ativo' : 'inativo'}" style="font-size: 11px;">${usuario.role.toUpperCase()}</span>` : ''}
         </div>
       </div>
 
@@ -219,8 +217,8 @@ export function renderizarDetalhesUsuario(usuario) {
         </div>
 
         <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;">
-          <label style="color: var(--text2); font-size: 11px; text-transform: uppercase;">Campus Preferido</label>
-          <p style="font-weight: 500; margin-top: 4px;">${escapeHtml(usuario.campus_preferido || 'Não definido')}</p>
+          <label style="color: var(--text2); font-size: 11px; text-transform: uppercase;">Campus</label>
+          <p style="font-weight: 500; margin-top: 4px;">${escapeHtml(usuario.campus_id || 'Não definido')}</p>
         </div>
 
         <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;">
@@ -235,10 +233,10 @@ export function renderizarDetalhesUsuario(usuario) {
       <!-- Timestamps -->
       <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; font-size: 12px;">
         <p style="color: var(--text2); margin-bottom: 8px;">
-          <strong>Criado em:</strong> ${formatarData(usuario.created_at)}
+          <strong>Criado em:</strong> ${formatarData(usuario.criado_em)}
         </p>
         <p style="color: var(--text2); margin-bottom: 0;">
-          <strong>Último acesso:</strong> ${formatarData(usuario.last_login)}
+          <strong>Último acesso:</strong> ${formatarData(usuario.ultimo_login)}
         </p>
       </div>
 
@@ -267,7 +265,7 @@ function escapeHtml(text) {
 export function obterCampusUnicos(usuarios = usuariosCache) {
   const campi = new Set();
   usuarios.forEach(u => {
-    if (u.campus_preferido) campi.add(u.campus_preferido);
+    if (u.campus_id) campi.add(u.campus_id);
   });
   return Array.from(campi).sort();
 }

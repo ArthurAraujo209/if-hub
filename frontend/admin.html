@@ -391,22 +391,39 @@
       idToken = await user.getIdToken();
 
       const usuarioSnap = await getDoc(doc(db, 'usuarios', user.uid));
-      if (!usuarioSnap.exists()) throw new Error('Usuário não encontrado');
-
-      adminUser = usuarioSnap.data();
-
-      if (adminUser.role !== 'admin' && adminUser.role !== 'admin_campus') {
+      if (!usuarioSnap.exists()) {
+        console.warn('❌ Documento do usuário não encontrado');
         document.getElementById('loading').style.display       = 'none';
         document.getElementById('acesso-negado').style.display = 'flex';
         return;
       }
+
+      adminUser = usuarioSnap.data();
+      console.log('👤 Usuário carregado:', { uid: adminUser.uid, nome: adminUser.nome, role: adminUser.role });
+
+      // Verificar se tem role de admin
+      if (!adminUser.role) {
+        console.warn('❌ Campo "role" não encontrado ou vazio');
+        document.getElementById('loading').style.display       = 'none';
+        document.getElementById('acesso-negado').style.display = 'flex';
+        return;
+      }
+
+      if (adminUser.role !== 'admin' && adminUser.role !== 'admin_campus') {
+        console.warn('❌ Usuário não tem permissão. Role:', adminUser.role);
+        document.getElementById('loading').style.display       = 'none';
+        document.getElementById('acesso-negado').style.display = 'flex';
+        return;
+      }
+
+      console.log('✅ Usuário tem permissão de admin');
 
       // Esconder aba de usuários para admin_campus
       if (adminUser.role === 'admin_campus') {
         document.getElementById('tab-usuarios').style.display = 'none';
       }
 
-      document.getElementById('admin-nome').textContent = adminUser.nome;
+      document.getElementById('admin-nome').textContent = adminUser.nome || 'Admin';
       document.getElementById('loading').style.display  = 'none';
       document.getElementById('admin-app').style.display = 'block';
 
@@ -414,8 +431,9 @@
       popularSelectCampus();
 
     } catch (err) {
-      console.error(err);
-      window.location.href = '/index.html';
+      console.error('❌ Erro ao carregar usuário:', err);
+      document.getElementById('loading').style.display       = 'none';
+      document.getElementById('acesso-negado').style.display = 'flex';
     }
   });
 
