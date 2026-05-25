@@ -330,28 +330,40 @@ body {
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
     color: var(--ios-text-secondary);
     font-size: 1.1rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
-      transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+
+    /* --- NOVA LÓGICA DE BORDA --- */
+    border: 1.5px solid transparent; /* Reserva o espaço da borda */
+    background-image: 
+        linear-gradient(var(--glass-bg), var(--glass-bg)), 
+        linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.05) 40%, transparent 100%);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+    
+    /* Sombra interna para dar o efeito de lente/profundidade */
+    box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.05);
 }
 
 .sidebar-action-btn:hover {
-    background: var(--glass-bg-elevated);
+    /* Ajuste para o hover não quebrar o gradiente */
+    background-image: 
+        linear-gradient(var(--glass-bg-elevated), var(--glass-bg-elevated)), 
+        linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.2) 50%, transparent 100%);
     color: var(--ios-text-primary);
-    transform: scale(1.05);
-    transform: rotate(360deg);
+    transform: scale(1.05) rotate(360deg);
 }
 
 .sidebar-action-btn.sidebar-action-logout:hover {
-    background: var(--accent-red-bg);
-    border-color: var(--accent-red-border);
+    /* Ajuste para o botão de logout manter o estilo */
+    background-image: 
+        linear-gradient(var(--accent-red-bg), var(--accent-red-bg)), 
+        linear-gradient(135deg, rgba(255,255,255,0.5) 0%, transparent 100%);
     color: var(--ios-accent-red);
 }
 
