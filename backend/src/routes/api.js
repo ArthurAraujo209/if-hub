@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
+const firestore = require("../services/firestore");
 
 const { SUAP_BASE_URL } = process.env;
 
@@ -286,6 +287,78 @@ router.get("/boletim-anual/:ano", verificarToken, async (req, res) => {
   } catch (err) {
     console.error("Erro boletim anual:", err);
     res.status(500).json({ erro: "Erro ao buscar boletim anual" });
+  }
+});
+
+// ===============================
+// FEATURES DO CAMPUS DO USUÁRIO
+// ===============================
+router.get("/campus/features/:campus_id", verificarToken, async (req, res) => {
+  const cacheKey = `campus_features_${req.params.campus_id}`;
+  const cached = req.cache.get(cacheKey);
+
+  if (cached) {
+    console.log(`✅ Campus features (${req.params.campus_id}) vindo do cache`);
+    return res.json(cached);
+  }
+
+  try {
+    const { campus_id } = req.params;
+    console.log(`📍 Buscando features do campus: ${campus_id}`);
+
+    const campus = await firestore.buscarCampus(campus_id);
+
+    if (!campus) {
+      console.warn(`⚠️  Campus "${campus_id}" não encontrado`);
+      return res.json({
+        campus_id,
+        ativo: false,
+        features: [],
+        mensagem: "Campus não configurado"
+      });
+    }
+
+    const response = {
+      campus_id,
+      ativo: campus.ativo,
+      features: campus.features || [],
+      nome: campus.nome,
+    };
+
+    req.cache.set(cacheKey, response);
+    console.log(`✅ Features carregadas:`, response);
+
+    res.json(response);
+  } catch (err) {
+    console.error("Erro ao buscar features do campus:", err);
+    res.status(500).json({ erro: "Erro ao buscar features do campus" });
+  }
+});
+
+// ===============================
+// VALIDAR SE FEATURE ESTÁ ATIVA
+// ===============================
+router.get("/campus/:campus_id/feature/:feature_name", verificarToken, async (req, res) => {
+  try {
+    const { campus_id, feature_name } = req.params;
+    
+    const campus = await firestore.buscarCampus(campus_id);
+
+    if (!campus || !campus.ativo) {
+      return res.json({ ativo: false, razao: "Campus inativo" });
+    }
+
+    const featureAtiva = (campus.features || []).includes(feature_name);
+
+    res.json({
+      campus_id,
+      feature: feature_name,
+      ativo: featureAtiva,
+      todasFeatures: campus.features || [],
+    });
+  } catch (err) {
+    console.error("Erro ao validar feature:", err);
+    res.status(500).json({ erro: "Erro ao validar feature" });
   }
 });
 

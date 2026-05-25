@@ -128,6 +128,7 @@
   <script src="/assets/js/config.js"></script>
   <script type="module">
     import { auth, signInWithCustomToken } from './assets/js/firebase-init.js';
+    import { sincronizarDadosUsuario } from './assets/js/user-sync.js';
 
     // ===== DEBUG =====
     console.log('═════════════════════════════════════════');
@@ -175,8 +176,6 @@
         // Limpar token da URL por segurança (não fica no histórico)
         window.history.replaceState({}, document.title, '/callback.html');
 
-        document.getElementById('mensagem').textContent = 'Login realizado! Redirecionando...';
-
         // ✅ FIXO: Guardar token SUAP no localStorage para dashboard.js usar
         if (suapToken) {
           localStorage.setItem('suap_token', suapToken);
@@ -185,13 +184,24 @@
           console.warn('⚠️  Token SUAP não recebido - dashboard pode falhar');
         }
 
-        console.log('⏳ Aguardando 3.5s antes de redirecionar para dashboard...');
+        document.getElementById('mensagem').textContent = 'Sincronizando dados...';
 
-        // Aguardar tempo suficiente para o Firestore replicar os dados
+        // ✅ NOVO: Sincronizar dados do usuário com Firestore
+        console.log('⏳ Sincronizando dados do usuário com Firestore...');
+        const syncOk = await sincronizarDadosUsuario();
+        if (syncOk) {
+          console.log('✅ Sincronização bem-sucedida');
+        } else {
+          console.warn('⚠️  Sincronização falhou, mas continuando...');
+        }
+
+        document.getElementById('mensagem').textContent = 'Redirecionando...';
+        console.log('⏳ Aguardando 1s antes de redirecionar para dashboard...');
+
         setTimeout(() => {
           console.log('🚀 Redirecionando para dashboard...');
           window.location.href = '/dashboard.html';
-        }, 3500);
+        }, 1000);
 
       } catch (err) {
         console.error('❌ ERRO AO FAZER LOGIN:');

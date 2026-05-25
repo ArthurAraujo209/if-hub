@@ -38,6 +38,14 @@ router.put('/campus/:id/features', async (req, res) => {
     }
 
     await firestore.atualizarCampus(id, { features });
+
+    // 🔄 Invalidar cache de features deste campus
+    const cacheKey = `campus_features_${id}`;
+    if (req.cache) {
+      req.cache.del(cacheKey);
+      console.log(`🗑️  Cache invalidado: ${cacheKey}`);
+    }
+
     res.json({ ok: true, mensagem: 'Features atualizadas com sucesso' });
 
   } catch (err) {
@@ -60,6 +68,14 @@ router.put('/campus/:id/status', async (req, res) => {
     }
 
     await firestore.atualizarCampus(req.params.id, { ativo });
+
+    // 🔄 Invalidar cache de features deste campus
+    const cacheKey = `campus_features_${req.params.id}`;
+    if (req.cache) {
+      req.cache.del(cacheKey);
+      console.log(`🗑️  Cache invalidado: ${cacheKey}`);
+    }
+
     res.json({ ok: true, mensagem: `Campus ${ativo ? 'ativado' : 'desativado'} com sucesso` });
 
   } catch (err) {
@@ -110,7 +126,26 @@ router.get('/usuarios', async (req, res) => {
       return res.status(403).json({ erro: 'Apenas superadmins podem listar usuários' });
     }
 
-    const usuarios = await firestore.buscarTodosUsuarios();
+    const { search, campus_id, limite = 50 } = req.query;
+    let usuarios = await firestore.buscarTodosUsuarios();
+
+    // Filtrar por campus se fornecido
+    if (campus_id) {
+      usuarios = usuarios.filter(u => u.campus_id === campus_id);
+    }
+
+    // Buscar por nome ou matrícula
+    if (search) {
+      const searchLower = search.toLowerCase();
+      usuarios = usuarios.filter(u => 
+        u.nome.toLowerCase().includes(searchLower) ||
+        u.matricula.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Limitar resultados
+    usuarios = usuarios.slice(0, parseInt(limite) || 50);
+
     res.json(usuarios);
 
   } catch (err) {

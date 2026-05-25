@@ -222,6 +222,38 @@
 
     .tabela th { color: var(--text2); font-weight: 500; }
 
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+      overflow: hidden;
+    }
+
+    .user-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .search-filter {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .search-filter input, .search-filter select {
+      flex: 1;
+      min-width: 200px;
+    }
+
     /* ===== Toast ===== */
     #toast {
       position: fixed;
@@ -319,6 +351,14 @@
     <!-- ===== SEÇÃO: USUÁRIOS (apenas superadmin) ===== -->
     <section id="secao-usuarios" class="secao">
       <h2>Gerenciar Usuários</h2>
+      
+      <div class="search-filter">
+        <input type="text" id="search-usuarios" placeholder="🔍 Buscar por nome ou matrícula..." onkeyup="filtrarUsuarios()">
+        <select id="filter-campus" onchange="filtrarUsuarios()">
+          <option value="">Todos os campus</option>
+        </select>
+      </div>
+      
       <div id="lista-usuarios">Carregando...</div>
     </section>
 
@@ -329,56 +369,37 @@
 <div id="toast"></div>
 
 <script type="module">
-  import { auth, db, onAuthStateChanged, signOut, doc, getDoc } from './assets/js/firebase-init.js';
+  import { auth, db, onAuthStateChanged, signOut, doc, getDoc, getDocs, collection } from './assets/js/firebase-init.js';
+  import { carregarUsuarios, buscaUsuarios, filtrarPorCampus, renderizarTabela, renderizarDetalhesUsuario, obterCampusUnicos } from './assets/js/admin-users.js';
 
   const API = 'https://if-hub-backend.onrender.com'; // ← ajuste se necessário
 
   let adminUser = null;
   let idToken   = null;
+  let todosUsuariosFirestore = [];
 
   // ===================================================
   // Auth check
   // ===================================================
   onAuthStateChanged(auth, async (user) => {
-    console.log('🔐 onAuthStateChanged disparado');
-    
     if (!user) {
-      console.error('❌ Nenhum usuário autenticado');
       window.location.href = '/index.html';
       return;
     }
 
-    console.log('✅ Usuário autenticado:', user.uid);
-
     try {
-      console.log('🔄 Buscando token...');
       idToken = await user.getIdToken();
-      console.log('✅ Token obtido');
 
-      console.log('🔄 Buscando documento do usuário no Firestore...');
-      console.log('   UID:', user.uid);
       const usuarioSnap = await getDoc(doc(db, 'usuarios', user.uid));
-      
-      if (!usuarioSnap.exists()) {
-        console.error('❌ Documento não existe em usuarios/', user.uid);
-        throw new Error('Usuário não encontrado no Firestore');
-      }
+      if (!usuarioSnap.exists()) throw new Error('Usuário não encontrado');
 
-      console.log('✅ Documento encontrado');
       adminUser = usuarioSnap.data();
-      console.log('👤 Dados do usuário:', adminUser);
-      console.log('   Role:', adminUser.role);
 
       if (adminUser.role !== 'admin' && adminUser.role !== 'admin_campus') {
-        console.warn('⛔ Usuário não tem role de admin');
-        console.warn('   Role atual:', adminUser.role);
-        console.warn('   Exigido: admin ou admin_campus');
         document.getElementById('loading').style.display       = 'none';
         document.getElementById('acesso-negado').style.display = 'flex';
         return;
       }
-
-      console.log('✅ Usuário autorizado!');
 
       // Esconder aba de usuários para admin_campus
       if (adminUser.role === 'admin_campus') {
@@ -389,14 +410,11 @@
       document.getElementById('loading').style.display  = 'none';
       document.getElementById('admin-app').style.display = 'block';
 
-      console.log('🚀 Carregando dados do admin...');
       carregarCampi();
       popularSelectCampus();
 
     } catch (err) {
-      console.error('❌ ERRO NO AUTH CHECK:');
-      console.error('   Mensagem:', err.message);
-      console.error('   Stack:', err.stack);
+      console.error(err);
       window.location.href = '/index.html';
     }
   });
@@ -545,64 +563,97 @@
   };
 
   // ===================================================
-  // USUÁRIOS (apenas superadmin)
+  // USUÁRIOS (apenas superadmin) - NOVO SISTEMA COM FIRESTORE
   // ===================================================
-  window.carregarUsuarios = async function() {
+  window.carregarUsuariosFirestore = async function() {
     if (adminUser.role !== 'admin') return;
 
-    const res = await fetch(`${API}/admin/usuarios`, { headers: await headers() });
-    const usuarios = await res.json();
+    try {
+      document.getElementById('lista-usuarios').innerHTML = '<div style="text-align: center; padding: 20px;"><div class="spinner" style="margin: 0 auto;"></div><p style="margin-top: 10px; color: var(--text2);">Carregando usuários...</p></div>';
 
-    document.getElementById('lista-usuarios').innerHTML = `
-      <table class="tabela">
-        <thead>
-          <tr>
-            <th>Nome</th>
-            <th>Matrícula</th>
-            <th>Campus</th>
-            <th>Role</th>
-            <th>Ação</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${usuarios.map(u => `
-            <tr>
-              <td>${u.nome}</td>
-              <td>${u.matricula}</td>
-              <td>${u.campus_id}</td>
-              <td><span class="tag">${u.role}</span></td>
-              <td>
-                <button class="btn btn-ghost" style="padding:4px 12px;font-size:12px"
-                        onclick="alterarRole('${u.uid}', '${u.nome}')">
-                  Editar role
-                </button>
-              </td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    `;
+      // Carregar do Firestore usando admin-users.js
+      todosUsuariosFirestore = await carregarUsuarios(true);
+
+      // Popular select de campus
+      const campi = obterCampusUnicos(todosUsuariosFirestore);
+      const selectCampus = document.getElementById('filter-campus');
+      if (selectCampus) {
+        selectCampus.innerHTML = '<option value="">Todos os campus</option>' +
+          campi.map(c => `<option value="${c}">${c}</option>`).join('');
+      }
+
+      renderizarUsuariosFirestore(todosUsuariosFirestore);
+      toast(`✅ ${todosUsuariosFirestore.length} usuários carregados`);
+
+    } catch (err) {
+      console.error('Erro ao carregar usuários:', err);
+      toast('❌ Erro ao carregar usuários', 'var(--danger)');
+      document.getElementById('lista-usuarios').innerHTML = '<p style="color: var(--danger);">Erro ao carregar usuários do Firestore</p>';
+    }
   };
 
-  window.alterarRole = async function(uid, nome) {
-    const roles = ['user', 'admin_campus', 'admin'];
-    const novaRole = prompt(`Role atual do usuário "${nome}".\n\nNovas opções: ${roles.join(', ')}\n\nDigite a nova role:`);
-    if (!novaRole || !roles.includes(novaRole)) { alert('Role inválida'); return; }
+  window.filtrarUsuariosFirestore = function() {
+    if (!todosUsuariosFirestore.length) return;
 
-    let campus_admin = null;
-    if (novaRole === 'admin_campus') {
-      campus_admin = prompt('Digite o campus_id que este admin vai gerenciar (ex: santa-cruz):');
-      if (!campus_admin) return;
+    const searchTerm = (document.getElementById('search-usuarios')?.value || '').toLowerCase();
+    const campusFilter = document.getElementById('filter-campus')?.value || '';
+
+    let filtrados = todosUsuariosFirestore;
+
+    if (searchTerm) {
+      filtrados = buscaUsuarios(searchTerm, filtrados);
     }
 
-    const res = await fetch(`${API}/admin/usuarios/${uid}/role`, {
-      method: 'PUT',
-      headers: await headers(),
-      body: JSON.stringify({ role: novaRole, campus_admin }),
-    });
+    if (campusFilter) {
+      filtrados = filtrarPorCampus(campusFilter, filtrados);
+    }
 
-    if (res.ok) { toast('✅ Role atualizada!'); carregarUsuarios(); }
-    else toast('❌ Erro ao atualizar role', 'var(--danger)');
+    renderizarUsuariosFirestore(filtrados);
+  };
+
+  // Expor no window
+  window.filtrarUsuarios = window.filtrarUsuariosFirestore;
+
+  function renderizarUsuariosFirestore(usuarios) {
+    const container = document.getElementById('lista-usuarios');
+    container.innerHTML = `
+      <div style="overflow-x: auto;">
+        ${renderizarTabela(usuarios)}
+      </div>
+    `;
+  }
+
+  window.verDetalhesUsuario = function(uid) {
+    const usuario = todosUsuariosFirestore.find(u => u.uid === uid);
+    if (!usuario) return;
+
+    const html = renderizarDetalhesUsuario(usuario);
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 20px;
+    `;
+    modal.innerHTML = `
+      <div style="position: relative; max-height: 90vh; overflow-y: auto;">
+        ${html}
+        <div style="display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end;">
+          <button class="btn btn-ghost" onclick="this.closest('[style*=fixed]').remove()">Fechar</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.onclick = (e) => {
+      if (e.target === modal) modal.remove();
+    };
   };
 
   // ===================================================
@@ -616,7 +667,7 @@
     if (btn) btn.classList.add('ativo');
 
     // Carregar dados da seção ao abrir
-    if (secao === 'usuarios' && adminUser?.role === 'admin') window.carregarUsuarios();
+    if (secao === 'usuarios' && adminUser?.role === 'admin') window.carregarUsuariosFirestore();
   };
 
   // ===================================================
