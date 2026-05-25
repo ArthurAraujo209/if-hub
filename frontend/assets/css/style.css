@@ -7,7 +7,7 @@
     --glass-border-strong: rgba(255, 255, 255, 0.25);
     --liquid-blur: blur(3px) saturate(150%);
     --liquid-blur-heavy: blur(5px) saturate(180%);
-    --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    --glass-shadow: inset 0px 0px 5px 5px rgba(255, 255, 255, 0.1), 0 20px 40px rgba(0, 0, 0, 0.3);
     --glass-shadow-elevated: 0 12px 30px rgba(0, 0, 0, 0.4);
     --indicator-glass: rgba(255, 255, 255, 0.15);
 
@@ -74,7 +74,7 @@ body.theme-light {
     --glass-bg-hover: rgba(255, 255, 255, 0.98);
     --glass-border: rgba(15, 23, 42, 0.08);
     --glass-border-strong: rgba(15, 23, 42, 0.16);
-    --glass-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+    --glass-shadow: inset 0px 0px 5px 5px rgba(255, 255, 255, 0.1), 0 20px 40px rgba(0, 0, 0, 0.3);
     --nav-active-bg: #e0e0e0;
     --ios-accent-green: #1f7a2f;
     --ios-accent-blue: #0f63c8;
@@ -95,7 +95,7 @@ body.theme-contrast {
     --glass-bg-elevated: rgba(255, 255, 255, 0.12);
     --glass-border: rgba(255, 255, 255, 0.18);
     --glass-border-strong: rgba(255, 255, 255, 0.3);
-    --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+    --glass-shadow: inset 0px 0px 5px 5px rgba(255, 255, 255, 0.1), 0 20px 40px rgba(0, 0, 0, 0.3);
     --nav-active-bg: #181818;
     --ios-accent-green: #7cff00;
     --ios-accent-blue: #34d6ff;
@@ -116,7 +116,7 @@ body.theme-forest {
     --glass-bg-hover: rgba(30, 68, 41, 0.96);
     --glass-border: rgba(145, 210, 155, 0.16);
     --glass-border-strong: rgba(145, 210, 155, 0.28);
-    --glass-shadow: 0 14px 38px rgba(0, 0, 0, 0.35);
+    --glass-shadow: inset 0px 0px 5px 5px rgba(255, 255, 255, 0.1), 0 20px 40px rgba(0, 0, 0, 0.3);
     --nav-active-bg: #081b11;
     --ios-accent-green: #5bba63;
     --ios-accent-blue: #3b9fd1;
@@ -137,7 +137,7 @@ body.theme-ocean {
     --glass-bg-hover: rgba(18, 68, 112, 0.96);
     --glass-border: rgba(173, 222, 255, 0.16);
     --glass-border-strong: rgba(173, 222, 255, 0.3);
-    --glass-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+    --glass-shadow: inset 0px 0px 5px 5px rgba(255, 255, 255, 0.1), 0 20px 40px rgba(0, 0, 0, 0.3);
     --nav-active-bg: #071927;
     --ios-accent-green: #4fd1c5;
     --ios-accent-blue: #38bdf8;
@@ -158,7 +158,7 @@ body.theme-solarized {
     --glass-bg-hover: rgba(255, 255, 255, 0.98);
     --glass-border: rgba(88, 110, 117, 0.12);
     --glass-border-strong: rgba(88, 110, 117, 0.22);
-    --glass-shadow: 0 14px 40px rgba(0, 0, 0, 0.08);
+    --glass-shadow: inset 0px 0px 5px 5px rgba(255, 255, 255, 0.1), 0 20px 40px rgba(0, 0, 0, 0.3);
     --nav-active-bg: #fdf6e3;
     --ios-accent-green: #2aa198;
     --ios-accent-blue: #268bd2;
@@ -330,40 +330,30 @@ body {
     width: 48px;
     height: 48px;
     border-radius: 50%;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
     color: var(--ios-text-secondary);
     font-size: 1.1rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    transition: all 0.2s ease;
+    transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    box-shadow: inset 0px 0px 8px 2px rgba(255, 255, 255, 0.1), 0 20px 40px rgba(0, 0, 0, 0.3);
 
-    /* --- NOVA LÓGICA DE BORDA --- */
-    border: 1.5px solid transparent; /* Reserva o espaço da borda */
-    background-image: 
-        linear-gradient(var(--glass-bg), var(--glass-bg)), 
-        linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.05) 40%, transparent 100%);
-    background-origin: border-box;
-    background-clip: padding-box, border-box;
-    
-    /* Sombra interna para dar o efeito de lente/profundidade */
-    box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.05);
 }
 
 .sidebar-action-btn:hover {
-    /* Ajuste para o hover não quebrar o gradiente */
-    background-image: 
-        linear-gradient(var(--glass-bg-elevated), var(--glass-bg-elevated)), 
-        linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.2) 50%, transparent 100%);
+    background: var(--glass-bg-elevated);
     color: var(--ios-text-primary);
-    transform: scale(1.05) rotate(360deg);
+    transform: scale(1.05);
+    transform: rotate(360deg);
 }
 
 .sidebar-action-btn.sidebar-action-logout:hover {
-    /* Ajuste para o botão de logout manter o estilo */
-    background-image: 
-        linear-gradient(var(--accent-red-bg), var(--accent-red-bg)), 
-        linear-gradient(135deg, rgba(255,255,255,0.5) 0%, transparent 100%);
+    background: var(--accent-red-bg);
+    border-color: var(--accent-red-border);
     color: var(--ios-accent-red);
 }
 
