@@ -369,7 +369,7 @@
 <div id="toast"></div>
 
 <script type="module">
-  import { auth, db, onAuthStateChanged, signOut, doc, getDoc, getDocs, collection } from './assets/js/firebase-init.js';
+  import { auth, db, onAuthStateChanged, signOut, doc, getDoc, getDocs, collection, onSnapshot } from './assets/js/firebase-init.js';
   import { carregarUsuarios, buscaUsuarios, filtrarPorCampus, renderizarTabela, renderizarDetalhesUsuario, obterCampusUnicos } from './assets/js/admin-users.js';
 
   const API = 'https://if-hub-backend.onrender.com'; // ← ajuste se necessário
@@ -418,6 +418,10 @@
 
       console.log('✅ Usuário tem permissão de admin');
 
+      // Importar modal
+      const { criarModalCampus } = await import('./assets/js/admin-campus-modal.js');
+      criarModalCampus();
+
       // Esconder aba de usuários para admin_campus
       if (adminUser.role === 'admin_campus') {
         document.getElementById('tab-usuarios').style.display = 'none';
@@ -429,6 +433,10 @@
 
       carregarCampi();
       popularSelectCampus();
+      
+      // 📡 Listener em tempo real para campus
+      escutarMudancasCampus();
+
 
     } catch (err) {
       console.error('❌ Erro ao carregar usuário:', err);
@@ -474,50 +482,26 @@
         </div>
 
         <div class="btn-group">
-          <button class="btn btn-ghost" onclick="editarFeatures('${c.id}', '${(c.features||[]).join(',')}')">
-            <i class="fa fa-edit"></i> Editar features
+          <button class="btn btn-primary" onclick="abrirModalCampus(${JSON.stringify(c).replace(/"/g, '&quot;')})">
+            <i class="fa fa-sliders-h"></i> Gerenciar
           </button>
-          ${adminUser.role === 'admin' ? `
-          <button class="btn ${c.ativo ? 'btn-danger' : 'btn-primary'}"
-                  onclick="toggleCampus('${c.id}', ${!c.ativo})">
-            <i class="fa ${c.ativo ? 'fa-ban' : 'fa-check'}"></i>
-            ${c.ativo ? 'Desativar' : 'Ativar'}
-          </button>` : ''}
         </div>
       </div>
     `).join('');
   }
 
-  window.editarFeatures = async function(campus_id, featuresStr) {
-    const todas = ['dashboard', 'horarios', 'notas', 'avaliacoes', 'mapa'];
-    const atuais = featuresStr ? featuresStr.split(',') : [];
-
-    const selecionadas = todas.filter(f => {
-      return confirm(`Feature "${f}" — está ${atuais.includes(f) ? 'ATIVA' : 'INATIVA'}. Deseja ${atuais.includes(f) ? 'DESATIVAR' : 'ATIVAR'}?`)
-        ? !atuais.includes(f)
-        : atuais.includes(f);
-    });
-
-    // Alternativa mais simples: usar prompt
-    const novas = prompt(
-      `Features do campus "${campus_id}":\n` +
-      `Disponíveis: ${todas.join(', ')}\n\n` +
-      `Atuais: ${atuais.join(', ')}\n\n` +
-      `Digite as features separadas por vírgula:`,
-      atuais.join(', ')
-    );
-
-    if (novas === null) return;
-
-    const featuresArray = novas.split(',').map(f => f.trim()).filter(Boolean);
-
+  // Editar features diretamente (chamado pelo modal)
+  window.editarFeaturesDirecto = async function(campus_id, features) {
     const res = await fetch(`${API}/admin/campus/${campus_id}/features`, {
       method: 'PUT',
       headers: await headers(),
-      body: JSON.stringify({ features: featuresArray }),
+      body: JSON.stringify({ features }),
     });
 
-    if (res.ok) { toast('✅ Features atualizadas!'); carregarCampi(); }
+    if (res.ok) { 
+      toast('✅ Features atualizadas!'); 
+      carregarCampi(); 
+    }
     else toast('❌ Erro ao atualizar', 'var(--danger)');
   };
 
@@ -528,9 +512,25 @@
       body: JSON.stringify({ ativo }),
     });
 
-    if (res.ok) { toast(`Campus ${ativo ? 'ativado' : 'desativado'}!`); carregarCampi(); }
+    if (res.ok) { 
+      toast(`Campus ${ativo ? 'ativado' : 'desativado'}!`); 
+      carregarCampi(); 
+    }
     else toast('❌ Erro', 'var(--danger)');
   };
+
+  // 📡 Escutar mudanças em tempo real no Firestore
+  function escutarMudancasCampus() {
+    const unsubscribe = onSnapshot(collection(db, 'campus'), (snapshot) => {
+      console.log('📡 Mudança detectada em campus!');
+      carregarCampi();
+    }, (err) => {
+      console.warn('⚠️ Erro ao escutar campus:', err.message);
+    });
+    
+    // Retornar função para desinscrever se necessário
+    window.desinscreverCampus = unsubscribe;
+  }
 
   // ===================================================
   // MAPAS
