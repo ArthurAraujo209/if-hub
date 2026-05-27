@@ -4,7 +4,6 @@ const urlsToCache = [
   '/',
   '/index.html',
   '/dashboard.html',
-  '/admin.html',
   '/callback.html',
   '/manifest.json',
   '/assets/icons/SIMPLIF - Icon 192x192.png',
