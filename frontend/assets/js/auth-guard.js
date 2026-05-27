@@ -180,6 +180,33 @@ onAuthStateChanged(auth, async (user) => {
         if (campus) {
           window.IFHub.campus = campus;
           console.log('   ✅ Campus carregado com sucesso');
+          
+          // 🚫 BLOQUEAR ACESSO SE CAMPUS INATIVO
+          if (campus.ativo === false) {
+            console.error('\n🚫 ACESSO BLOQUEADO');
+            console.error(`   Campus "${campus.nome}" está INATIVO`);
+            const msgDiv = document.createElement('div');
+            msgDiv.style.cssText = `
+              position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+              background: rgba(0,0,0,0.95); display: flex; align-items: center; justify-content: center;
+              z-index: 9999; color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            `;
+            msgDiv.innerHTML = `
+              <div style="text-align: center; max-width: 400px;">
+                <div style="font-size: 4rem; margin-bottom: 20px;">🚫</div>
+                <h1 style="margin-bottom: 10px;">Acesso Restrito</h1>
+                <p style="color: rgba(255,255,255,0.7); margin-bottom: 20px;">
+                  O campus <strong>${campus.nome}</strong> está temporariamente desativado.
+                </p>
+                <p style="color: rgba(255,255,255,0.6); font-size: 0.9rem;">
+                  Entre em contato com o administrador do sistema para mais informações.
+                </p>
+              </div>
+            `;
+            document.body.appendChild(msgDiv);
+            document.body.style.overflow = 'hidden';
+            throw new Error(`Campus ${campus.nome} está inativo`);
+          }
         } else {
           console.log('   ℹ️  Campus não está configurado no Firestore');
         }
@@ -188,6 +215,10 @@ onAuthStateChanged(auth, async (user) => {
       }
     } catch (campusErr) {
       console.error('❌ Erro ao carregar campus:', campusErr.message);
+      if (campusErr.message.includes('inativo')) {
+        // Já mostrou a mensagem de bloqueio
+        return;
+      }
       console.error('   Continuando sem dados do campus...');
     }
 

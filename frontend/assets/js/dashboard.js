@@ -1259,14 +1259,26 @@ async function fetchComRefresh(url, options = {}) {
  * Valida se um campus está ativo
  */
 async function validarCampus(campusId) {
-  if (!campusId) return true; // Sem campus = tudo liberado
+  if (!campusId) {
+    console.log('❌ Campus ID inválido');
+    return true; // Sem campus = tudo liberado
+  }
   
   try {
-    const response = await fetchComRefresh(`${API_URL}/campus/features/${campusId}`);
-    if (!response.ok) return true; // Erro = considerar ativo
+    const url = `${API_URL}/campus/features/${campusId}`;
+    console.log(`🔗 Consultando: ${url}`);
+    const response = await fetchComRefresh(url);
+    
+    if (!response.ok) {
+      console.warn(`⚠️ Response não OK: ${response.status}`);
+      return true; // Erro = considerar ativo
+    }
     
     const data = await response.json();
-    return data.ativo === true;
+    console.log(`📊 Resposta do backend:`, data);
+    const ativo = data.ativo === true;
+    console.log(`🔍 Campus ativo?: ${ativo}`);
+    return ativo;
   } catch (err) {
     console.warn('⚠️ Erro ao validar campus:', err.message);
     return true; // Erro = considerar ativo
@@ -1329,10 +1341,14 @@ async function carregarDadosAno(ano) {
     preencherHorarios(dadosGlobais);
     
     // 🔍 Validar campus antes de preencher turmas
+    console.log('🔍 Validando campus:', dadosAluno?.campus_id);
     const campusAtivo = await validarCampus(dadosAluno?.campus_id);
+    console.log('✅ Resultado validação:', campusAtivo);
+    
     if (!campusAtivo && dadosGlobais.turmas) {
       console.warn(`⚠️ Campus ${dadosAluno?.campus_id} está desativado. Removendo horários...`);
       dadosGlobais.turmas = dadosGlobais.turmas.map(t => ({ ...t, horarios_de_aula: null }));
+      console.log('📋 Turmas após filtro:', dadosGlobais.turmas);
     }
     
     preencherTurmas(dadosGlobais);
