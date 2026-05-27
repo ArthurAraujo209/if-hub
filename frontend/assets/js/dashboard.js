@@ -1255,6 +1255,24 @@ async function fetchComRefresh(url, options = {}) {
   return response;
 }
 
+/**
+ * Valida se um campus está ativo
+ */
+async function validarCampus(campusId) {
+  if (!campusId) return true; // Sem campus = tudo liberado
+  
+  try {
+    const response = await fetchComRefresh(`${API_URL}/campus/features/${campusId}`);
+    if (!response.ok) return true; // Erro = considerar ativo
+    
+    const data = await response.json();
+    return data.ativo === true;
+  } catch (err) {
+    console.warn('⚠️ Erro ao validar campus:', err.message);
+    return true; // Erro = considerar ativo
+  }
+}
+
 async function carregarDadosAluno() {
   const token = localStorage.getItem("suap_token");
   if (!token) {
