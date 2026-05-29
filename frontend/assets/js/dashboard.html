@@ -418,11 +418,11 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
                         <div>
                             <label style="font-size:0.82rem;color:var(--ios-text-secondary);font-weight:600;display:block;margin-bottom:6px;">1 Bimestre:</label>
-                            <input type="number" id="sem-b1" class="ios-input" placeholder="Digite a Nota" type="text" inputmode="decimal" maxlength="4" oninput="calcSemestral()" />
+                            <input type="text" inputmode="decimal" maxlength="4" id="sem-b1" class="ios-input" placeholder="Digite a Nota" oninput="calcSemestral()" />
                         </div>
                         <div>
                             <label style="font-size:0.82rem;color:var(--ios-text-secondary);font-weight:600;display:block;margin-bottom:6px;">2 Bimestre:</label>
-                            <input type="number" id="sem-b2" class="ios-input" placeholder="Digite a Nota" type="text" inputmode="decimal" maxlength="4" oninput="calcSemestral()" />
+                            <input type="text" inputmode="decimal" maxlength="4" id="sem-b2" class="ios-input" placeholder="Digite a Nota" oninput="calcSemestral()" />
                         </div>
                     </div>
                     <div style="margin-bottom: 16px;">
@@ -445,19 +445,19 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
                         <div>
                             <label style="font-size:0.82rem;color:var(--ios-text-secondary);font-weight:600;display:block;margin-bottom:6px;">1 Bimestre: <span style="color:var(--ios-accent-green);font-size:0.72rem;">(peso 2)</span></label>
-                            <input type="number" id="anu-b1" class="ios-input" placeholder="Digite a Nota" type="text" inputmode="decimal" maxlength="4" oninput="calcAnual()" />
+                            <input type="text" inputmode="decimal" maxlength="4" id="anu-b1" class="ios-input" placeholder="Digite a Nota" oninput="calcAnual()" />
                         </div>
                         <div>
                             <label style="font-size:0.82rem;color:var(--ios-text-secondary);font-weight:600;display:block;margin-bottom:6px;">2 Bimestre: <span style="color:var(--ios-accent-green);font-size:0.72rem;">(peso 2)</span></label>
-                            <input type="number" id="anu-b2" class="ios-input" placeholder="Digite a Nota" type="text" inputmode="decimal" maxlength="4" oninput="calcAnual()" />
+                            <input type="text" inputmode="decimal" maxlength="4" id="anu-b2" class="ios-input" placeholder="Digite a Nota" oninput="calcAnual()" />
                         </div>
                         <div>
                             <label style="font-size:0.82rem;color:var(--ios-text-secondary);font-weight:600;display:block;margin-bottom:6px;">3 Bimestre: <span style="color:var(--ios-accent-orange);font-size:0.72rem;">(peso 3)</span></label>
-                            <input type="number" id="anu-b3" class="ios-input" placeholder="Digite a Nota" type="text" inputmode="decimal" maxlength="4" oninput="calcAnual()" />
+                            <input type="text" inputmode="decimal" maxlength="4" id="anu-b3" class="ios-input" placeholder="Digite a Nota" oninput="calcAnual()" />
                         </div>
                         <div>
                             <label style="font-size:0.82rem;color:var(--ios-text-secondary);font-weight:600;display:block;margin-bottom:6px;">4 Bimestre: <span style="color:var(--ios-accent-orange);font-size:0.72rem;">(peso 3)</span></label>
-                            <input type="number" id="anu-b4" class="ios-input" placeholder="Digite a Nota" type="text" inputmode="decimal" maxlength="4" oninput="calcAnual()" />
+                            <input type="text" inputmode="decimal" maxlength="4" id="anu-b4" class="ios-input" placeholder="Digite a Nota" oninput="calcAnual()" />
                         </div>
                     </div>
                     <div style="margin-bottom: 16px;">
@@ -569,9 +569,14 @@
         mediaEl.style.color = aprovado ? 'var(--ios-text-primary)' : '#ef4444';
     }
 
+    function parseNota(id) {
+        const v = document.getElementById(id).value.replace(',', '.').trim();
+        return parseFloat(v);
+    }
+
     function calcSemestral() {
-        const b1 = parseFloat(document.getElementById('sem-b1').value);
-        const b2 = parseFloat(document.getElementById('sem-b2').value);
+        const b1 = parseNota('sem-b1');
+        const b2 = parseNota('sem-b2');
         const statusEl = document.getElementById('sem-status');
         const mediaEl = document.getElementById('sem-media');
         const necEl = document.getElementById('sem-necessaria');
