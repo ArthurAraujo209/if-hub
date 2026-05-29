@@ -8,7 +8,7 @@
  * - campus_id (não campus_preferido)
  */
 
-import { db, doc, getDoc, updateDoc, auth, onAuthStateChanged } from './firebase-init.js';
+import { db, doc, getDoc, updateDoc, setDoc, auth, onAuthStateChanged } from './firebase-init.js';
 
 /**
  * Sincroniza dados do usuário com Firestore após login bem-sucedido
@@ -54,8 +54,8 @@ export async function sincronizarDadosUsuario() {
           };
 
           if (!prefDocSnap.exists()) {
-            // Criar preferências padrão
-            await updateDoc(prefDocRef, preferenciasPadrao);
+            // Criar preferências padrão com setDoc (documento não existe ainda)
+            await setDoc(prefDocRef, preferenciasPadrao);
             console.log('✅ Preferências criadas com valores padrão');
           } else {
             // Atualizar tema se mudou localmente
@@ -97,9 +97,7 @@ export async function atualizarTemaUsuario(novoTema) {
     }
 
     const prefDocRef = doc(db, 'usuarios', user.uid, 'preferencias', 'config');
-    await updateDoc(prefDocRef, {
-      tema: novoTema,
-    });
+    await setDoc(prefDocRef, { tema: novoTema }, { merge: true });
 
     console.log('✅ Tema atualizado para:', novoTema);
     return true;
