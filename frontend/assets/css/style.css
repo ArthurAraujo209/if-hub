@@ -2876,3 +2876,10 @@ body.spotlight-open .header-right {
         -webkit-user-drag: none;
     }
 }
+
+/* Calculadora Section */
+
+#calculadora-section .ios-panel::before,
+#calculadora-section .ios-panel::after {
+    pointer-events: none;
+}
