@@ -12,7 +12,7 @@ import { getAuth, signInWithCustomToken,
          onAuthStateChanged, signOut,
          browserLocalPersistence, setPersistence } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, doc, getDoc,
-         updateDoc, onSnapshot,
+         updateDoc, setDoc, onSnapshot,
          collection, getDocs }                    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -44,6 +44,7 @@ export {
   doc,
   getDoc,
   updateDoc,
+  setDoc,
   onSnapshot,
   collection,
   getDocs,
