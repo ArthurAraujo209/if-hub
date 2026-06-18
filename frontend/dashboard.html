@@ -444,19 +444,19 @@
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
                         <div>
-                            <label style="font-size:0.82rem;color:var(--ios-text-secondary);font-weight:600;display:block;margin-bottom:6px;">1 Bimestre: <span style="color:var(--ios-accent-green);font-size:0.72rem;">(peso 2)</span></label>
+                            <label style="font-size:0.82rem;color:var(--ios-text-secondary);font-weight:600;display:block;margin-bottom:6px;">1 Bimestre: <span style="color:var(--ios-accent-green);font-size:0.72rem;">(peso 40)</span></label>
                             <input type="text" inputmode="decimal" maxlength="4" id="anu-b1" class="ios-input" placeholder="Digite a Nota" oninput="calcAnual()" />
                         </div>
                         <div>
-                            <label style="font-size:0.82rem;color:var(--ios-text-secondary);font-weight:600;display:block;margin-bottom:6px;">2 Bimestre: <span style="color:var(--ios-accent-green);font-size:0.72rem;">(peso 2)</span></label>
+                            <label style="font-size:0.82rem;color:var(--ios-text-secondary);font-weight:600;display:block;margin-bottom:6px;">2 Bimestre: <span style="color:var(--ios-accent-green);font-size:0.72rem;">(peso 40)</span></label>
                             <input type="text" inputmode="decimal" maxlength="4" id="anu-b2" class="ios-input" placeholder="Digite a Nota" oninput="calcAnual()" />
                         </div>
                         <div>
-                            <label style="font-size:0.82rem;color:var(--ios-text-secondary);font-weight:600;display:block;margin-bottom:6px;">3 Bimestre: <span style="color:var(--ios-accent-orange);font-size:0.72rem;">(peso 3)</span></label>
+                            <label style="font-size:0.82rem;color:var(--ios-text-secondary);font-weight:600;display:block;margin-bottom:6px;">3 Bimestre: <span style="color:var(--ios-accent-orange);font-size:0.72rem;">(peso 60)</span></label>
                             <input type="text" inputmode="decimal" maxlength="4" id="anu-b3" class="ios-input" placeholder="Digite a Nota" oninput="calcAnual()" />
                         </div>
                         <div>
-                            <label style="font-size:0.82rem;color:var(--ios-text-secondary);font-weight:600;display:block;margin-bottom:6px;">4 Bimestre: <span style="color:var(--ios-accent-orange);font-size:0.72rem;">(peso 3)</span></label>
+                            <label style="font-size:0.82rem;color:var(--ios-text-secondary);font-weight:600;display:block;margin-bottom:6px;">4 Bimestre: <span style="color:var(--ios-accent-orange);font-size:0.72rem;">(peso 60)</span></label>
                             <input type="text" inputmode="decimal" maxlength="4" id="anu-b4" class="ios-input" placeholder="Digite a Nota" oninput="calcAnual()" />
                         </div>
                     </div>
@@ -606,10 +606,10 @@
         }
     }
 
-    function calcAnual() {
-        // Pesos: B1=2, B2=2, B3=3, B4=3 (total=10)
-        const weights = [2, 2, 3, 3];
-        const totalWeight = 10;
+        function calcAnual() {
+        // Pesos: B1=40, B2=40, B3=60, B4=60
+        const weights = [40, 40, 60, 60];
+        const totalWeight = 200;
         const ids = ['anu-b1','anu-b2','anu-b3','anu-b4'];
         const vals = ids.map(id => parseNota(id));
         const filled = vals.map(v => !isNaN(v));
@@ -624,12 +624,12 @@
             mediaEl.textContent = formatNota(media);
             necEl.textContent = '--';
             setStatus(statusEl, mediaEl, media);
-        } else if (filledCount === 3) {
-            // Find the missing index
-            const missingIdx = filled.indexOf(false);
-            const filledSum = vals.reduce((acc, v, i) => i !== missingIdx && !isNaN(v) ? acc + v * weights[i] : acc, 0);
-            const filledWeight = weights.reduce((acc, w, i) => i !== missingIdx ? acc + w : acc, 0);
-            const needed = (MEDIA_MINIMA * totalWeight - filledSum) / weights[missingIdx];
+        } else if (filledCount === 3 || filledCount === 2) {
+            const missingIndices = filled.reduce((acc, f, i) => !f ? [...acc, i] : acc, []);
+            const filledSum = vals.reduce((acc, v, i) => filled[i] ? acc + v * weights[i] : acc, 0);
+            const missingWeight = missingIndices.reduce((acc, i) => acc + weights[i], 0);
+
+            const needed = (MEDIA_MINIMA * totalWeight - filledSum) / missingWeight;
             necEl.textContent = needed > 100 ? 'Impossível' : needed < 0 ? 'Já aprovado!' : formatNota(needed);
             mediaEl.textContent = '--';
             statusEl.textContent = '';
@@ -637,8 +637,8 @@
             necEl.textContent = '--';
             mediaEl.textContent = '--';
             statusEl.textContent = '';
-        }
     }
+}
     </script>
 
 </body>
