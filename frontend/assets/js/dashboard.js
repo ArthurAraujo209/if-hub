@@ -1258,14 +1258,14 @@ async function fetchComRefresh(url, options = {}) {
 /**
  * Valida se um campus está ativo
  */
-async function validarCampus(campusId) {
-  if (!campusId) {
+async function validarCampus(campus_id) {
+  if (!campus_id) {
     console.log('❌ Campus ID inválido');
     return true; // Sem campus = tudo liberado
   }
   
   try {
-    const url = `${API_URL}/campus/features/${campusId}`;
+    const url = `${API_URL}/campus/features/${campus_id}`;
     console.log(`🔗 Consultando: ${url}`);
     const response = await fetchComRefresh(url);
     
