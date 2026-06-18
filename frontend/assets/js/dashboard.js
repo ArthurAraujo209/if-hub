@@ -1220,8 +1220,8 @@ async function fetchComRefresh(url, options = {}) {
 
   if (response.status === 401) {
     // Token expirado — tenta renovar via Firebase UID
-    const { auth } = await import('./assets/js/firebase-init.js');
-    const user = auth.currentUser;
+    const { auth } = await import('/assets/js/firebase-init.js');
+    const user = auth.currentUser
 
     if (!user) {
       window.location.href = "/index.html";
@@ -1989,8 +1989,6 @@ function mudarPeriodoBoletim() {}
 // NOTIFICAÇÕES FIREBASE
 // ==========================================
 
-const messaging = firebase.messaging();
-
 // Toast simples (se não existir)
 function showToast(message, duration = 3000) {
     const existing = document.querySelector('.toast');
@@ -2012,6 +2010,8 @@ async function initNotifications() {
   try {
     console.log('🔔 Iniciando Firebase...');
     
+    const { messaging, getToken, onMessage } = await import('/assets/js/firebase-init.js');
+    
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
       showToast('⚠️ Permissão negada');
@@ -2023,7 +2023,7 @@ async function initNotifications() {
     
     console.log('⏳ Obtendo token com VAPID:', vapidKey.substring(0, 10) + '...');
 
-    const token = await messaging.getToken({ vapidKey });
+    const token = await getToken(messaging, { vapidKey });
 
     if (!token) {
       showToast('❌ Erro ao obter token');
@@ -2051,7 +2051,7 @@ async function initNotifications() {
     updateNotificationUI(true);
 
     // Listener para mensagens em foreground
-    messaging.onMessage((payload) => {
+    onMessage(messaging, (payload) => {
       console.log('📨 Foreground:', payload);
       new Notification(payload.notification.title, {
         body: payload.notification.body,
@@ -2067,13 +2067,14 @@ async function initNotifications() {
 
 async function checkNotificationStatus() {
   try {
+    const { messaging, getToken } = await import('/assets/js/firebase-init.js');
     const permission = Notification.permission;
     if (permission !== 'granted') {
       updateNotificationUI(false);
       return;
     }
 
-    const token = await messaging.getToken();
+    const token = await getToken(messaging);
     updateNotificationUI(!!token);
     
   } catch (err) {
@@ -2083,6 +2084,7 @@ async function checkNotificationStatus() {
 
 async function unsubscribeNotifications() {
   try {
+    const { messaging } = await import('/assets/js/firebase-init.js');
     await messaging.deleteToken();
     
     const token = localStorage.getItem('suap_token');

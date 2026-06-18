@@ -14,6 +14,8 @@ import { getAuth, signInWithCustomToken,
 import { getFirestore, doc, getDoc,
          updateDoc, setDoc, onSnapshot,
          collection, getDocs }                    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getMessaging, getToken,
+         deleteToken, onMessage }                  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
 
 const firebaseConfig = {
   apiKey:            "AIzaSyA1dkn0ftReTMChrrnYOmMRjtDUd_fDkz0",
@@ -28,6 +30,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
+const messaging = getMessaging(app);
 
 // Sessão persistente: usuário fica logado semanas (até fazer logout explícito)
 setPersistence(auth, browserLocalPersistence)
@@ -38,6 +41,10 @@ setPersistence(auth, browserLocalPersistence)
 export {
   auth,
   db,
+  messaging,
+  getToken,
+  deleteToken,
+  onMessage,
   signInWithCustomToken,
   onAuthStateChanged,
   signOut,
