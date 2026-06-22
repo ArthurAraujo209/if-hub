@@ -1303,6 +1303,9 @@ async function carregarDadosAluno() {
 
     const data = await response.json();
     dadosAluno = data.aluno;
+    console.log("Aluno:", dadosAluno);
+    console.log("campus_id:", dadosAluno?.campus_id);
+    console.log("campus:", dadosAluno?.campus);
 
     preencherSidebar({ aluno: dadosAluno });
     preencherPerfil({ aluno: dadosAluno });
