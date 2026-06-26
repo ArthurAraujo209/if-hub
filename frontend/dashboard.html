@@ -627,9 +627,13 @@
         } else if (filledCount === 3 || filledCount === 2) {
             const missingIndices = filled.reduce((acc, f, i) => !f ? [...acc, i] : acc, []);
             const filledSum = vals.reduce((acc, v, i) => filled[i] ? acc + v * weights[i] : acc, 0);
-            const missingWeight = missingIndices.reduce((acc, i) => acc + weights[i], 0);
 
-            const needed = (MEDIA_MINIMA * totalWeight - filledSum) / missingWeight;
+            // Primeiro faltante = bimestre mais próximo (nota mínima)
+            // Demais faltantes = assume nota máxima (100) — cenário mais otimista
+            const nextIdx = missingIndices[0];
+            const futureWeight = missingIndices.slice(1).reduce((acc, i) => acc + weights[i], 0);
+
+            const needed = (MEDIA_MINIMA * totalWeight - filledSum - 100 * futureWeight) / weights[nextIdx];
             necEl.textContent = needed > 100 ? 'Impossível' : needed < 0 ? 'Já aprovado!' : formatNota(needed);
             mediaEl.textContent = '--';
             statusEl.textContent = '';
