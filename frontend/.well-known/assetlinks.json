@@ -3,6 +3,6 @@
       "target": {
         "namespace": "android_app",
         "package_name": "app.vercel.simplifrn.twa",
-        "sha256_cert_fingerprints": ["7A:67:D9:D2:8C:05:D5:3A:E6:4F:13:52:91:3D:6E:2F:02:33:EE:9A:06:30:51:F3:D1:A8:54:56:42:95:2A:BC"]
+        "sha256_cert_fingerprints": ["47:C3:E6:38:50:70:1B:08:C0:F1:85:CC:18:6E:05:65:F0:60:58:21:E5:BE:40:A8:46:26:A1:7A:87:09:4A:04"]
       }
     }]
