@@ -1,18 +1,24 @@
-const fs = require('fs');
-const path = require('path');
-const dotenv = require('dotenv');
-
-const envPath = fs.existsSync(path.join(__dirname, '.env'))
-  ? path.join(__dirname, '.env')
-  : path.join(__dirname, '.env.local');
-
-dotenv.config({ path: envPath });
-console.log(`🔧 Carregando variáveis de ambiente de: ${envPath}`);
-
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
 const NodeCache = require('node-cache');
+
+// ===== CONFIGURAÇÃO DE AMBIENTE =====
+// Em produção (Render), as variáveis já estão no process.env, não precisamos de arquivo .env
+if (process.env.NODE_ENV !== 'production') {
+  const fs = require('fs');
+  const path = require('path');
+  const dotenv = require('dotenv');
+
+  const envPath = fs.existsSync(path.join(__dirname, '.env'))
+    ? path.join(__dirname, '.env')
+    : path.join(__dirname, '.env.local');
+
+  dotenv.config({ path: envPath });
+  console.log(`🔧 Carregando variáveis de ambiente de: ${envPath}`);
+} else {
+  console.log(`🚀 Ambiente de Produção Detectado: Usando variáveis do Render`);
+}
 
 const { subscriptions, enviarFCM, iniciarCron } = require('./src/services/notifications');
 const authRoutes  = require('./src/routes/auth');
@@ -132,4 +138,4 @@ app.listen(PORT, () => {
   console.log(`✅ Backend rodando em http://localhost:${PORT}`);
   console.log(`📡 Frontend: ${process.env.FRONTEND_URL}`);
   console.log(`⏰ Cron de notificações iniciado`);
-});
+});   
