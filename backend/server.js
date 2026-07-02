@@ -139,3 +139,11 @@ app.listen(PORT, () => {
   console.log(`📡 Frontend: ${process.env.FRONTEND_URL}`);
   console.log(`⏰ Cron de notificações iniciado`);
 });   
+
+console.log("NODE_ENV =", process.env.NODE_ENV);
+console.log("FIREBASE_PROJECT_ID =", process.env.FIREBASE_PROJECT_ID);
+console.log("FIREBASE_CLIENT_EMAIL =", process.env.FIREBASE_CLIENT_EMAIL);
+console.log(
+  "ENV FIREBASE KEYS =",
+  Object.keys(process.env).filter(k => k.includes("FIREBASE"))
+);
