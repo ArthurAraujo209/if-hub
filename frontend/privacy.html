@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Política de Privacidade — SimplIF</title>
+    <meta
+        name="description"
+        content="Política de Privacidade do SimplIF."
+    >
+
+    <style>
+        :root {
+            --green: #359830;
+            --green-dark: #287625;
+            --text: #1f1f1f;
+            --muted: #666;
+            --background: #f6f7f6;
+            --card: #ffffff;
+            --border: #e5e7e5;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Helvetica,
+                Arial,
+                sans-serif;
+            color: var(--text);
+            background: var(--background);
+            line-height: 1.7;
+        }
+
+        .container {
+            width: min(900px, calc(100% - 32px));
+            margin: 0 auto;
+        }
+
+        header {
+            padding: 56px 0 32px;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--green);
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-decoration: none;
+            margin-bottom: 28px;
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            display: grid;
+            place-items: center;
+            border-radius: 10px;
+            background: var(--green);
+            color: white;
+            font-weight: 800;
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            font-size: clamp(2rem, 5vw, 3rem);
+            line-height: 1.15;
+            letter-spacing: -0.04em;
+        }
+
+        .updated {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        main {
+            padding-bottom: 64px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: clamp(24px, 5vw, 42px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        }
+
+        section + section {
+            margin-top: 38px;
+        }
+
+        h2 {
+            margin: 0 0 12px;
+            font-size: 1.35rem;
+            line-height: 1.3;
+            color: #181818;
+        }
+
+        p {
+            margin: 0 0 12px;
+        }
+
+        p:last-child {
+            margin-bottom: 0;
+        }
+
+        ul {
+            margin: 12px 0 0;
+            padding-left: 22px;
+        }
+
+        li + li {
+            margin-top: 6px;
+        }
+
+        strong {
+            color: #171717;
+        }
+
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 24px 0 36px;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 600px) {
+            header {
+                padding-top: 36px;
+            }
+
+            .card {
+                border-radius: 14px;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --text: #f1f1f1;
+                --muted: #a7aaa7;
+                --background: #111311;
+                --card: #191c19;
+                --border: #2a2e2a;
+            }
+
+            h2,
+            strong {
+                color: #fff;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <a class="brand" href="/">
+                <span class="brand-icon">S</span>
+                SimplIF
+            </a>
+
+            <h1>Política de Privacidade</h1>
+            <p class="updated">Última atualização: 23 de setembro de 2026</p>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <article class="card">
+
+                <section>
+                    <h2>1. Dados e informações</h2>
+
+                    <p>
+                        O <strong>SimplIF</strong> é uma aplicação independente
+                        criada para facilitar o acesso a informações acadêmicas
+                        do Instituto Federal do Rio Grande do Norte (IFRN).
+                    </p>
+
+                    <p>
+                        O SimplIF <strong>não coleta, vende, compartilha ou mantém
+                        um banco de dados com informações pessoais dos usuários</strong>.
+                    </p>
+
+                    <p>
+                        Para funcionar, o SimplIF utiliza a autenticação oficial
+                        do <strong>SUAP/IFRN por OAuth</strong>. Após a autenticação,
+                        o SimplIF apenas acessa as informações disponibilizadas
+                        pelo próprio SUAP e as apresenta ao usuário dentro da aplicação.
+                    </p>
+                </section>
+
+                <section>
+                    <h2>2. Autenticação</h2>
+
+                    <p>
+                        A autenticação é realizada através do sistema oficial
+                        do SUAP/IFRN.
+                    </p>
+
+                    <p>
+                        O SimplIF <strong>não solicita nem armazena a senha do
+                        usuário do SUAP</strong>. As credenciais utilizadas para
+                        acessar o SUAP são tratadas pelo próprio sistema de
+                        autenticação do IFRN.
+                    </p>
+                </section>
+
+                <section>
+                    <h2>3. Uso das informações</h2>
+
+                    <p>
+                        As informações obtidas através do SUAP são utilizadas
+                        exclusivamente para fornecer as funcionalidades do SimplIF,
+                        como a visualização de:
+                    </p>
+
+                    <ul>
+                        <li>Notas;</li>
+                        <li>Frequência;</li>
+                        <li>Horários;</li>
+                        <li>Disciplinas;</li>
+                        <li>Informações acadêmicas disponibilizadas pelo SUAP;</li>
+                        <li>Outras informações que o próprio SUAP disponibilize à aplicação.</li>
+                    </ul>
+
+                    <p>
+                        Essas informações são apresentadas
+                        <strong>somente ao usuário autenticado</strong> e não são
+                        comercializadas ou compartilhadas pelo SimplIF com terceiros.
+                    </p>
+                </section>
+
+                <section>
+                    <h2>4. Segurança</h2>
+
+                    <p>
+                        O SimplIF não possui controle sobre a infraestrutura,
+                        autenticação ou segurança interna do SUAP/IFRN. Essas
+                        responsabilidades pertencem aos sistemas responsáveis
+                        pela autenticação e fornecimento dos dados.
+                    </p>
+
+                    <p>
+                        O SimplIF utiliza os mecanismos de autenticação
+                        disponibilizados oficialmente pelo SUAP e
+                        <strong>não tem acesso à senha do usuário</strong>.
+                    </p>
+                </section>
+
+                <section>
+                    <h2>5. Serviços de terceiros</h2>
+
+                    <p>
+                        O SimplIF pode utilizar serviços de infraestrutura
+                        necessários para seu funcionamento. Esses serviços são
+                        utilizados para executar a aplicação e não têm como
+                        finalidade comercializar ou compartilhar os dados
+                        acadêmicos apresentados ao usuário.
+                    </p>
+                </section>
+
+                <section>
+                    <h2>6. Alterações nesta política</h2>
+
+                    <p>
+                        Esta Política de Privacidade poderá ser atualizada caso
+                        ocorram mudanças nas funcionalidades ou na forma como o
+                        SimplIF funciona.
+                    </p>
+
+                    <p>
+                        A versão mais recente estará sempre disponível nesta página.
+                    </p>
+                </section>
+
+                <section>
+                    <h2>7. Contato</h2>
+
+                    <p>
+                        Em caso de dúvidas sobre esta Política de Privacidade ou
+                        sobre o funcionamento do SimplIF, entre em contato através
+                        do canal oficial do projeto.
+                    </p>
+                </section>
+
+            </article>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            SimplIF — Aplicação independente para acesso facilitado a
+            informações acadêmicas do IFRN.
+        </div>
+    </footer>
+</body>
+</html>
