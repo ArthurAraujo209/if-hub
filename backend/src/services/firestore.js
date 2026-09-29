@@ -34,71 +34,59 @@ module.exports = {
   async criarOuAtualizarUsuario(uid, dados) {
     console.log('\n💾 CRIANDO/ATUALIZANDO USUÁRIO NO FIRESTORE');
     console.log('   UID:', uid);
-    console.log('   Dados a serem salvos:', dados);
-    
+
     const ref = db().collection('usuarios').doc(uid);
     const snap = await ref.get();
+    const isNewUser = !snap.exists;
 
-    if (!snap.exists) {
-      console.log('   📝 Primeiro login - criando documento novo...');
-      
-      const novoUsuario = {
-        uid,
-        nome: dados.nome || 'Usuário',
-        matricula: dados.matricula || null,
-        email_academico: dados.email_academico || null,
-        foto_url: dados.foto_url || null,
-        cpf: dados.cpf || null,
-        data_nascimento: dados.data_nascimento || null,
-        campus_id: dados.campus_id || null,
-        role: 'user',
-        campus_admin: null,
-        suap_token: dados.suap_token || null,
-        refresh_token: dados.refresh_token || null,
-        criado_em: admin.firestore.FieldValue.serverTimestamp(),
-        ultimo_login: admin.firestore.FieldValue.serverTimestamp(),
-        preferencias: {
-          tema: 'dark',
-          ordem_telas: [],
-          notificacoes: true,
-        },
-      };
-      
-      console.log('   📥 Enviando para Firestore...');
-      await ref.set(novoUsuario);
-      console.log('   ✅ Documento criado com sucesso');
-      
+    // Campos que TODO login atualiza
+    const commonPayload = {
+      nome: dados.nome || 'Usuário',
+      matricula: dados.matricula || null,
+      email_academico: dados.email_academico || null,
+      foto_url: dados.foto_url || null,
+      cpf: dados.cpf || null,
+      data_nascimento: dados.data_nascimento || null,
+      campus_id: dados.campus_id || null,
+      suap_token: dados.suap_token || null,
+      refresh_token: dados.refresh_token || null,
+      ultimo_login: admin.firestore.FieldValue.serverTimestamp(),
+      plataforma_ultima: 'web',
+      total_acessos: admin.firestore.FieldValue.increment(1),
+      ultimo_acesso: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    // Campos que só na primeira vez
+    const firstLoginPayload = isNewUser
+      ? {
+          role: 'user',
+          campus_admin: null,
+          criado_em: admin.firestore.FieldValue.serverTimestamp(),
+          plataforma_origem: 'web',
+          preferencias: {
+            tema: 'dark',
+            ordem_telas: [],
+            notificacoes: true,
+          },
+        }
+      : {};
+
+    if (isNewUser) {
+      console.log('   📝 Primeiro login — criando documento novo');
     } else {
-      console.log('   🔄 Login subsequente - atualizando documento existente...');
-      
-      const atualizacao = {
-        nome: dados.nome || 'Usuário',
-        matricula: dados.matricula || null,
-        email_academico: dados.email_academico || null,
-        foto_url: dados.foto_url || null,
-        cpf: dados.cpf || null,
-        data_nascimento: dados.data_nascimento || null,
-        campus_id: dados.campus_id || null,
-        suap_token: dados.suap_token || null,
-        refresh_token: dados.refresh_token || null,
-        ultimo_login: admin.firestore.FieldValue.serverTimestamp(),
-      };
-      
-      console.log('   📥 Enviando atualização para Firestore...');
-      await ref.update(atualizacao);
-      console.log('   ✅ Documento atualizado com sucesso');
+      console.log('   🔄 Login subsequente — atualizando');
     }
 
-    console.log('   📖 Lendo documento atualizado do Firestore...');
+    await ref.set({ ...commonPayload, ...firstLoginPayload }, { merge: true });
+    console.log('   ✅ Documento salvo com sucesso');
+
     const atualizado = await ref.get();
-    console.log('   ✅ Dados salvos:', atualizado.data());
-    
     return atualizado.data();
   },
 
   async buscarTodosUsuarios() {
     const snap = await db().collection('usuarios').get();
-    return snap.docs.map(d => d.data());
+    return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
   },
 
   async atualizarRoleUsuario(uid, role, campus_admin = null) {

@@ -25,7 +25,6 @@ const verificarToken = (req, res, next) => {
 router.get("/me", verificarToken, async (req, res) => {
   const cacheKey = `me_${req.token}`;
   const cached = req.cache.get(cacheKey);
-
   if (cached) return res.json(cached);
 
   try {
@@ -54,8 +53,32 @@ router.get("/me", verificarToken, async (req, res) => {
 
     const response = { aluno: alunoCompleto };
 
-    req.cache.set(cacheKey, response);
+    // Tracking de acesso (consistente com o app)
+    const matricula = alunoCompleto?.identificacao || alunoCompleto?.matricula;
+    if (matricula) {
+      try {
+        const admin = require('firebase-admin');
+        const userRef = admin.firestore().collection('usuarios').doc(`suap_${matricula}`);
+        const snap = await userRef.get();
+        if (snap.exists) {
+          const data = snap.data();
+          const now = Date.now();
+          const ultimo = data?.ultimo_acesso?.toDate?.()?.getTime?.() ?? 0;
+          const shouldCount = now - ultimo > 30 * 60 * 1000;
 
+          const update = { plataforma_ultima: 'web' };
+          if (shouldCount) {
+            update.ultimo_acesso = admin.firestore.FieldValue.serverTimestamp();
+            update.total_acessos = admin.firestore.FieldValue.increment(1);
+          }
+          await userRef.set(update, { merge: true });
+        }
+      } catch (err) {
+        console.warn('[me web] tracking falhou:', err.message);
+      }
+    }
+
+    req.cache.set(cacheKey, response);
     res.json(response);
   } catch (err) {
     console.error("Erro /me:", err.response?.data || err.message);
