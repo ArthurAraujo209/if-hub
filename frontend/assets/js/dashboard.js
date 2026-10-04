@@ -1412,7 +1412,15 @@ function preencherDashboard(data) {
         count++;
       }
     });
-    const mediaFreq = count > 0 ? (totalFreq / count).toFixed(1) + '%' : '--';
+    let totalAulas = 0;
+    let totalFaltas = 0;
+    boletim.forEach(d => {
+      totalAulas += parseInt(d.carga_horaria) || 0;
+      totalFaltas += parseInt(d.numero_faltas) || 0;
+    });
+    const mediaFreq = totalAulas > 0
+      ? (((totalAulas - totalFaltas) / totalAulas) * 100).toFixed(2).replace('.', ',') + '%'
+      : '--';
     cardFrequencia.textContent = mediaFreq;
   }
 
