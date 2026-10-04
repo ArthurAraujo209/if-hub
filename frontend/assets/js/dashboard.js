@@ -1403,23 +1403,15 @@ function preencherDashboard(data) {
 
   // Frequência - Média das porcentagens de frequência
   if (cardFrequencia) {
-    let totalFreq = 0;
-    let count = 0;
-    boletim.forEach(d => {
-      const freq = parseFloat(d.percentual_carga_horaria_frequentada);
-      if (!isNaN(freq)) {
-        totalFreq += freq;
-        count++;
-      }
-    });
-    let totalAulas = 0;
+    let totalAulasDadas = 0;
     let totalFaltas = 0;
     boletim.forEach(d => {
-      totalAulas += parseInt(d.carga_horaria) || 0;
+      totalAulasDadas += parseInt(d.carga_horaria_cumprida) || 0;
       totalFaltas += parseInt(d.numero_faltas) || 0;
     });
-    const mediaFreq = totalAulas > 0
-      ? (((totalAulas - totalFaltas) / totalAulas) * 100).toFixed(2).replace('.', ',') + '%'
+    const mediaFreq = totalAulasDadas > 0
+      ? (((totalAulasDadas - totalFaltas) / totalAulasDadas) * 100)
+          .toFixed(2).replace('.', ',') + '%'
       : '--';
     cardFrequencia.textContent = mediaFreq;
   }
