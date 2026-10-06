@@ -65,6 +65,17 @@ function identificarCampus(dadosSuap) {
   return campus_id || 'desconhecido';
 }
 
+function obterAno(dados, campos) {
+  for (const campo of campos) {
+    const valor = dados?.[campo];
+    const ano = typeof valor === 'number' ? valor : Number(valor);
+    if (Number.isInteger(ano) && ano > 0) {
+      return ano;
+    }
+  }
+  return null;
+}
+
 router.get('/login', (req, res) => {
   res.set('Cache-Control', 'no-store');
 
@@ -170,10 +181,14 @@ router.get('/callback', async (req, res) => {
     const matricula = dadosPessoal?.identificacao || dadosAluno?.matricula || 'desconhecido';
     const nome = dadosPessoal?.nome_usual || dadosPessoal?.nome || dadosAluno?.nome_aluno || 'Usuário';
     const campus_id = identificarCampus(dadosAluno);
+    const ano_ingresso = obterAno(dadosAluno, ['ano_ingresso', 'ingresso'])
+      || obterAno({ ano: String(matricula).slice(0, 4) }, ['ano']);
+    const ano_atual = obterAno(dadosAluno, ['ano_atual', 'ano_cursando']);
     const email_academico = dadosAluno?.email || dadosPessoal?.email_academico || 'desconhecido';
     const foto_url = dadosPessoal?.foto || dadosAluno?.url_foto_75x100 || null;
     const cpf = dadosPessoal?.cpf || null;
     const data_nascimento = dadosPessoal?.data_nascimento || null;
+    const curso = dadosAluno?.curso || null;
 
     console.log('\n📊 Dados consolidados:');
     console.log('   Aluno:', nome);
@@ -192,6 +207,9 @@ router.get('/callback', async (req, res) => {
       nome,
       matricula,
       campus_id,
+      curso,
+      ano_ingresso,
+      ano_atual,
       email_academico,
       foto_url,
       cpf,

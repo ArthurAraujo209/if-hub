@@ -56,6 +56,16 @@ module.exports = {
       ultimo_acesso: admin.firestore.FieldValue.serverTimestamp(),
     };
 
+    const academicPayload = {};
+    if (typeof dados.curso === 'string' && dados.curso.trim()) {
+      academicPayload.curso = dados.curso.trim();
+    }
+    for (const campo of ['ano_ingresso', 'ano_atual']) {
+      if (Number.isInteger(dados[campo]) && dados[campo] > 0) {
+        academicPayload[campo] = dados[campo];
+      }
+    }
+
     // Campos que só na primeira vez
     const firstLoginPayload = isNewUser
       ? {
@@ -77,7 +87,7 @@ module.exports = {
       console.log('   🔄 Login subsequente — atualizando');
     }
 
-    await ref.set({ ...commonPayload, ...firstLoginPayload }, { merge: true });
+    await ref.set({ ...commonPayload, ...academicPayload, ...firstLoginPayload }, { merge: true });
     console.log('   ✅ Documento salvo com sucesso');
 
     const atualizado = await ref.get();

@@ -1253,7 +1253,8 @@ function preencherPerfil(data) {
       { label: 'Campus',          value: aluno.campus },
       { label: 'Situação',        value: aluno.situacao },
       { label: 'IRA',             value: aluno.ira },
-      { label: 'Ano de Ingresso', value: aluno.ingresso },
+      { label: 'Ano de Ingresso', value: aluno.ingresso || aluno.ano_ingresso },
+      { label: 'Ano Atual',       value: aluno.ano_atual },
     ];
     detalhesEl.innerHTML = campos.filter(c => c.value).map(c => `
       <div class="info-row">
