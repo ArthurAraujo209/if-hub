@@ -1,42 +1,30 @@
-/**
- * CONFIGURAÇÃO DINÂMICA DO AMBIENTE
- * Detecta automaticamente se está em DEV (localhost) ou PROD (web)
- */
+// assets/js/config.js
+// Fonte única de configuração de ambiente.
+// Carregado como <script> simples (index.html, callback.html, dashboard.html).
+// Módulos ES leem via `window.IFHubConfig`.
 
-const isDevelopment = window.location.hostname === 'localhost' || 
-                      window.location.hostname === '127.0.0.1';
+(() => {
+  const isDev = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
-const config = {
-  // URLs do Backend
-  backendBaseURL: isDevelopment 
-    ? 'http://localhost:3000'
-    : 'https://if-hub-backend.onrender.com',
-  
-  // URLs do Frontend (para redirects)
-  frontendBaseURL: isDevelopment
-    ? 'http://localhost:5500'
-    : 'https://simplifrn.vercel.app',
-  
-  // API Endpoints
-  api: {
-    login: () => `${config.backendBaseURL}/auth/login`,
-    callback: () => `${config.backendBaseURL}/auth/callback`,
-    logout: () => `${config.backendBaseURL}/auth/logout`,
-    me: () => `${config.backendBaseURL}/api/me`,
-    aluno: () => `${config.backendBaseURL}/api/aluno`,
-  },
-  
-  // Debug
-  isDevelopment,
-  environment: isDevelopment ? 'development' : 'production',
-};
+  const backendURL  = isDev ? 'http://localhost:3000'          : 'https://if-hub-backend.onrender.com';
+  const frontendURL = isDev ? 'http://localhost:5500'          : 'https://simplifrn.vercel.app';
 
-// Log para debug
-console.log(`🌍 Ambiente: ${config.environment}`);
-console.log(`🔗 Backend: ${config.backendBaseURL}`);
-console.log(`🔗 Frontend: ${config.frontendBaseURL}`);
+  window.IFHubConfig = {
+    isDev,
+    backendURL,
+    frontendURL,
+    api: {
+      login:          () => `${backendURL}/auth/login`,
+      logout:         () => `${backendURL}/auth/logout`,
+      refresh:        () => `${backendURL}/auth/refresh`,
+      token:          () => `${backendURL}/auth/token`,
+      me:             () => `${backendURL}/api/me`,
+      dashboard:      (ano) => `${backendURL}/api/dashboard/${ano}`,
+      boletimAnual:   (ano) => `${backendURL}/api/boletim-anual/${ano}`,
+      campusFeatures: (id)  => `${backendURL}/api/campus/features/${id}`,
+      notifications:  (action) => `${backendURL}/api/notifications/${action}`,
+    },
+  };
 
-// Exportar para usar em outros arquivos
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = config;
-}
+  console.log(`🌍 [${isDev ? 'DEV' : 'PROD'}] backend=${backendURL}`);
+})();

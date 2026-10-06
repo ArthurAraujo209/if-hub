@@ -1,20 +1,17 @@
-// dashboard.js - Versão com dados carregados do JSON externo
+// dashboard.js — Dashboard principal. Carrega dados do SUAP + mapa do campus.
+// Depende de: window.IFHubConfig (config.js) e window.IFHub (auth-guard.js).
 
-// Detectar ambiente automaticamente
-const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_URL = isDev ? "http://localhost:3000/api" : "https://if-hub-backend.onrender.com/api";
-const DATA_URL = "./assets/data/salas.json"; // Ajuste se necessário
+const cfg = window.IFHubConfig;
+const API_URL = `${cfg.backendURL}/api`;
+const DATA_URL = './assets/data/salas.json';
+
 let dadosGlobais = null;
 let dadosAluno = null;
 let anoAtual = new Date().getFullYear();
 
-console.log(`🌍 Dashboard usando API_URL: ${API_URL}`);
-
-// Essas variáveis agora serão preenchidas após o carregamento do JSON
 let roomsDatabase = [];
 let buildingData = {};
 
-// ========== VARIÁVEIS GLOBAIS ==========
 let fuseRooms, fuseBuildings;
 let currentZoom = 1;
 let searchTimeout = null;
@@ -23,470 +20,350 @@ let spotlightFuse = null;
 let selectedSpotlightTheme = 'dark';
 
 const appThemes = [
-  {
-    id: 'dark',
-    name: 'Escuro',
-    description: 'Visão noturna suave com contraste natural.',
-    palette: ['#0a0a0f', '#12121a', '#359830', '#0a84ff'],
-  },
-  {
-    id: 'light',
-    name: 'Claro',
-    description: 'Fundo claro, alto contraste e toque limpo.',
-    palette: ['#f3f5f8', '#ffffff', '#0f63c8', '#1f7a2f'],
-  },
-  {
-    id: 'contrast',
-    name: 'Alto Contraste',
-    description: 'Cores fortes e leitura rápida em qualquer luz.',
-    palette: ['#030303', '#ffffff', '#7cff00', '#34d6ff'],
-  },
-  {
-    id: 'forest',
-    name: 'Floresta',
-    description: 'Tom natural com verde profundo e ambiente acolhedor.',
-    palette: ['#081b11', '#102516', '#5bba63', '#3b9fd1'],
-  },
-  {
-    id: 'ocean',
-    name: 'Oceano',
-    description: 'Visual fresco para navegação leve e moderna.',
-    palette: ['#071927', '#0d2d45', '#4fd1c5', '#38bdf8'],
-  },
-  {
-    id: 'solarized',
-    name: 'Solarizado',
-    description: 'Tons suaves para foco prolongado e leitura confortável.',
-    palette: ['#fdf6e3', '#f5e9d2', '#2aa198', '#268bd2'],
-  },
+  { id: 'dark',       name: 'Escuro',         description: 'Visão noturna suave com contraste natural.',       palette: ['#0a0a0f', '#12121a', '#359830', '#0a84ff'] },
+  { id: 'light',      name: 'Claro',          description: 'Fundo claro, alto contraste e toque limpo.',        palette: ['#f3f5f8', '#ffffff', '#0f63c8', '#1f7a2f'] },
+  { id: 'contrast',   name: 'Alto Contraste', description: 'Cores fortes e leitura rápida em qualquer luz.',    palette: ['#030303', '#ffffff', '#7cff00', '#34d6ff'] },
+  { id: 'forest',     name: 'Floresta',       description: 'Tom natural com verde profundo.',                   palette: ['#081b11', '#102516', '#5bba63', '#3b9fd1'] },
+  { id: 'ocean',      name: 'Oceano',         description: 'Visual fresco para navegação leve e moderna.',      palette: ['#071927', '#0d2d45', '#4fd1c5', '#38bdf8'] },
+  { id: 'solarized',  name: 'Solarizado',     description: 'Tons suaves para foco prolongado.',                 palette: ['#fdf6e3', '#f5e9d2', '#2aa198', '#268bd2'] },
 ];
 
-// ========== CARREGAMENTO DO JSON ==========
+// ============================================================================
+// CARREGAMENTO DO MAPA
+// ============================================================================
 async function carregarDadosMapa() {
   try {
-    console.log("📥 Carregando dados do mapa...");
     const response = await fetch(DATA_URL);
-    if (!response.ok) throw new Error("Erro ao carregar JSON");
+    if (!response.ok) throw new Error('Erro ao carregar JSON');
     const dados = await response.json();
 
-    // --- Converter salas para o formato antigo ---
     roomsDatabase = dados.salas.map(sala => ({
       id: sala.id,
       name: sala.nome,
       block: sala.bloco,
       floor: sala.andar,
       room: sala.numero,
-      type: sala.tipo,          // será usado no painel de detalhes
-      keywords: sala.keywords || []
+      type: sala.tipo,
+      keywords: sala.keywords || [],
     }));
 
-    // --- Construir buildingData combinando blocos do JSON com os blocos personalizados ---
     const blocosPersonalizados = {
       1: {
-        nome: "Guarita",
-        descricao: "Entrada principal",
-        andares: { Térreo: ["Portaria"] },
-        icon: "shield-alt",
-        cor: "var(--ios-accent-blue)",
+        nome: 'Guarita', descricao: 'Entrada principal',
+        andares: { Térreo: ['Portaria'] },
+        icon: 'shield-alt', cor: 'var(--ios-accent-blue)',
       },
       4: {
-        nome: "Espaço Multiuso",
-        descricao: "Atividades diversas",
-        andares: { Térreo: ["Ginástica", "Eventos", "Aulas"] },
-        icon: "table-tennis",
-        cor: "var(--ios-accent-orange)",
+        nome: 'Espaço Multiuso', descricao: 'Atividades diversas',
+        andares: { Térreo: ['Ginástica', 'Eventos', 'Aulas'] },
+        icon: 'table-tennis', cor: 'var(--ios-accent-orange)',
       },
       6: {
-        nome: "Piscina",
-        descricao: "Natação",
-        andares: { Externo: ["Piscina"] },
-        icon: "swimming-pool",
-        cor: "var(--ios-accent-blue)",
+        nome: 'Piscina', descricao: 'Natação',
+        andares: { Externo: ['Piscina'] },
+        icon: 'swimming-pool', cor: 'var(--ios-accent-blue)',
       },
       areia: {
-        nome: "Quadra de Areia",
-        descricao: "Esportes de praia",
-        andares: { Externo: ["Vôlei de Praia", "Futevôlei"] },
-        icon: "volleyball-ball",
-        cor: "var(--ios-accent-orange)",
+        nome: 'Quadra de Areia', descricao: 'Esportes de praia',
+        andares: { Externo: ['Vôlei de Praia', 'Futevôlei'] },
+        icon: 'volleyball-ball', cor: 'var(--ios-accent-orange)',
       },
       quadra: {
-        nome: "Quadra Poliesportiva",
-        descricao: "Esportes",
-        andares: { Externo: ["Basquete", "Futsal", "Handebol", "Banho"] },
-        icon: "basketball-ball",
-        cor: "var(--ios-accent-orange)",
+        nome: 'Quadra Poliesportiva', descricao: 'Esportes',
+        andares: { Externo: ['Basquete', 'Futsal', 'Handebol', 'Banho'] },
+        icon: 'basketball-ball', cor: 'var(--ios-accent-orange)',
       },
-      "E-ginasio": {
-        nome: "Ginásio",
-        descricao: "Educação Física",
-        andares: {
-          Térreo: ["Quadra", "Academia", "Vestiários Masculino", "Vestiários Feminino"]
-        },
-        icon: "dumbbell",
-        cor: "#FF3B30",
+      'E-ginasio': {
+        nome: 'Ginásio', descricao: 'Educação Física',
+        andares: { Térreo: ['Quadra', 'Academia', 'Vestiários Masculino', 'Vestiários Feminino'] },
+        icon: 'dumbbell', cor: '#FF3B30',
       },
-      "E-anexo": {
-        nome: "Prédio Anexo - Música e Arte",
-        descricao: "Laboratórios de Música e Arte",
+      'E-anexo': {
+        nome: 'Prédio Anexo - Música e Arte', descricao: 'Laboratórios de Música e Arte',
         andares: {
-          "1º Andar": ["Lab. de Música", "Sala de Música"],
-          "2º Andar": ["Coord. NUARTE", "Lab. Cenográfico", "Grêmio"]
+          '1º Andar': ['Lab. de Música', 'Sala de Música'],
+          '2º Andar': ['Coord. NUARTE', 'Lab. Cenográfico', 'Grêmio'],
         },
-        icon: "music",
-        cor: "#FF3B30",
+        icon: 'music', cor: '#FF3B30',
       },
     };
 
-    // Blocos do JSON (A, B, C, D, E, F)
     const blocosJSON = {};
     for (const [id, bloco] of Object.entries(dados.blocos)) {
       blocosJSON[id] = {
-        nome: bloco.nome,
-        descricao: bloco.descricao,
-        andares: bloco.andares,
-        icon: bloco.icon,
-        cor: bloco.cor,        // usa a cor hexadecimal do JSON
+        nome: bloco.nome, descricao: bloco.descricao,
+        andares: bloco.andares, icon: bloco.icon, cor: bloco.cor,
       };
     }
 
-    // Mescla: os blocos do JSON sobrescrevem os personalizados com mesmo ID (caso existam)
     buildingData = { ...blocosPersonalizados, ...blocosJSON };
-
-    console.log(`✅ ${roomsDatabase.length} salas e ${Object.keys(buildingData).length} blocos carregados.`);
     buildSpotlightIndex();
   } catch (error) {
-    console.error("❌ Erro ao carregar dados do mapa:", error);
-    // Em caso de erro, usa dados de fallback (opcional)
+    console.error('❌ Erro ao carregar dados do mapa:', error);
     roomsDatabase = [];
     buildingData = {};
-    showAlert("Erro ao carregar mapa. Verifique o arquivo de dados.");
+    showAlert('Erro ao carregar mapa. Verifique o arquivo de dados.');
   }
 }
 
-// ========== FUNÇÕES DE BUSCA (Fuse) ==========
+// ============================================================================
+// BUSCA INTELIGENTE (Fuse)
+// ============================================================================
 function initializeFuse() {
-  console.log("🔍 Inicializando busca inteligente...");
-
-  const fuseOptions = {
-    includeScore: true,
-    threshold: 0.4,
-    ignoreLocation: true,
-    findAllMatches: true,
-    minMatchCharLength: 2,
+  fuseRooms = new Fuse(roomsDatabase, {
+    includeScore: true, threshold: 0.4, ignoreLocation: true,
+    findAllMatches: true, minMatchCharLength: 2,
     keys: [
-      { name: "name", weight: 2 },
-      { name: "keywords", weight: 1.5 },
-      { name: "room", weight: 1 },
-      { name: "block", weight: 1 },
+      { name: 'name', weight: 2 },
+      { name: 'keywords', weight: 1.5 },
+      { name: 'room', weight: 1 },
+      { name: 'block', weight: 1 },
     ],
-  };
-
-  fuseRooms = new Fuse(roomsDatabase, fuseOptions);
+  });
 
   const buildingArray = Object.entries(buildingData).map(([id, data]) => ({
-    id: id,
-    nome: data.nome,
-    descricao: data.descricao,
-    icon: data.icon,
-    cor: data.cor,
-    andares: data.andares,
+    id, nome: data.nome, descricao: data.descricao,
+    icon: data.icon, cor: data.cor, andares: data.andares,
   }));
 
   fuseBuildings = new Fuse(buildingArray, {
-    includeScore: true,
-    threshold: 0.4,
-    keys: ["nome", "descricao"],
+    includeScore: true, threshold: 0.4, keys: ['nome', 'descricao'],
   });
-
-  console.log("✅ Busca inteligente pronta!");
 }
 
-// FUNÇÃO PRINCIPAL DE BUSCA (chamada pelo HTML)
 function performSmartSearch() {
-  const input = document.getElementById("room-search");
+  const input = document.getElementById('room-search');
   if (!input) return;
-
   const query = input.value.trim();
-
   if (!query || query.length < 2) {
-    document.getElementById("autocomplete-suggestions").classList.remove("show");
+    document.getElementById('autocomplete-suggestions').classList.remove('show');
     return;
   }
-
   if (!fuseRooms) initializeFuse();
 
   const roomResults = fuseRooms.search(query);
   const buildingResults = fuseBuildings.search(query);
 
   const allResults = [
-    ...roomResults.map((r) => ({ item: r.item, score: r.score, type: "room" })),
-    ...buildingResults.map((b) => ({ item: b.item, score: b.score, type: "building" })),
-  ]
-    .sort((a, b) => (a.score || 1) - (b.score || 1))
-    .slice(0, 8);
+    ...roomResults.map(r => ({ item: r.item, score: r.score, type: 'room' })),
+    ...buildingResults.map(b => ({ item: b.item, score: b.score, type: 'building' })),
+  ].sort((a, b) => (a.score || 1) - (b.score || 1)).slice(0, 8);
 
   showSuggestions(allResults, query);
 }
 
-// Limpar pesquisa
 function clearSearch() {
-  const input = document.getElementById("room-search");
-  if (input) input.value = "";
-  document.getElementById("autocomplete-suggestions").classList.remove("show");
+  const input = document.getElementById('room-search');
+  if (input) input.value = '';
+  document.getElementById('autocomplete-suggestions').classList.remove('show');
   closeResultPanel();
-  document.querySelectorAll(".building-3d").forEach((b) => b.classList.remove("active", "highlight"));
+  document.querySelectorAll('.building-3d').forEach(b => b.classList.remove('active', 'highlight'));
 }
 
-// Fechar painel de resultados
 function closeResultPanel() {
-  const container = document.getElementById("search-result-container");
-  if (container) {
-    container.style.display = "none";
-    container.classList.remove("show");
-  }
+  const c = document.getElementById('search-result-container');
+  if (c) { c.style.display = 'none'; c.classList.remove('show'); }
 }
 
-// Mostrar sugestões
 function showSuggestions(results, query) {
-  const container = document.getElementById("autocomplete-suggestions");
+  const container = document.getElementById('autocomplete-suggestions');
   if (!container) return;
 
   if (results.length === 0) {
     container.innerHTML = `
-      <div style="padding: 20px; text-align: center; color: var(--ios-text-secondary);">
-        <i class="fas fa-search" style="font-size: 2rem; opacity: 0.5; margin-bottom: 10px;"></i>
+      <div style="padding:20px;text-align:center;color:var(--ios-text-secondary);">
+        <i class="fas fa-search" style="font-size:2rem;opacity:.5;margin-bottom:10px;"></i>
         <p>Nenhum resultado para "${escapeHtml(query)}"</p>
         <small>Tente: bibli, lab, 101, cantina...</small>
-      </div>
-    `;
-    container.classList.add("show");
+      </div>`;
+    container.classList.add('show');
     return;
   }
 
-  let html = "";
-  results.forEach((result) => {
-    if (result.type === "room") {
+  let html = '';
+  results.forEach(result => {
+    if (result.type === 'room') {
       const room = result.item;
       html += `
         <div class="suggestion-item" onclick="selectRoom('${room.id}')">
-          <i class="fas fa-door-open" style="color: var(--ios-accent-green); width: 30px;"></i>
-          <div style="flex: 1;">
-            <div style="font-weight: 600;">${highlightMatch(room.name, query)}</div>
-            <div style="font-size: 0.8rem; color: var(--ios-text-secondary);">
+          <i class="fas fa-door-open" style="color:var(--ios-accent-green);width:30px;"></i>
+          <div style="flex:1;">
+            <div style="font-weight:600;">${highlightMatch(room.name, query)}</div>
+            <div style="font-size:.8rem;color:var(--ios-text-secondary);">
               Bloco ${room.block} • ${room.room}
             </div>
           </div>
-        </div>
-      `;
+        </div>`;
     } else {
-      const building = result.item;
+      const b = result.item;
       html += `
-        <div class="suggestion-item" onclick="selectBuilding('${building.id}')">
-          <i class="fas fa-building" style="color: var(--ios-accent-blue); width: 30px;"></i>
-          <div style="flex: 1;">
-            <div style="font-weight: 600;">${highlightMatch(building.nome, query)}</div>
-            <div style="font-size: 0.8rem; color: var(--ios-text-secondary);">
-              ${building.descricao.substring(0, 40)}...
+        <div class="suggestion-item" onclick="selectBuilding('${b.id}')">
+          <i class="fas fa-building" style="color:var(--ios-accent-blue);width:30px;"></i>
+          <div style="flex:1;">
+            <div style="font-weight:600;">${highlightMatch(b.nome, query)}</div>
+            <div style="font-size:.8rem;color:var(--ios-text-secondary);">
+              ${b.descricao.substring(0, 40)}...
             </div>
           </div>
-        </div>
-      `;
+        </div>`;
     }
   });
 
   container.innerHTML = html;
-  container.classList.add("show");
+  container.classList.add('show');
 }
 
-// Manipulador de input com debounce
 function handleSearchInput() {
-  const input = document.getElementById("room-search");
+  const input = document.getElementById('room-search');
   if (!input) return;
-
   const query = input.value;
-
   if (searchTimeout) clearTimeout(searchTimeout);
-
   if (query.length >= 2) {
     searchTimeout = setTimeout(() => performSmartSearch(), 300);
   } else {
-    document.getElementById("autocomplete-suggestions").classList.remove("show");
+    document.getElementById('autocomplete-suggestions').classList.remove('show');
   }
 }
 
-// Selecionar sala
 function selectRoom(roomId) {
-  const room = roomsDatabase.find((r) => r.id === roomId);
+  const room = roomsDatabase.find(r => r.id === roomId);
   if (!room) return;
-
-  document.getElementById("autocomplete-suggestions").classList.remove("show");
-  document.getElementById("room-search").value = room.name;
-
+  document.getElementById('autocomplete-suggestions').classList.remove('show');
+  document.getElementById('room-search').value = room.name;
   showRoomDetails(room);
   highlightBuilding(room.block);
 }
 
-// Selecionar bloco
 function selectBuilding(buildingId) {
   const building = buildingData[buildingId];
   if (!building) return;
-
-  document.getElementById("autocomplete-suggestions").classList.remove("show");
-  document.getElementById("room-search").value = building.nome;
-
+  document.getElementById('autocomplete-suggestions').classList.remove('show');
+  document.getElementById('room-search').value = building.nome;
   showBuildingDetails(buildingId, building);
   highlightBuilding(buildingId);
 }
 
-// Mostrar detalhes da sala
 function showRoomDetails(room) {
-  const container = document.getElementById("search-result-container");
-  const title = document.getElementById("search-result-title");
-  const content = document.getElementById("search-result-content");
-
+  const container = document.getElementById('search-result-container');
+  const title = document.getElementById('search-result-title');
+  const content = document.getElementById('search-result-content');
   if (!container) return;
 
   title.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <i class="fas fa-door-open" style="color: var(--ios-accent-green);"></i>
+    <div style="display:flex;justify-content:space-between;align-items:center;width:100%;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <i class="fas fa-door-open" style="color:var(--ios-accent-green);"></i>
         <span>${room.name}</span>
-        <span style="background: var(--gradient-primary); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem;">Bloco ${room.block}</span>
+        <span style="background:var(--gradient-primary);padding:4px 12px;border-radius:20px;font-size:.8rem;">Bloco ${room.block}</span>
       </div>
-      <button onclick="closeResultPanel()" class="close-panel" style="background: rgba(255,255,255,0.1); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+      <button onclick="closeResultPanel()" class="close-panel" style="background:rgba(255,255,255,.1);border:none;color:white;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;">
         <i class="fas fa-times"></i>
       </button>
-    </div>
-  `;
+    </div>`;
 
   content.innerHTML = `
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
-      <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
-        <i class="fas fa-door-closed"></i>
-        <div><strong>Sala</strong><br>${room.room}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;">
+      <div style="background:rgba(255,255,255,.05);padding:15px;border-radius:12px;">
+        <i class="fas fa-door-closed"></i><div><strong>Sala</strong><br>${room.room}</div>
       </div>
-      <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
-        <i class="fas fa-building"></i>
-        <div><strong>Bloco</strong><br>${room.block}</div>
+      <div style="background:rgba(255,255,255,.05);padding:15px;border-radius:12px;">
+        <i class="fas fa-building"></i><div><strong>Bloco</strong><br>${room.block}</div>
       </div>
-      <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
-        <i class="fas fa-layer-group"></i>
-        <div><strong>Andar</strong><br>${room.floor}</div>
+      <div style="background:rgba(255,255,255,.05);padding:15px;border-radius:12px;">
+        <i class="fas fa-layer-group"></i><div><strong>Andar</strong><br>${room.floor}</div>
       </div>
-      <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
-        <i class="fas fa-tag"></i>
-        <div><strong>Tipo</strong><br>${room.type}</div>
+      <div style="background:rgba(255,255,255,.05);padding:15px;border-radius:12px;">
+        <i class="fas fa-tag"></i><div><strong>Tipo</strong><br>${room.type}</div>
       </div>
     </div>
-    <button class="ios-btn result-action-btn" onclick="resetMap()" style="margin-top: 20px;">
+    <button class="ios-btn result-action-btn" onclick="resetMap()" style="margin-top:20px;">
       <i class="fas fa-sync-alt"></i> Resetar Visualização
-    </button>
-  `;
+    </button>`;
 
-  container.style.display = "block";
-  container.classList.add("show");
-  container.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  container.style.display = 'block';
+  container.classList.add('show');
+  container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// Mostrar detalhes do bloco
 function showBuildingDetails(buildingId, building) {
-  const container = document.getElementById("search-result-container");
-  const title = document.getElementById("search-result-title");
-  const content = document.getElementById("search-result-content");
-
+  const container = document.getElementById('search-result-container');
+  const title = document.getElementById('search-result-title');
+  const content = document.getElementById('search-result-content');
   if (!container) return;
 
   title.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <i class="fas fa-${building.icon}" style="color: ${building.cor};"></i>
+    <div style="display:flex;justify-content:space-between;align-items:center;width:100%;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <i class="fas fa-${building.icon}" style="color:${building.cor};"></i>
         <span>${building.nome}</span>
       </div>
-      <button onclick="closeResultPanel()" class="close-panel" style="background: rgba(255,255,255,0.1); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+      <button onclick="closeResultPanel()" class="close-panel" style="background:rgba(255,255,255,.1);border:none;color:white;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;">
         <i class="fas fa-times"></i>
       </button>
-    </div>
-  `;
+    </div>`;
 
-  let andaresHtml = "";
+  let andaresHtml = '';
   for (const [andar, salas] of Object.entries(building.andares)) {
     andaresHtml += `
-      <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 10px;">
-        <div style="font-weight: 600; color: var(--ios-accent-green); margin-bottom: 5px;">${andar}</div>
-        <div style="color: var(--ios-text-secondary);">${salas.join(" • ")}</div>
-      </div>
-    `;
+      <div style="background:rgba(255,255,255,.05);padding:15px;border-radius:12px;margin-bottom:10px;">
+        <div style="font-weight:600;color:var(--ios-accent-green);margin-bottom:5px;">${andar}</div>
+        <div style="color:var(--ios-text-secondary);">${salas.join(' • ')}</div>
+      </div>`;
   }
 
   content.innerHTML = `
-    <p style="color: var(--ios-text-secondary); margin-bottom: 20px;">${building.descricao}</p>
-    <h4 style="margin-bottom: 15px;">Andares</h4>
+    <p style="color:var(--ios-text-secondary);margin-bottom:20px;">${building.descricao}</p>
+    <h4 style="margin-bottom:15px;">Andares</h4>
     ${andaresHtml}
-    <button class="ios-btn result-action-btn" onclick="resetMap()" style="margin-top: 20px;">
+    <button class="ios-btn result-action-btn" onclick="resetMap()" style="margin-top:20px;">
       <i class="fas fa-sync-alt"></i> Resetar Visualização
-    </button>
-  `;
+    </button>`;
 
-  container.style.display = "block";
-  container.classList.add("show");
-  container.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  container.style.display = 'block';
+  container.classList.add('show');
+  container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// Destacar bloco no mapa
 function highlightBuilding(buildingId) {
-  document.querySelectorAll(".building-3d").forEach((b) => b.classList.remove("active", "highlight"));
+  document.querySelectorAll('.building-3d').forEach(b => b.classList.remove('active', 'highlight'));
   const building = document.querySelector(`[data-id="${buildingId}"]`);
-  if (building) building.classList.add("active", "highlight");
+  if (building) building.classList.add('active', 'highlight');
 }
 
-// Funções de zoom
 function zoomMap(factor) {
   currentZoom *= factor;
   currentZoom = Math.max(0.5, Math.min(3, currentZoom));
-  const image = document.getElementById("campus-image");
+  const image = document.getElementById('campus-image');
   if (image) image.style.transform = `scale(${currentZoom})`;
 }
 
 function resetMap() {
   currentZoom = 1;
-  const image = document.getElementById("campus-image");
-  if (image) image.style.transform = "scale(1)";
-
-  document.querySelectorAll(".building-3d").forEach((b) => b.classList.remove("active", "highlight"));
-
-  const container = document.getElementById("search-result-container");
-  if (container) {
-    container.style.display = "none";
-    container.classList.remove("show");
-  }
-
-  const input = document.getElementById("room-search");
-  if (input) input.value = "";
-
-  document.getElementById("autocomplete-suggestions").classList.remove("show");
+  const image = document.getElementById('campus-image');
+  if (image) image.style.transform = 'scale(1)';
+  document.querySelectorAll('.building-3d').forEach(b => b.classList.remove('active', 'highlight'));
+  const container = document.getElementById('search-result-container');
+  if (container) { container.style.display = 'none'; container.classList.remove('show'); }
+  const input = document.getElementById('room-search');
+  if (input) input.value = '';
+  document.getElementById('autocomplete-suggestions').classList.remove('show');
 }
 
-// Filtrar por categoria (chamado pelos quick links)
 function filterByCategory(category) {
-  const searchInput = document.getElementById("room-search");
+  const searchInput = document.getElementById('room-search');
   if (!searchInput) return;
-  
-  // Mapeia categorias para termos de busca
   const categoryMap = {
-    'lab': 'laboratório',
-    'biblioteca': 'biblioteca',
-    'esporte': 'quadra ginásio',
-    'alimentacao': 'cantina refeitório'
+    lab: 'laboratório',
+    biblioteca: 'biblioteca',
+    esporte: 'quadra ginásio',
+    alimentacao: 'cantina refeitório',
   };
-  
   searchInput.value = categoryMap[category] || category;
   performSmartSearch();
 }
 
-// Utilitários
 function escapeHtml(text) {
-  const div = document.createElement("div");
+  const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
@@ -494,354 +371,275 @@ function escapeHtml(text) {
 function highlightMatch(text, query) {
   if (!query) return escapeHtml(text);
   try {
-    const regex = new RegExp(`(${escapeRegExp(query)})`, "gi");
-    return escapeHtml(text).replace(regex, '<mark style="background: rgba(48,209,88,0.3); padding: 2px; border-radius: 3px;">$1</mark>');
-  } catch (e) {
-    return escapeHtml(text);
-  }
+    const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
+    return escapeHtml(text).replace(regex,
+      '<mark style="background:rgba(48,209,88,.3);padding:2px;border-radius:3px;">$1</mark>');
+  } catch { return escapeHtml(text); }
 }
 
 function escapeRegExp(string) {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// ========== FUNÇÕES ORIGINAIS ==========
-
+// ============================================================================
+// HELPERS DE DADOS
+// ============================================================================
 function safeArray(data) {
   if (!data) return [];
   if (Array.isArray(data)) return data;
   if (data.results && Array.isArray(data.results)) return data.results;
-  if (typeof data === "object") return [data];
+  if (typeof data === 'object') return [data];
   return [];
 }
 
 function safeObject(data) {
   if (!data) return {};
-  if (typeof data === "object" && !Array.isArray(data)) return data;
+  if (typeof data === 'object' && !Array.isArray(data)) return data;
   return {};
 }
 
 function parseHorario(codigo) {
   if (!codigo || codigo.length < 3) return null;
-
   const dia = parseInt(codigo[0]);
   const turno = codigo[1];
-  const horas = codigo
-    .substring(2)
-    .split("")
-    .map((h) => parseInt(h));
-
-  const diasNomes = ["", "Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-  const turnosNomes = { M: "Manhã", V: "Tarde", N: "Noite" };
-
+  const horas = codigo.substring(2).split('').map(h => parseInt(h));
+  const diasNomes = ['', 'Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const turnosNomes = { M: 'Manhã', V: 'Tarde', N: 'Noite' };
   return {
     dia,
-    diaNome: diasNomes[dia] || "",
+    diaNome: diasNomes[dia] || '',
     turno,
     turnoNome: turnosNomes[turno] || turno,
     horas,
-    horasStr: horas.join("ª, ") + "ª",
+    horasStr: horas.join('ª, ') + 'ª',
   };
 }
 
-// ============================================================
-// NAVBAR MOBILE — iOS 26 Liquid Glass Bubble (GSAP)
-// ============================================================
-
-const indicator  = document.getElementById('navIndicator');
-const menuItems  = document.querySelectorAll('.mobile-menu-item');
-
-// Estado do drag
-let _isDragging      = false;
-let _dragStartX      = 0;
-let _currentItem     = null;   // item sob a bolha durante arraste
-let _touchMoved      = false;  // distingue tap de swipe
-
-// ── Helpers ─────────────────────────────────────────────────
-
-/** Retorna { left, width } do item relativo ao menu pai */
-function _itemGeometry(el) {
-    const rect     = el.getBoundingClientRect();
-    const menuRect = el.parentElement.getBoundingClientRect();
-    return { left: rect.left - menuRect.left, width: rect.width };
-}
-
-/** Move a bolha suavemente para o item — sem animação de bounce (durante drag) */
-function _slideBubbleTo(el, instant = false) {
-    if (!el) return;
-    const { left, width } = _itemGeometry(el);
-    if (instant) {
-        gsap.set(indicator, { x: left, width });
-    } else {
-        gsap.to(indicator, {
-            x: left,
-            width,
-            duration: 0.32,
-            ease: 'power3.out',
-        });
-    }
-}
-
-/** Animação de toque: bolha expande e retorna — efeito "squish" iOS */
-function _bubbleTap(el) {
-    const { left, width } = _itemGeometry(el);
-
-    // Garante posição correta antes de animar
-    gsap.set(indicator, { x: left, width });
-
-    gsap.timeline()
-        // 1. Expande suavemente ao pressionar
-        .to(indicator, {
-            scaleX: 1.18,
-            scaleY: 0.82,
-            duration: 0.12,
-            ease: 'power2.out',
-        })
-        // 2. Dá um rebote overshoot
-        .to(indicator, {
-            scaleX: 0.94,
-            scaleY: 1.06,
-            duration: 0.18,
-            ease: 'power2.inOut',
-        })
-        // 3. Assenta no lugar com spring suave
-        .to(indicator, {
-            scaleX: 1,
-            scaleY: 1,
-            duration: 0.26,
-            ease: 'elastic.out(1, 0.5)',
-        });
-}
-
-/** Move a bolha para o item alvo com animação de navegação normal (click / tap) */
-function _navigateBubbleTo(el) {
-    if (!el) return;
-    const { left, width } = _itemGeometry(el);
-
-    gsap.to(indicator, {
-        x: left,
-        width,
-        duration: 0.42,
-        ease: 'power4.out',
+function formatarData(dataStr) {
+  if (!dataStr) return 'Data não definida';
+  try {
+    const [ano, mes, dia] = dataStr.split('T')[0].split('-');
+    const data = new Date(ano, mes - 1, dia);
+    return data.toLocaleDateString('pt-BR', {
+      weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
     });
-
-    // Squish leve ao chegar
-    gsap.timeline({ delay: 0.1 })
-        .to(indicator, { scaleX: 1.1, scaleY: 0.88, duration: 0.14, ease: 'power2.out' })
-        .to(indicator, { scaleX: 1,   scaleY: 1,    duration: 0.28, ease: 'elastic.out(1, 0.45)' });
+  } catch { return dataStr; }
 }
 
-// ── Inicialização ────────────────────────────────────────────
+// ============================================================================
+// NAVBAR MOBILE (GSAP)
+// ============================================================================
+const indicator = document.getElementById('navIndicator');
+const menuItems = document.querySelectorAll('.mobile-menu-item');
+
+let _isDragging = false;
+let _dragStartX = 0;
+let _currentItem = null;
+let _touchMoved = false;
+
+function _itemGeometry(el) {
+  const rect = el.getBoundingClientRect();
+  const menuRect = el.parentElement.getBoundingClientRect();
+  return { left: rect.left - menuRect.left, width: rect.width };
+}
+
+function _slideBubbleTo(el, instant = false) {
+  if (!el) return;
+  const { left, width } = _itemGeometry(el);
+  if (instant) {
+    gsap.set(indicator, { x: left, width });
+  } else {
+    gsap.to(indicator, { x: left, width, duration: 0.32, ease: 'power3.out' });
+  }
+}
+
+function _bubbleTap(el) {
+  const { left, width } = _itemGeometry(el);
+  gsap.set(indicator, { x: left, width });
+  gsap.timeline()
+    .to(indicator, { scaleX: 1.18, scaleY: 0.82, duration: 0.12, ease: 'power2.out' })
+    .to(indicator, { scaleX: 0.94, scaleY: 1.06, duration: 0.18, ease: 'power2.inOut' })
+    .to(indicator, { scaleX: 1, scaleY: 1, duration: 0.26, ease: 'elastic.out(1, 0.5)' });
+}
+
+function _navigateBubbleTo(el) {
+  if (!el) return;
+  const { left, width } = _itemGeometry(el);
+  gsap.to(indicator, { x: left, width, duration: 0.42, ease: 'power4.out' });
+  gsap.timeline({ delay: 0.1 })
+    .to(indicator, { scaleX: 1.1, scaleY: 0.88, duration: 0.14, ease: 'power2.out' })
+    .to(indicator, { scaleX: 1, scaleY: 1, duration: 0.28, ease: 'elastic.out(1, 0.45)' });
+}
 
 window.addEventListener('load', () => {
-    const activeItem = document.querySelector('.mobile-menu-item.active');
-    if (activeItem) {
-        const { left, width } = _itemGeometry(activeItem);
-        gsap.set(indicator, { x: left, width, scaleX: 1, scaleY: 1 });
-    }
+  const activeItem = document.querySelector('.mobile-menu-item.active');
+  if (activeItem && indicator) {
+    const { left, width } = _itemGeometry(activeItem);
+    gsap.set(indicator, { x: left, width, scaleX: 1, scaleY: 1 });
+  }
 
-    loadThemeFromStorage();
-    renderThemeTiles();
+  loadThemeFromStorage();
+  renderThemeTiles();
 
-    const headerSearchButton = document.querySelector('.header-search-btn');
-    if (headerSearchButton) {
-        headerSearchButton.addEventListener('click', (event) => {
-            event.preventDefault();
-            openSpotlight();
-        });
-    }
-
-    const mobileSearchButton = document.querySelector('.mobile-search');
-    if (mobileSearchButton) {
-        mobileSearchButton.addEventListener('click', (event) => {
-            event.preventDefault();
-            openSpotlight();
-        });
-    }
+  const headerSearchButton = document.querySelector('.header-search-btn');
+  if (headerSearchButton) {
+    headerSearchButton.addEventListener('click', (e) => { e.preventDefault(); openSpotlight(); });
+  }
+  const mobileSearchButton = document.querySelector('.mobile-search');
+  if (mobileSearchButton) {
+    mobileSearchButton.addEventListener('click', (e) => { e.preventDefault(); openSpotlight(); });
+  }
 });
 
 window.addEventListener('keydown', (event) => {
-    const isCommand = event.metaKey || event.ctrlKey;
-    if (isCommand && event.key.toLowerCase() === 'k') {
-        event.preventDefault();
-        openSpotlight();
-    }
-    if (event.key === 'Escape') {
-        closeSpotlight();
-        closeThemePicker();
-    }
+  const isCommand = event.metaKey || event.ctrlKey;
+  if (isCommand && event.key.toLowerCase() === 'k') {
+    event.preventDefault();
+    openSpotlight();
+  }
+  if (event.key === 'Escape') {
+    closeSpotlight();
+    closeThemePicker();
+  }
 });
-
-// ── Função de Navegação ──────────────────────────────────────
 
 function showSection(sectionName, event) {
-    if (event) event.preventDefault();
+  if (event) event.preventDefault();
 
-    // Atualiza classe active
-    menuItems.forEach(item => item.classList.remove('active'));
+  menuItems.forEach(item => item.classList.remove('active'));
 
-    let activeItem;
-    if (event && event.currentTarget && event.currentTarget.classList.contains('mobile-menu-item')) {
-        activeItem = event.currentTarget;
-    } else {
-        activeItem = Array.from(menuItems).find(item =>
-            item.getAttribute('onclick') && item.getAttribute('onclick').includes(sectionName)
-        );
-    }
+  let activeItem;
+  if (event && event.currentTarget && event.currentTarget.classList.contains('mobile-menu-item')) {
+    activeItem = event.currentTarget;
+  } else {
+    activeItem = Array.from(menuItems).find(item =>
+      item.getAttribute('onclick') && item.getAttribute('onclick').includes(sectionName));
+  }
 
-    if (activeItem) {
-        activeItem.classList.add('active');
-        // Só faz a animação de nav se não for chamado pelo drag (drag anima em tempo real)
-        if (!_isDragging) {
-            _navigateBubbleTo(activeItem);
-        }
-    }
+  if (activeItem) {
+    activeItem.classList.add('active');
+    if (!_isDragging) _navigateBubbleTo(activeItem);
+  }
 
-    // Atualiza sidebar
-    document.querySelectorAll('.sidebar .nav-link').forEach(link => link.classList.remove('active'));
-    const sidebarLink = Array.from(document.querySelectorAll('.sidebar .nav-link')).find(link => {
-        const onclick = link.getAttribute('onclick');
-        return onclick && onclick.includes(sectionName);
-    });
-    if (sidebarLink) sidebarLink.classList.add('active');
+  document.querySelectorAll('.sidebar .nav-link').forEach(l => l.classList.remove('active'));
+  const sidebarLink = Array.from(document.querySelectorAll('.sidebar .nav-link')).find(l => {
+    const onclick = l.getAttribute('onclick');
+    return onclick && onclick.includes(sectionName);
+  });
+  if (sidebarLink) sidebarLink.classList.add('active');
 
-    // Atualiza header-nav
-    document.querySelectorAll('.header-nav-link').forEach(link => link.classList.remove('active'));
-    const headerLink = Array.from(document.querySelectorAll('.header-nav-link')).find(link => {
-        const onclick = link.getAttribute('onclick');
-        return onclick && onclick.includes(sectionName);
-    });
-    if (headerLink) headerLink.classList.add('active');
+  document.querySelectorAll('.header-nav-link').forEach(l => l.classList.remove('active'));
+  const headerLink = Array.from(document.querySelectorAll('.header-nav-link')).find(l => {
+    const onclick = l.getAttribute('onclick');
+    return onclick && onclick.includes(sectionName);
+  });
+  if (headerLink) headerLink.classList.add('active');
 
-    // Troca de seção
-    document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-    const targetSection = document.getElementById(`${sectionName}-section`);
-    if (targetSection) targetSection.classList.add('active');
+  document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+  const targetSection = document.getElementById(`${sectionName}-section`);
+  if (targetSection) targetSection.classList.add('active');
 
-    const titles = {
-        dashboard: '<i class="fas fa-home"></i> Dashboard',
-        boletim:   '<i class="fas fa-file-alt"></i> Boletim',
-        horarios:  '<i class="fas fa-clock"></i> Horários',
-        turmas:    '<i class="fas fa-users"></i> Turmas',
-        mapa:      '<i class="fas fa-map-marked-alt"></i> Mapa do Campus',
-        avaliacoes:'<i class="fas fa-clipboard-list"></i> Avaliações',
-        periodos:  '<i class="fas fa-calendar-alt"></i> Períodos',
-        perfil:    '<i class="fas fa-user"></i> Perfil',
-    };
-    const pageTitle = document.getElementById('page-title');
-    if (pageTitle) pageTitle.innerHTML = titles[sectionName] || titles['dashboard'];
+  const titles = {
+    dashboard:  '<i class="fas fa-home"></i> Dashboard',
+    boletim:    '<i class="fas fa-file-alt"></i> Boletim',
+    horarios:   '<i class="fas fa-clock"></i> Horários',
+    turmas:     '<i class="fas fa-users"></i> Turmas',
+    mapa:       '<i class="fas fa-map-marked-alt"></i> Mapa do Campus',
+    avaliacoes: '<i class="fas fa-clipboard-list"></i> Avaliações',
+    periodos:   '<i class="fas fa-calendar-alt"></i> Períodos',
+    perfil:     '<i class="fas fa-user"></i> Perfil',
+    calculadora:'<i class="fas fa-calculator"></i> Calculadora',
+  };
+  const pageTitle = document.getElementById('page-title');
+  if (pageTitle) pageTitle.innerHTML = titles[sectionName] || titles.dashboard;
 
-    if (window.innerWidth <= 1024) closeSidebar();
+  if (window.innerWidth <= 1024) closeSidebar();
 }
 
-// ── Gestos Touch na Navbar ───────────────────────────────────
-
 menuItems.forEach(item => {
+  item.addEventListener('touchstart', (e) => {
+    _touchMoved = false;
+    _isDragging = false;
+    _currentItem = item;
+    _dragStartX = e.touches[0].clientX;
+    _bubbleTap(item);
+  }, { passive: true });
 
-    // ── touchstart: anima bolha IMEDIATAMENTE ao toque ──────
-    item.addEventListener('touchstart', (e) => {
-        _touchMoved  = false;
-        _isDragging  = false;
-        _currentItem = item;
-        _dragStartX  = e.touches[0].clientX;
+  item.addEventListener('touchmove', (e) => {
+    const touch = e.touches[0];
+    const deltaX = Math.abs(touch.clientX - _dragStartX);
+    if (deltaX > 6) { _touchMoved = true; _isDragging = true; }
+    if (!_isDragging) return;
 
-        // Feedback tátil imediato: bolha "respira" no item tocado
-        _bubbleTap(item);
-    }, { passive: true });
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const hoveredItem = el?.closest('.mobile-menu-item');
 
-    // ── touchmove: arrasta a bolha em tempo real ─────────────
-    item.addEventListener('touchmove', (e) => {
-        const touch = e.touches[0];
-        const deltaX = Math.abs(touch.clientX - _dragStartX);
+    if (hoveredItem && hoveredItem !== _currentItem) {
+      _currentItem = hoveredItem;
+      _slideBubbleTo(hoveredItem, false);
+      if (navigator.vibrate) navigator.vibrate(6);
+    }
+  }, { passive: true });
 
-        // Considera drag se moveu > 6px na horizontal
-        if (deltaX > 6) {
-            _touchMoved = true;
-            _isDragging = true;
+  item.addEventListener('touchend', () => {
+    if (_isDragging && _currentItem) {
+      const onclickAttr = _currentItem.getAttribute('onclick');
+      if (onclickAttr) {
+        const match = onclickAttr.match(/'([^']+)'/);
+        if (match) {
+          showSection(match[1]);
+          if (navigator.vibrate) navigator.vibrate(10);
         }
-
-        if (!_isDragging) return;
-
-        // Descobre qual item está sob o dedo
-        const el = document.elementFromPoint(touch.clientX, touch.clientY);
-        const hoveredItem = el?.closest('.mobile-menu-item');
-
-        if (hoveredItem && hoveredItem !== _currentItem) {
-            _currentItem = hoveredItem;
-            // Desliza instantaneamente para o novo item (sem spring — fica fluido)
-            _slideBubbleTo(hoveredItem, false);
-
-            // Vibração sutil a cada item novo
-            if (navigator.vibrate) navigator.vibrate(6);
-        }
-    }, { passive: true });
-
-    // ── touchend: snap para item mais próximo ou toca ────────
-    item.addEventListener('touchend', (e) => {
-        if (_isDragging && _currentItem) {
-            // Finaliza no item que estava sob o dedo
-            const onclickAttr = _currentItem.getAttribute('onclick');
-            if (onclickAttr) {
-                const match = onclickAttr.match(/'([^']+)'/);
-                if (match) {
-                    const section = match[1];
-                    showSection(section);
-                    if (navigator.vibrate) navigator.vibrate(10);
-                }
-            }
-            // Animação de snap final com squish
-            _navigateBubbleTo(_currentItem);
-        } else if (!_touchMoved) {
-            // Tap simples — a animação de tap já foi executada no touchstart
-            // showSection é chamado pelo onclick do elemento
-        }
-
-        _isDragging  = false;
-        _currentItem = null;
-    }, { passive: true });
+      }
+      _navigateBubbleTo(_currentItem);
+    }
+    _isDragging = false;
+    _currentItem = null;
+  }, { passive: true });
 });
 
-// --- Função para toggle da sidebar no desktop ---
 function toggleSidebarDesktop() {
-    const sidebar = document.getElementById("sidebar");
-    const mainContent = document.getElementById("mainContent");
-    sidebar.classList.toggle("sidebar-collapsed");
-    mainContent.classList.toggle("expanded");
+  const sidebar = document.getElementById('sidebar');
+  const mainContent = document.getElementById('mainContent');
+  sidebar.classList.toggle('sidebar-collapsed');
+  mainContent.classList.toggle('expanded');
 }
 
 function toggleSidebar() {
-  const sidebar = document.getElementById("sidebar");
-  const overlay = document.getElementById("sidebar-overlay");
-  const icon = document.getElementById("menu-toggle-icon");
-  const mobileMenu = document.getElementById("mobileMenu");
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  const icon = document.getElementById('menu-toggle-icon');
+  const mobileMenu = document.getElementById('mobileMenu');
 
-  sidebar.classList.toggle("open");
-  if (sidebar.classList.contains("open")) {
-    overlay.style.display = "block";
-    icon.classList.remove("fa-bars");
-    icon.classList.add("fa-arrow-left");
-    mobileMenu.style.display = "none";
+  sidebar.classList.toggle('open');
+  if (sidebar.classList.contains('open')) {
+    overlay.style.display = 'block';
+    icon.classList.remove('fa-bars');
+    icon.classList.add('fa-arrow-left');
+    mobileMenu.style.display = 'none';
   } else {
-    overlay.style.display = "none";
-    icon.classList.remove("fa-arrow-left");
-    icon.classList.add("fa-bars");
-    mobileMenu.style.display = "flex";
+    overlay.style.display = 'none';
+    icon.classList.remove('fa-arrow-left');
+    icon.classList.add('fa-bars');
+    mobileMenu.style.display = 'flex';
   }
 }
 
 function closeSidebar() {
-  const sidebar = document.getElementById("sidebar");
-  const overlay = document.getElementById("sidebar-overlay");
-  const icon = document.getElementById("menu-toggle-icon");
-  const mobileMenu = document.getElementById("mobileMenu");
-
-  sidebar.classList.remove("open");
-  overlay.style.display = "none";
-  icon.classList.remove("fa-arrow-left");
-  icon.classList.add("fa-bars");
-  mobileMenu.style.display = "flex";
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  const icon = document.getElementById('menu-toggle-icon');
+  const mobileMenu = document.getElementById('mobileMenu');
+  sidebar.classList.remove('open');
+  overlay.style.display = 'none';
+  icon.classList.remove('fa-arrow-left');
+  icon.classList.add('fa-bars');
+  mobileMenu.style.display = 'flex';
 }
 
+// ============================================================================
+// TEMAS
+// ============================================================================
 function openThemePicker() {
   const overlay = document.getElementById('theme-picker-overlay');
   if (!overlay) return;
@@ -859,23 +657,19 @@ function closeThemePicker() {
 function renderThemeTiles() {
   const container = document.getElementById('themeGrid');
   if (!container) return;
-
-  container.innerHTML = appThemes
-    .map((theme) => `
-      <div class="theme-card ${theme.id === selectedSpotlightTheme ? 'active' : ''}" onclick="selectTheme('${theme.id}')">
-        <div class="theme-swatch">
-          <span style="background: ${theme.palette[0]};"></span>
-          <span style="background: ${theme.palette[1]};"></span>
-          <span style="background: ${theme.palette[2]};"></span>
-          <span style="background: ${theme.palette[3]};"></span>
-        </div>
-        <div>
-          <strong>${theme.name}</strong>
-          <p>${theme.description}</p>
-        </div>
+  container.innerHTML = appThemes.map(theme => `
+    <div class="theme-card ${theme.id === selectedSpotlightTheme ? 'active' : ''}" onclick="selectTheme('${theme.id}')">
+      <div class="theme-swatch">
+        <span style="background:${theme.palette[0]};"></span>
+        <span style="background:${theme.palette[1]};"></span>
+        <span style="background:${theme.palette[2]};"></span>
+        <span style="background:${theme.palette[3]};"></span>
       </div>
-    `)
-    .join('');
+      <div>
+        <strong>${theme.name}</strong>
+        <p>${theme.description}</p>
+      </div>
+    </div>`).join('');
 }
 
 function selectTheme(themeId) {
@@ -896,11 +690,13 @@ function loadThemeFromStorage() {
   applyTheme(saved);
 }
 
+// ============================================================================
+// SPOTLIGHT (CMD/Ctrl+K)
+// ============================================================================
 function openSpotlight() {
   const overlay = document.getElementById('spotlight-overlay');
   const input = document.getElementById('spotlight-search');
   if (!overlay || !input) return;
-
   overlay.removeAttribute('hidden');
   document.body.classList.add('spotlight-open');
   buildSpotlightIndex();
@@ -913,7 +709,6 @@ function closeSpotlight() {
   const overlay = document.getElementById('spotlight-overlay');
   const input = document.getElementById('spotlight-search');
   if (!overlay) return;
-
   overlay.setAttribute('hidden', '');
   document.body.classList.remove('spotlight-open');
   if (input) input.value = '';
@@ -923,29 +718,27 @@ function buildSpotlightIndex() {
   const items = [];
 
   const sections = [
-    { id: 'dashboard', type: 'section', title: 'Dashboard', subtitle: 'Visão geral', icon: 'home', tags: ['dashboard', 'início', 'home'] },
-    { id: 'boletim', type: 'section', title: 'Boletim', subtitle: 'Notas e médias', icon: 'file-alt', tags: ['boletim', 'notas', 'media'] },
-    { id: 'horarios', type: 'section', title: 'Horários', subtitle: 'Aulas e cronograma', icon: 'clock', tags: ['horários', 'aulas', 'cronograma'] },
-    { id: 'turmas', type: 'section', title: 'Turmas', subtitle: 'Disciplinas e horários', icon: 'users', tags: ['turmas', 'disciplinas', 'cursos'] },
-    { id: 'mapa', type: 'section', title: 'Mapa do Campus', subtitle: 'Localize salas e blocos', icon: 'map-marked-alt', tags: ['mapa', 'campus', 'salas', 'blocos'] },
-    { id: 'avaliacoes', type: 'section', title: 'Avaliações', subtitle: 'Provas e trabalhos', icon: 'clipboard-list', tags: ['avaliações', 'provas', 'trabalhos', 'notas'] },
-    { id: 'periodos', type: 'section', title: 'Períodos', subtitle: 'Cronograma acadêmico', icon: 'calendar-alt', tags: ['períodos', 'ano', 'semestre'] },
-    { id: 'perfil', type: 'section', title: 'Perfil', subtitle: 'Informações pessoais', icon: 'user', tags: ['perfil', 'conta'] },
+    { id: 'dashboard',  type: 'section', title: 'Dashboard',       subtitle: 'Visão geral',         icon: 'home',            tags: ['dashboard', 'início', 'home'] },
+    { id: 'boletim',    type: 'section', title: 'Boletim',         subtitle: 'Notas e médias',      icon: 'file-alt',        tags: ['boletim', 'notas', 'media'] },
+    { id: 'horarios',   type: 'section', title: 'Horários',        subtitle: 'Aulas e cronograma',  icon: 'clock',           tags: ['horários', 'aulas', 'cronograma'] },
+    { id: 'turmas',     type: 'section', title: 'Turmas',          subtitle: 'Disciplinas',         icon: 'users',           tags: ['turmas', 'disciplinas'] },
+    { id: 'mapa',       type: 'section', title: 'Mapa do Campus',  subtitle: 'Localize salas',      icon: 'map-marked-alt',  tags: ['mapa', 'campus', 'salas', 'blocos'] },
+    { id: 'avaliacoes', type: 'section', title: 'Avaliações',      subtitle: 'Provas e trabalhos',  icon: 'clipboard-list',  tags: ['avaliações', 'provas'] },
+    { id: 'periodos',   type: 'section', title: 'Períodos',        subtitle: 'Cronograma',          icon: 'calendar-alt',    tags: ['períodos', 'ano'] },
+    { id: 'perfil',     type: 'section', title: 'Perfil',          subtitle: 'Informações pessoais',icon: 'user',            tags: ['perfil', 'conta'] },
   ];
-
   items.push(...sections);
 
   const actions = [
-    { id: 'action_boletim', type: 'action', title: 'Ver boletim completo', subtitle: 'Abrir área de notas', icon: 'file-alt', action: 'boletim', tags: ['boletim', 'notas', 'ver'] },
-    { id: 'action_horarios', type: 'action', title: 'Ver horários da semana', subtitle: 'Abrir agenda de aulas', icon: 'clock', action: 'horarios', tags: ['horários', 'agenda', 'aulas'] },
-    { id: 'action_mapa', type: 'action', title: 'Ir para o mapa', subtitle: 'Buscar salas e blocos', icon: 'map-marked-alt', action: 'mapa', tags: ['mapa', 'salas', 'blocos'] },
-    { id: 'action_perfil', type: 'action', title: 'Ver meu perfil', subtitle: 'Informações do aluno', icon: 'user', action: 'perfil', tags: ['perfil', 'dados', 'conta'] },
+    { id: 'action_boletim',   type: 'action', title: 'Ver boletim completo',       subtitle: 'Abrir notas',  icon: 'file-alt',        action: 'boletim',    tags: ['boletim', 'notas', 'ver'] },
+    { id: 'action_horarios',  type: 'action', title: 'Ver horários da semana',    subtitle: 'Agenda',       icon: 'clock',           action: 'horarios',   tags: ['horários', 'agenda'] },
+    { id: 'action_mapa',      type: 'action', title: 'Ir para o mapa',            subtitle: 'Buscar salas', icon: 'map-marked-alt',  action: 'mapa',       tags: ['mapa', 'salas'] },
+    { id: 'action_perfil',    type: 'action', title: 'Ver meu perfil',            subtitle: 'Meus dados',   icon: 'user',            action: 'perfil',     tags: ['perfil', 'dados'] },
   ];
-
   items.push(...actions);
 
   if (roomsDatabase.length > 0) {
-    items.push(...roomsDatabase.map((room) => ({
+    items.push(...roomsDatabase.map(room => ({
       id: `room_${room.id}`,
       type: 'room',
       title: room.name,
@@ -971,85 +764,64 @@ function buildSpotlightIndex() {
   }
 
   if (dadosGlobais) {
-    const boletim = safeArray(dadosGlobais.boletim);
-    boletim.forEach((disciplina) => {
-      if (!disciplina.disciplina) return;
+    safeArray(dadosGlobais.boletim).forEach(d => {
+      if (!d.disciplina) return;
       items.push({
-        id: `disciplina_${disciplina.disciplina}`,
+        id: `disciplina_${d.disciplina}`,
         type: 'disciplina',
-        title: disciplina.disciplina,
-        subtitle: `Média: ${disciplina.media_final_disciplina || disciplina.media_disciplina || '--'} • ${disciplina.situacao || 'Cursando'}`,
-        icon: 'book',
-        action: 'boletim',
-        data: disciplina.disciplina,
-        tags: [disciplina.disciplina, disciplina.situacao || '', 'matéria', 'disciplina'],
+        title: d.disciplina,
+        subtitle: `Média: ${d.media_final_disciplina || d.media_disciplina || '--'} • ${d.situacao || 'Cursando'}`,
+        icon: 'book', action: 'boletim', data: d.disciplina,
+        tags: [d.disciplina, d.situacao || '', 'matéria', 'disciplina'],
       });
     });
 
-    const avaliacoes = safeArray(dadosGlobais.avaliacoes?.proximas);
-    avaliacoes.forEach((avaliacao, index) => {
+    safeArray(dadosGlobais.avaliacoes?.proximas).forEach((av, index) => {
       items.push({
-        id: `avaliacao_${index}`,
-        type: 'avaliacao',
-        title: avaliacao.descricao || 'Avaliação',
-        subtitle: `${avaliacao.componente_curricular || ''} • ${avaliacao.data || ''}`,
-        icon: 'clipboard-list',
-        action: 'avaliacoes',
-        data: avaliacao,
-        tags: [avaliacao.descricao || '', avaliacao.componente_curricular || '', 'prova', 'avaliação'],
+        id: `avaliacao_${index}`, type: 'avaliacao',
+        title: av.descricao || 'Avaliação',
+        subtitle: `${av.componente_curricular || ''} • ${av.data || ''}`,
+        icon: 'clipboard-list', action: 'avaliacoes', data: av,
+        tags: [av.descricao || '', av.componente_curricular || '', 'prova'],
       });
     });
 
-    const turmas = safeArray(dadosGlobais.turmas);
-    turmas.forEach((turma) => {
-      if (!turma.nome_componente) return;
+    safeArray(dadosGlobais.turmas).forEach(t => {
+      if (!t.nome_componente) return;
       items.push({
-        id: `turma_${turma.nome_componente}`,
-        type: 'turma',
-        title: turma.nome_componente,
-        subtitle: turma.horarios_de_aula ? `Horários: ${turma.horarios_de_aula}` : 'Turma cadastrada',
-        icon: 'users',
-        action: 'turmas',
-        data: turma,
-        tags: [turma.nome_componente, turma.horarios_de_aula || '', 'turma'],
+        id: `turma_${t.nome_componente}`, type: 'turma',
+        title: t.nome_componente,
+        subtitle: t.horarios_de_aula ? `Horários: ${t.horarios_de_aula}` : 'Turma cadastrada',
+        icon: 'users', action: 'turmas', data: t,
+        tags: [t.nome_componente, t.horarios_de_aula || '', 'turma'],
       });
-      if (turma.horarios_de_aula) {
-        const codes = turma.horarios_de_aula.split(' / ');
-        codes.forEach((code) => {
+      if (t.horarios_de_aula) {
+        t.horarios_de_aula.split(' / ').forEach(code => {
           items.push({
-            id: `horario_${turma.nome_componente}_${code}`,
-            type: 'horario',
-            title: `${turma.nome_componente} - ${code}`,
+            id: `horario_${t.nome_componente}_${code}`, type: 'horario',
+            title: `${t.nome_componente} - ${code}`,
             subtitle: 'Horário de aula',
-            icon: 'clock',
-            action: 'horarios',
-            data: turma,
-            tags: [turma.nome_componente, code, 'horário', 'aula'],
+            icon: 'clock', action: 'horarios', data: t,
+            tags: [t.nome_componente, code, 'horário', 'aula'],
           });
         });
       }
     });
 
-    const periodos = safeArray(dadosGlobais.periodos);
-    periodos.forEach((periodo) => {
+    safeArray(dadosGlobais.periodos).forEach(p => {
       items.push({
-        id: `periodo_${periodo.ano_letivo || periodo.nome}`,
-        type: 'periodo',
-        title: periodo.nome || `Ano ${periodo.ano_letivo}`,
-        subtitle: periodo.ano_letivo ? `Ano letivo ${periodo.ano_letivo}` : 'Período acadêmico',
-        icon: 'calendar-alt',
-        action: 'periodos',
-        data: periodo,
-        tags: [periodo.nome || '', periodo.ano_letivo || '', 'período', 'ano'],
+        id: `periodo_${p.ano_letivo || p.nome}`, type: 'periodo',
+        title: p.nome || `Ano ${p.ano_letivo}`,
+        subtitle: p.ano_letivo ? `Ano letivo ${p.ano_letivo}` : 'Período acadêmico',
+        icon: 'calendar-alt', action: 'periodos', data: p,
+        tags: [p.nome || '', p.ano_letivo || '', 'período'],
       });
     });
   }
 
   spotlightIndex = items;
   spotlightFuse = new Fuse(spotlightIndex, {
-    includeScore: true,
-    threshold: 0.35,
-    ignoreLocation: true,
+    includeScore: true, threshold: 0.35, ignoreLocation: true,
     keys: [
       { name: 'title', weight: 2 },
       { name: 'subtitle', weight: 1 },
@@ -1068,10 +840,10 @@ function updateSpotlightSearch() {
 
   if (!query) {
     results = spotlightIndex
-      .filter((item) => item.type === 'section' || item.type === 'action')
+      .filter(item => item.type === 'section' || item.type === 'action')
       .slice(0, 6);
   } else if (spotlightFuse) {
-    results = spotlightFuse.search(query).slice(0, 10).map((result) => result.item);
+    results = spotlightFuse.search(query).slice(0, 10).map(r => r.item);
   }
 
   renderSpotlightResults(results, query);
@@ -1086,37 +858,33 @@ function renderSpotlightResults(results, query = '') {
       <div class="spotlight-empty">
         <i class="fas fa-search"></i>
         <div>Nenhum resultado encontrado.</div>
-      </div>
-    `;
+      </div>`;
     return;
   }
 
-  container.innerHTML = results
-    .map((item, index) => {
-      const title = highlightMatch(item.title, query);
-      const subtitle = highlightMatch(item.subtitle || '', query);
-      const badges = item.tags ? item.tags.slice(0, 3).map((tag) => `<span class="spotlight-pill">${escapeHtml(tag)}</span>`).join('') : '';
-      return `
-        <div class="spotlight-item" onclick="executeSpotlightItem(${index})">
-          <div class="spotlight-item-icon"><i class="fas fa-${item.icon}"></i></div>
-          <div class="spotlight-item-content">
-            <div class="spotlight-item-title">${title}</div>
-            <div class="spotlight-item-subtitle">${subtitle}</div>
-            <div class="spotlight-tag">${badges}</div>
-          </div>
+  container.innerHTML = results.map((item, index) => {
+    const title = highlightMatch(item.title, query);
+    const subtitle = highlightMatch(item.subtitle || '', query);
+    const badges = item.tags
+      ? item.tags.slice(0, 3).map(tag => `<span class="spotlight-pill">${escapeHtml(tag)}</span>`).join('')
+      : '';
+    return `
+      <div class="spotlight-item" onclick="executeSpotlightItem(${index})">
+        <div class="spotlight-item-icon"><i class="fas fa-${item.icon}"></i></div>
+        <div class="spotlight-item-content">
+          <div class="spotlight-item-title">${title}</div>
+          <div class="spotlight-item-subtitle">${subtitle}</div>
+          <div class="spotlight-tag">${badges}</div>
         </div>
-      `;
-    })
-    .join('');
-
-  container.querySelectorAll('.spotlight-item').forEach((item, index) => {
-    item.addEventListener('click', () => executeSpotlightItem(index));
-  });
+      </div>`;
+  }).join('');
 }
 
 function executeSpotlightItem(index) {
   const query = document.getElementById('spotlight-search')?.value || '';
-  const results = query && spotlightFuse ? spotlightFuse.search(query).slice(0, 10).map((r) => r.item) : spotlightIndex;
+  const results = query && spotlightFuse
+    ? spotlightFuse.search(query).slice(0, 10).map(r => r.item)
+    : spotlightIndex;
   const selected = results[index] || spotlightIndex[index];
   if (!selected) return;
 
@@ -1127,80 +895,60 @@ function executeSpotlightItem(index) {
     case 'action':
       showSection(selected.action || selected.id);
       break;
-    case 'room':
-      showSection('mapa');
-      selectRoom(selected.data);
-      break;
-    case 'building':
-      showSection('mapa');
-      selectBuilding(selected.data);
-      break;
-    case 'disciplina':
-      showSection('boletim');
-      break;
-    case 'avaliacao':
-      showSection('avaliacoes');
-      break;
-    case 'turma':
-      showSection('turmas');
-      break;
-    case 'horario':
-      showSection('horarios');
-      break;
-    case 'periodo':
-      showSection('periodos');
-      break;
-    default:
-      if (selected.action) showSection(selected.action);
-      break;
+    case 'room':       showSection('mapa');       selectRoom(selected.data);     break;
+    case 'building':   showSection('mapa');       selectBuilding(selected.data); break;
+    case 'disciplina': showSection('boletim');                                    break;
+    case 'avaliacao':  showSection('avaliacoes');                                 break;
+    case 'turma':      showSection('turmas');                                     break;
+    case 'horario':    showSection('horarios');                                   break;
+    case 'periodo':    showSection('periodos');                                   break;
+    default: if (selected.action) showSection(selected.action);
   }
 }
 
 function handleSpotlightKeydown(event) {
-  const key = event.key;
-  if (key === 'Enter') {
+  if (event.key === 'Enter') {
     event.preventDefault();
     const query = event.target.value.trim();
-    const results = query && spotlightFuse ? spotlightFuse.search(query).slice(0, 10).map((r) => r.item) : spotlightIndex;
+    const results = query && spotlightFuse
+      ? spotlightFuse.search(query).slice(0, 10).map(r => r.item)
+      : spotlightIndex;
     if (results.length) executeSpotlightItem(0);
   }
 }
 
+// ============================================================================
+// AUTENTICAÇÃO E FETCH
+// ============================================================================
 async function logout() {
   try {
-    await fetch(`${API_URL}/auth/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
-  } catch (e) {}
-  localStorage.removeItem("suap_token");
-  window.location.href = "/index.html";
+    await fetch(cfg.api.logout(), { method: 'POST', credentials: 'include' });
+  } catch {}
+  localStorage.removeItem('suap_token');
+  window.location.href = '/index.html';
 }
 
-function showAlert(message, type = "error") {
-  const container = document.getElementById("alert-container");
+function showAlert(message, type = 'error') {
+  const container = document.getElementById('alert-container');
   if (!container) return;
-
-  const icon = type === "error" ? "exclamation-circle" : "check-circle";
-  const className = type === "error" ? "alert-error" : "alert-success";
-
+  const icon = type === 'error' ? 'exclamation-circle' : 'check-circle';
+  const className = type === 'error' ? 'alert-error' : 'alert-success';
   container.innerHTML = `
-        <div class="ios-alert ${className}">
-            <i class="fas fa-${icon}"></i>
-            <span style="font-weight: 500;">${message}</span>
-        </div>
-    `;
-  setTimeout(() => (container.innerHTML = ""), 5000);
+    <div class="ios-alert ${className}">
+      <i class="fas fa-${icon}"></i>
+      <span style="font-weight:500;">${message}</span>
+    </div>`;
+  setTimeout(() => (container.innerHTML = ''), 5000);
 }
 
 function mostrarLoading() {
-  const loadingEl = document.getElementById("loading");
-  if (loadingEl) loadingEl.style.display = "flex";
+  const el = document.getElementById('loading');
+  if (el) el.style.display = 'flex';
 }
 
 function esconderLoading() {
-  const loadingEl = document.getElementById("loading");
-  if (loadingEl) loadingEl.style.display = "none";
+  const el = document.getElementById('loading');
+  if (el) el.style.display = 'none';
 }
 
 async function trocarAno(novoAno) {
@@ -1210,8 +958,9 @@ async function trocarAno(novoAno) {
   esconderLoading();
 }
 
+// Fetch com renovação automática de token SUAP (401)
 async function fetchComRefresh(url, options = {}) {
-  let token = localStorage.getItem("suap_token");
+  let token = localStorage.getItem('suap_token');
 
   let response = await fetch(url, {
     ...options,
@@ -1219,33 +968,26 @@ async function fetchComRefresh(url, options = {}) {
   });
 
   if (response.status === 401) {
-    // Token expirado — tenta renovar via Firebase UID
-    const { auth } = await import('/assets/js/firebase-init.js');
-    const user = auth.currentUser
+    const { auth } = await import('./firebase-init.js');
+    const user = auth.currentUser;
+    if (!user) { window.location.href = '/index.html'; return null; }
 
-    if (!user) {
-      window.location.href = "/index.html";
-      return null;
-    }
-
-    const backendBase = API_URL.replace('/api', '');
-    const refreshRes = await fetch(`${backendBase}/auth/refresh`, {
+    const refreshRes = await fetch(cfg.api.refresh(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ uid: user.uid }),
     });
 
     if (!refreshRes.ok) {
-      localStorage.removeItem("suap_token");
-      window.location.href = "/index.html";
+      localStorage.removeItem('suap_token');
+      window.location.href = '/index.html';
       return null;
     }
 
     const data = await refreshRes.json();
-    localStorage.setItem("suap_token", data.suap_token);
+    localStorage.setItem('suap_token', data.suap_token);
     token = data.suap_token;
 
-    // Repete a requisição original com o novo token
     response = await fetch(url, {
       ...options,
       headers: { ...options.headers, Authorization: `Bearer ${token}` },
@@ -1255,110 +997,60 @@ async function fetchComRefresh(url, options = {}) {
   return response;
 }
 
-/**
- * Valida se um campus está ativo
- */
-async function validarCampus(campus_id) {
-  if (!campus_id) {
-    console.log('❌ Campus ID inválido');
-    return true; // Sem campus = tudo liberado
-  }
-  
-  try {
-    const url = `${API_URL}/campus/features/${campus_id}`;
-    console.log(`🔗 Consultando: ${url}`);
-    const response = await fetchComRefresh(url);
-    
-    if (!response.ok) {
-      console.warn(`⚠️ Response não OK: ${response.status}`);
-      return true; // Erro = considerar ativo
-    }
-    
-    const data = await response.json();
-    console.log(`📊 Resposta do backend:`, data);
-    const ativo = data.ativo === true;
-    console.log(`🔍 Campus ativo?: ${ativo}`);
-    return ativo;
-  } catch (err) {
-    console.warn('⚠️ Erro ao validar campus:', err.message);
-    return true; // Erro = considerar ativo
-  }
-}
+// ❌ REMOVIDO: validarCampus() — o auth-guard já carrega `campus.ativo`.
+//    A chamada extra à API sempre retornava `true` porque `dadosAluno.campus_id`
+//    nunca existe (o SUAP retorna `campus`, não `campus_id`).
 
 async function carregarDadosAluno() {
-  const token = localStorage.getItem("suap_token");
-  if (!token) {
-    window.location.href = "/index.html";
-    return;
-  }
+  const token = localStorage.getItem('suap_token');
+  if (!token) { window.location.href = '/index.html'; return; }
 
   try {
-    const response = await fetchComRefresh(`${API_URL}/me`);
-
+    const response = await fetchComRefresh(cfg.api.me());
     if (!response || response.status === 401) {
-      localStorage.removeItem("suap_token");
-      window.location.href = "/index.html";
+      localStorage.removeItem('suap_token');
+      window.location.href = '/index.html';
       return;
     }
-
     const data = await response.json();
     dadosAluno = data.aluno;
-    console.log("Aluno:", dadosAluno);
-    console.log("campus_id:", dadosAluno?.campus_id);
-    console.log("campus:", dadosAluno?.campus);
-
     preencherSidebar({ aluno: dadosAluno });
     preencherPerfil({ aluno: dadosAluno });
   } catch (error) {
-    console.error("Erro ao carregar dados do aluno:", error);
+    console.error('Erro ao carregar dados do aluno:', error);
   }
 }
 
 async function carregarDadosAno(ano) {
   try {
-    const response = await fetchComRefresh(`${API_URL}/dashboard/${ano}`);
-
+    const response = await fetchComRefresh(cfg.api.dashboard(ano));
     if (!response || response.status === 401) {
-      localStorage.removeItem("suap_token");
-      showAlert("Sessão expirada. Faça login novamente.");
-      setTimeout(() => (window.location.href = "/index.html"), 2000);
+      localStorage.removeItem('suap_token');
+      showAlert('Sessão expirada. Faça login novamente.');
+      setTimeout(() => (window.location.href = '/index.html'), 2000);
       return;
     }
-
     const data = await response.json();
+    dadosGlobais = { ...data, aluno: dadosAluno };
 
-    dadosGlobais = {
-      ...data,
-      aluno: dadosAluno,
-    };
-
-    if (data.erro) {
-      showAlert(data.erro);
-      return;
-    }
+    if (data.erro) { showAlert(data.erro); return; }
 
     preencherDashboard(dadosGlobais);
     preencherPeriodos(dadosGlobais);
     preencherAvaliacoes(dadosGlobais);
     preencherBoletim(dadosGlobais);
     preencherHorarios(dadosGlobais);
-    
-    // 🔍 Validar campus antes de preencher turmas
-    console.log('🔍 Validando campus:', dadosAluno?.campus_id);
-    const campusAtivo = await validarCampus(dadosAluno?.campus_id);
-    console.log('✅ Resultado validação:', campusAtivo);
-    
-    if (!campusAtivo && dadosGlobais.turmas) {
-      console.warn(`⚠️ Campus ${dadosAluno?.campus_id} está desativado. Removendo horários...`);
+
+    // ✅ FIX: usa o campus já carregado pelo auth-guard em vez de chamada extra.
+    if (window.IFHub?.campus?.ativo === false && dadosGlobais.turmas) {
       dadosGlobais.turmas = dadosGlobais.turmas.map(t => ({ ...t, horarios_de_aula: null }));
-      console.log('📋 Turmas após filtro:', dadosGlobais.turmas);
     }
-    
+
     preencherTurmas(dadosGlobais);
     buildSpotlightIndex();
   } catch (error) {
-    console.error("Erro:", error);
-    showAlert("Erro ao carregar dados: " + error.message);
+    console.error('Erro:', error);
+    showAlert('Erro ao carregar dados: ' + error.message);
   }
 }
 
@@ -1369,22 +1061,24 @@ async function carregarDados() {
   esconderLoading();
 }
 
+// ============================================================================
+// PREENCHIMENTO DE UI
+// ============================================================================
 function preencherSidebar(data) {
   const aluno = safeObject(data.aluno);
-  const nome = aluno.nome_usual || aluno.nome || "Aluno";
-  const matricula = aluno.matricula || "";
+  const nome = aluno.nome_usual || aluno.nome || 'Aluno';
+  const matricula = aluno.matricula || '';
   const foto = aluno.foto || aluno.url_foto_75x100;
 
-  const nomeEl = document.getElementById("sidebar-nome");
-  const matriculaEl = document.getElementById("sidebar-matricula");
-
+  const nomeEl = document.getElementById('sidebar-nome');
+  const matEl = document.getElementById('sidebar-matricula');
   if (nomeEl) nomeEl.textContent = nome;
-  if (matriculaEl) matriculaEl.textContent = matricula;
+  if (matEl) matEl.textContent = matricula;
 
-  const avatarEl = document.getElementById("sidebar-avatar");
+  const avatarEl = document.getElementById('sidebar-avatar');
   if (avatarEl) {
     if (foto) {
-      avatarEl.innerHTML = `<img src="${foto}" alt="Foto" onerror="this.style.display='none'; this.parentElement.innerHTML='<span>${nome.charAt(0)}</span>'">`;
+      avatarEl.innerHTML = `<img src="${foto}" alt="Foto" onerror="this.style.display='none';this.parentElement.innerHTML='<span>${nome.charAt(0)}</span>'">`;
     } else {
       avatarEl.innerHTML = `<span>${nome.charAt(0).toUpperCase()}</span>`;
     }
@@ -1395,146 +1089,104 @@ function preencherDashboard(data) {
   const aluno = safeObject(data.aluno);
   const boletim = safeArray(data.boletim);
 
-  const cardIra = document.getElementById("card-ira");
-  const cardFrequencia = document.getElementById("card-frequencia");
-  const cardFaltas = document.getElementById("card-faltas");
+  const cardIra = document.getElementById('card-ira');
+  const cardFreq = document.getElementById('card-frequencia');
+  const cardFaltas = document.getElementById('card-faltas');
 
-  if (cardIra) cardIra.textContent = aluno.ira || "--";
+  if (cardIra) cardIra.textContent = aluno.ira || '--';
 
-  // Frequência - Média das porcentagens de frequência
-  if (cardFrequencia) {
-    let totalAulasDadas = 0;
-    let totalFaltas = 0;
+  if (cardFreq) {
+    let totalFreq = 0, count = 0;
     boletim.forEach(d => {
-      totalAulasDadas += parseInt(d.carga_horaria_cumprida) || 0;
-      totalFaltas += parseInt(d.numero_faltas) || 0;
+      const f = parseFloat(d.percentual_carga_horaria_frequentada);
+      if (!isNaN(f)) { totalFreq += f; count++; }
     });
-    const mediaFreq = totalAulasDadas > 0
-      ? (((totalAulasDadas - totalFaltas) / totalAulasDadas) * 100)
-          .toFixed(2).replace('.', ',') + '%'
-      : '--';
-    cardFrequencia.textContent = mediaFreq;
+    cardFreq.textContent = count > 0 ? (totalFreq / count).toFixed(1) + '%' : '--';
   }
 
-  // Total de Faltas
   if (cardFaltas) {
-    const totalFaltas = boletim.reduce((sum, d) => sum + (parseInt(d.numero_faltas) || 0), 0);
-    cardFaltas.textContent = totalFaltas;
+    cardFaltas.textContent = boletim.reduce((sum, d) => sum + (parseInt(d.numero_faltas) || 0), 0);
   }
 
-  const containerAval = document.getElementById("dashboard-avaliacoes");
-
-  let avaliacoes = [];
-  if (data.avaliacoes) {
-    const proximas = safeArray(data.avaliacoes.proximas);
-    avaliacoes = proximas;
-  }
+  const containerAval = document.getElementById('dashboard-avaliacoes');
+  const avaliacoes = data.avaliacoes ? safeArray(data.avaliacoes.proximas) : [];
 
   if (containerAval) {
     if (avaliacoes.length === 0) {
-      containerAval.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-calendar-check"></i>
-                    <p>Nenhuma avaliação agendada</p>
-                </div>
-            `;
+      containerAval.innerHTML = `<div class="empty-state"><i class="fas fa-calendar-check"></i><p>Nenhuma avaliação agendada</p></div>`;
     } else {
-      containerAval.innerHTML = avaliacoes
-        .slice(0, 3)
-        .map(
-          (av) => `
-                <div class="timeline-item" style="margin-bottom: 16px;">
-                    <div class="timeline-date"><i class="fas fa-clock"></i> ${formatarData(av.data)}</div>
-                    <div class="timeline-title">${av.descricao || "Avaliação"}</div>
-                    <div class="timeline-desc">${av.diario || av.componente_curricular || ""}</div>
-                </div>
-            `,
-        )
-        .join("");
+      containerAval.innerHTML = avaliacoes.slice(0, 3).map(av => `
+        <div class="timeline-item" style="margin-bottom:16px;">
+          <div class="timeline-date"><i class="fas fa-clock"></i> ${formatarData(av.data)}</div>
+          <div class="timeline-title">${av.descricao || 'Avaliação'}</div>
+          <div class="timeline-desc">${av.diario || av.componente_curricular || ''}</div>
+        </div>`).join('');
     }
   }
 
-  const containerBoletim = document.getElementById("dashboard-boletim-resumo");
+  const containerBoletim = document.getElementById('dashboard-boletim-resumo');
   if (containerBoletim) {
     if (boletim.length === 0) {
       containerBoletim.innerHTML = `<div class="empty-state"><i class="fas fa-file-alt"></i><p>Nenhuma disciplina</p></div>`;
     } else {
-      const html = boletim
-        .slice(0, 5)
-        .map((d) => {
-          const media =
-            parseFloat(d.media_final_disciplina) ||
-            parseFloat(d.media_disciplina) ||
-            0;
-          let situacaoClass = "tag-cursando";
-          if (d.situacao === "Aprovado") situacaoClass = "tag-aprovado";
-          else if (d.situacao === "Reprovado") situacaoClass = "tag-reprovado";
-
-          return `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px; background: rgba(255,255,255,0.03); border-radius: 16px; margin-bottom: 12px; border: 1px solid var(--glass-border);">
-                        <div>
-                            <div style="font-weight: 600; margin-bottom: 4px;">${d.disciplina || "Disciplina"}</div>
-                            <div style="font-size: 0.85rem; color: var(--ios-text-secondary);">Média: ${media || "--"}</div>
-                        </div>
-                        <span class="situacao-badge ${situacaoClass}">${d.situacao || "Cursando"}</span>
-                    </div>
-                `;
-        })
-        .join("");
-      containerBoletim.innerHTML = html;
+      containerBoletim.innerHTML = boletim.slice(0, 5).map(d => {
+        const media = parseFloat(d.media_final_disciplina) || parseFloat(d.media_disciplina) || 0;
+        let cls = 'tag-cursando';
+        if (d.situacao === 'Aprovado') cls = 'tag-aprovado';
+        else if (d.situacao === 'Reprovado') cls = 'tag-reprovado';
+        return `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:18px;background:rgba(255,255,255,.03);border-radius:16px;margin-bottom:12px;border:1px solid var(--glass-border);">
+            <div>
+              <div style="font-weight:600;margin-bottom:4px;">${d.disciplina || 'Disciplina'}</div>
+              <div style="font-size:.85rem;color:var(--ios-text-secondary);">Média: ${media || '--'}</div>
+            </div>
+            <span class="situacao-badge ${cls}">${d.situacao || 'Cursando'}</span>
+          </div>`;
+      }).join('');
     }
   }
 
-  // Preenche horários de hoje
   preencherHorariosHoje(data);
 }
 
-// NOVA FUNÇÃO: Preencher o painel de horários de hoje
 function preencherHorariosHoje(data) {
-  const container = document.getElementById("dashboard-horarios-hoje");
+  const container = document.getElementById('dashboard-horarios-hoje');
   if (!container) return;
 
-  const hoje = new Date();
-  const diaSemana = hoje.getDay(); // 0 = domingo, 1 = segunda, ..., 6 = sábado
+  const diaSemana = new Date().getDay();
 
-  // Se for sábado ou domingo, exibir mensagem
-  if (diaSemana === 0) { // domingo
+  if (diaSemana === 0) {
     container.innerHTML = `
-      <div class="empty-state" style="padding: 20px;">
-        <i class="fas fa-sun" style="font-size: 2.5rem;"></i>
-        <p style="font-size: 1.1rem; margin: 10px 0;">Domingo é dia de descanso! 🛌</p>
-        <small style="color: var(--ios-text-secondary);">Amanhã (segunda) você tem aulas normalmente.</small>
-      </div>
-    `;
+      <div class="empty-state" style="padding:20px;">
+        <i class="fas fa-sun" style="font-size:2.5rem;"></i>
+        <p style="font-size:1.1rem;margin:10px 0;">Domingo é dia de descanso! 🛌</p>
+        <small style="color:var(--ios-text-secondary);">Amanhã (segunda) você tem aulas normalmente.</small>
+      </div>`;
     return;
   }
-  if (diaSemana === 6) { // sábado
+  if (diaSemana === 6) {
     container.innerHTML = `
-      <div class="empty-state" style="padding: 20px;">
-        <i class="fas fa-couch" style="font-size: 2.5rem;"></i>
-        <p style="font-size: 1.1rem; margin: 10px 0;">Sábado, dia de relaxar! 🎉</p>
-        <small style="color: var(--ios-text-secondary);">Aproveite o fim de semana.</small>
-      </div>
-    `;
+      <div class="empty-state" style="padding:20px;">
+        <i class="fas fa-couch" style="font-size:2.5rem;"></i>
+        <p style="font-size:1.1rem;margin:10px 0;">Sábado, dia de relaxar! 🎉</p>
+        <small style="color:var(--ios-text-secondary);">Aproveite o fim de semana.</small>
+      </div>`;
     return;
   }
 
-  // Dia de semana (segunda a sexta)
   const turmas = safeArray(data.turmas);
   const horariosHoje = [];
 
-  turmas.forEach(turma => {
-    if (turma.horarios_de_aula) {
-      const codigos = turma.horarios_de_aula.split(" / ");
-      codigos.forEach(cod => {
-        const parsed = parseHorario(cod.trim());
-        // parsed.dia: 1=domingo,2=segunda,...7=sábado
-        if (parsed && parsed.dia === diaSemana + 1) { // +1 porque no array o índice 1 é domingo
+  turmas.forEach(t => {
+    if (t.horarios_de_aula) {
+      t.horarios_de_aula.split(' / ').forEach(cod => {
+        const p = parseHorario(cod.trim());
+        if (p && p.dia === diaSemana + 1) {
           horariosHoje.push({
-            ...parsed,
-            disciplina: turma.descricao,
-            sigla: turma.sigla,
-            local: turma.locais_de_aula?.[0] || "Local não definido",
+            ...p,
+            disciplina: t.descricao,
+            sigla: t.sigla,
+            local: t.locais_de_aula?.[0] || 'Local não definido',
           });
         }
       });
@@ -1542,34 +1194,27 @@ function preencherHorariosHoje(data) {
   });
 
   if (horariosHoje.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state" style="padding: 20px;">
-        <i class="fas fa-calendar-day"></i>
-        <p>Nenhuma aula hoje</p>
-      </div>
-    `;
+    container.innerHTML = `<div class="empty-state" style="padding:20px;"><i class="fas fa-calendar-day"></i><p>Nenhuma aula hoje</p></div>`;
     return;
   }
 
-  // Ordenar por turno e hora
   const ordemTurno = { M: 1, V: 2, N: 3 };
   horariosHoje.sort((a, b) => {
     if (ordemTurno[a.turno] !== ordemTurno[b.turno]) return ordemTurno[a.turno] - ordemTurno[b.turno];
     return a.horas[0] - b.horas[0];
   });
 
-  let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+  let html = '<div style="display:flex;flex-direction:column;gap:12px;">';
   horariosHoje.forEach(aula => {
-    const tagClass = { M: "tag-manha", V: "tag-tarde", N: "tag-noite" }[aula.turno] || "tag-manha";
+    const tagClass = { M: 'tag-manha', V: 'tag-tarde', N: 'tag-noite' }[aula.turno] || 'tag-manha';
     html += `
-      <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 16px; border-radius: 16px; border-left: 4px solid var(--ios-accent-green);">
+      <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.03);padding:16px;border-radius:16px;border-left:4px solid var(--ios-accent-green);">
         <div>
-          <div style="font-weight: 600; margin-bottom: 4px;">${aula.disciplina}</div>
-          <div style="font-size: 0.85rem; color: var(--ios-text-secondary);"><i class="fas fa-map-marker-alt"></i> ${aula.local}</div>
+          <div style="font-weight:600;margin-bottom:4px;">${aula.disciplina}</div>
+          <div style="font-size:.85rem;color:var(--ios-text-secondary);"><i class="fas fa-map-marker-alt"></i> ${aula.local}</div>
         </div>
-        <span class="aula-tag ${tagClass}" style="font-size: 0.7rem;">${aula.turnoNome} (${aula.horasStr})</span>
-      </div>
-    `;
+        <span class="aula-tag ${tagClass}" style="font-size:.7rem;">${aula.turnoNome} (${aula.horasStr})</span>
+      </div>`;
   });
   html += '</div>';
   container.innerHTML = html;
@@ -1577,96 +1222,74 @@ function preencherHorariosHoje(data) {
 
 function preencherPerfil(data) {
   const aluno = safeObject(data.aluno);
-  const nome = aluno.nome_usual || aluno.nome || "Aluno";
+  const nome = aluno.nome_usual || aluno.nome || 'Aluno';
   const foto = aluno.foto || aluno.url_foto_75x100;
 
-  const nomeEl = document.getElementById("perfil-nome");
-  const matriculaEl = document.getElementById("perfil-matricula");
-  const emailEl = document.getElementById("perfil-email");
-
+  const nomeEl = document.getElementById('perfil-nome');
+  const matEl = document.getElementById('perfil-matricula');
+  const emailEl = document.getElementById('perfil-email');
   if (nomeEl) nomeEl.textContent = nome;
-  if (matriculaEl) matriculaEl.textContent = aluno.identificacao || "--";
-  if (emailEl)
-    emailEl.textContent = aluno.email_academico || aluno.email || "--";
+  if (matEl) matEl.textContent = aluno.identificacao || '--';
+  if (emailEl) emailEl.textContent = aluno.email_academico || aluno.email || '--';
 
-  const avatarEl = document.getElementById("perfil-avatar");
+  const avatarEl = document.getElementById('perfil-avatar');
   if (avatarEl) {
     if (foto) {
-      avatarEl.innerHTML = `<img src="${foto}" alt="Foto" onerror="this.parentElement.innerHTML='<span id=\'perfil-avatar-text\'>${nome.charAt(0)}</span>'">`;
+      avatarEl.innerHTML = `<img src="${foto}" alt="Foto" onerror="this.parentElement.innerHTML='<span>${nome.charAt(0)}</span>'">`;
     } else {
-      avatarEl.innerHTML = `<span id="perfil-avatar-text">${nome.charAt(0).toUpperCase()}</span>`;
+      avatarEl.innerHTML = `<span>${nome.charAt(0).toUpperCase()}</span>`;
     }
   }
 
-  const detalhesEl = document.getElementById("perfil-detalhes");
+  const detalhesEl = document.getElementById('perfil-detalhes');
   if (detalhesEl) {
     const campos = [
-      { label: "Nome Completo", value: aluno.nome || aluno.nome_registro },
-      { label: "Nome Usual", value: aluno.nome_usual },
-      { label: "Matrícula", value: aluno.matricula },
-      { label: "CPF", value: aluno.cpf },
-      { label: "E-mail Acadêmico", value: aluno.email_academico },
-      { label: "Curso", value: aluno.curso },
-      { label: "Campus", value: aluno.campus },
-      { label: "Situação", value: aluno.situacao },
-      { label: "IRA", value: aluno.ira },
-      { label: "Ano de Ingresso", value: aluno.ingresso },
+      { label: 'Nome Completo',   value: aluno.nome || aluno.nome_registro },
+      { label: 'Nome Usual',      value: aluno.nome_usual },
+      { label: 'Matrícula',       value: aluno.matricula },
+      { label: 'CPF',             value: aluno.cpf },
+      { label: 'E-mail Acadêmico',value: aluno.email_academico },
+      { label: 'Curso',           value: aluno.curso },
+      { label: 'Campus',          value: aluno.campus },
+      { label: 'Situação',        value: aluno.situacao },
+      { label: 'IRA',             value: aluno.ira },
+      { label: 'Ano de Ingresso', value: aluno.ingresso },
     ];
-
-    detalhesEl.innerHTML = campos
-      .filter((c) => c.value)
-      .map(
-        (c) => `
-                <div class="info-row">
-                    <span class="info-label" style="font-size: 0.875rem;">${c.label}</span>
-                    <span class="info-value" style="font-size: 0.875rem;">${c.value}</span>
-                </div>
-            `,
-      )
-      .join("");
+    detalhesEl.innerHTML = campos.filter(c => c.value).map(c => `
+      <div class="info-row">
+        <span class="info-label" style="font-size:.875rem;">${c.label}</span>
+        <span class="info-value" style="font-size:.875rem;">${c.value}</span>
+      </div>`).join('');
   }
 }
 
 function preencherPeriodos(data) {
   const periodos = safeArray(data.periodos);
-  const container = document.getElementById("periodos-grid");
+  const container = document.getElementById('periodos-grid');
+  const anos = [...new Set(periodos.map(p => p.ano_letivo))].sort((a, b) => b - a);
 
-  const anos = [...new Set(periodos.map((p) => p.ano_letivo))].sort(
-    (a, b) => b - a,
-  );
-
-  const headerSelect = document.getElementById("ano-select");
+  const headerSelect = document.getElementById('ano-select');
   if (headerSelect) {
-    headerSelect.innerHTML = anos
-      .map(
-        (ano) =>
-          `<option value="${ano}" ${ano === anoAtual ? "selected" : ""}>${ano}</option>`,
-      )
-      .join("");
+    headerSelect.innerHTML = anos.map(a =>
+      `<option value="${a}" ${a === anoAtual ? 'selected' : ''}>${a}</option>`).join('');
   }
 
   if (container) {
     if (anos.length === 0) {
-      container.innerHTML =
-        '<p style="color: var(--ios-text-secondary); text-align: center; padding: 40px;">Nenhum período encontrado</p>';
+      container.innerHTML = '<p style="color:var(--ios-text-secondary);text-align:center;padding:40px;">Nenhum período encontrado</p>';
     } else {
-      container.innerHTML = anos
-        .map(
-          (ano) => `
-                <div class="periodo-card ${ano === anoAtual ? "active" : ""}" onclick="trocarAno(${ano})">
-                    <div class="periodo-ano">${ano}</div>
-                    <div class="periodo-status">${ano === anoAtual ? "Período Atual" : "Clique para visualizar"}</div>
-                </div>
-            `,
-        )
-        .join("");
+      container.innerHTML = anos.map(ano => `
+        <div class="periodo-card ${ano === anoAtual ? 'active' : ''}" onclick="trocarAno(${ano})">
+          <div class="periodo-ano">${ano}</div>
+          <div class="periodo-status">${ano === anoAtual ? 'Período Atual' : 'Clique para visualizar'}</div>
+        </div>`).join('');
     }
   }
 }
 
 function preencherBoletim(data) {
   const boletim = safeArray(data.boletim);
-  const container = document.getElementById("boletim-content");
+  const container = document.getElementById('boletim-content');
   if (!container) return;
 
   if (boletim.length === 0) {
@@ -1674,81 +1297,70 @@ function preencherBoletim(data) {
     return;
   }
 
-  const html = `
-        <div class="table-responsive">
-          <table class="ios-table">
-              <thead>
-                  <tr>
-                      <th>Disciplina</th>
-                      <th style="text-align: center;">1ª Etapa</th>
-                      <th style="text-align: center;">2ª Etapa</th>
-                      <th style="text-align: center;">3ª Etapa</th>
-                      <th style="text-align: center;">4ª Etapa</th>
-                      <th style="text-align: center;">Média</th>
-                      <th style="text-align: center;">Situação</th>
-                  </tr>
-              </thead>
-              <tbody>
-                  ${boletim
-                    .map((d) => {
-                      const n1 = d.nota_etapa_1?.nota || "--";
-                      const n2 = d.nota_etapa_2?.nota || "--";
-                      const n3 = d.nota_etapa_3?.nota || "--";
-                      const n4 = d.nota_etapa_4?.nota || "--";
-                      const media =
-                        d.media_disciplina || d.media_final_disciplina || "--";
-                      const n1Num = parseFloat(n1) || 0;
-                      const n2Num = parseFloat(n2) || 0;
-                      const n3Num = parseFloat(n3) || 0;
-                      const n4Num = parseFloat(n4) || 0;
-                      let situacaoClass = "tag-cursando";
-                      if (d.situacao === "Aprovado")
-                        situacaoClass = "tag-aprovado";
-                      else if (d.situacao === "Reprovado")
-                        situacaoClass = "tag-reprovado";
-                      return `
-                          <tr>
-                              <td>
-                                  <div class="disciplina-info">
-                                      <h4>${d.disciplina || "Disciplina"}</h4>
-                                      <p>Faltas: ${d.numero_faltas || 0} | Freq: ${d.percentual_carga_horaria_frequentada || 0}%</p>
-                                  </div>
-                              </td>
-                              <td style="text-align: center;"><span class="nota-badge ${n1Num >= 60 ? "nota-aprovado" : n1Num >= 40 ? "nota-recuperacao" : "nota-reprovado"}">${n1}</span></td>
-                              <td style="text-align: center;"><span class="nota-badge ${n2Num >= 60 ? "nota-aprovado" : n2Num >= 40 ? "nota-recuperacao" : "nota-reprovado"}">${n2}</span></td>
-                              <td style="text-align: center;"><span class="nota-badge ${n3Num >= 60 ? "nota-aprovado" : n3Num >= 40 ? "nota-recuperacao" : "nota-reprovado"}">${n3}</span></td>
-                              <td style="text-align: center;"><span class="nota-badge ${n4Num >= 60 ? "nota-aprovado" : n4Num >= 40 ? "nota-recuperacao" : "nota-reprovado"}">${n4}</span></td>
-                              <td style="text-align: center; font-weight: 700; font-size: 1.1rem;">${media}</td>
-                              <td style="text-align: center;"><span class="situacao-badge ${situacaoClass}">${d.situacao || "Cursando"}</span></td>
-                          </tr>
-                      `;
-                    })
-                    .join("")}
-              </tbody>
-          </table>
-        </div>
-    `;
-
-  container.innerHTML = html;
+  container.innerHTML = `
+    <div class="table-responsive">
+      <table class="ios-table">
+        <thead>
+          <tr>
+            <th>Disciplina</th>
+            <th style="text-align:center;">1ª Etapa</th>
+            <th style="text-align:center;">2ª Etapa</th>
+            <th style="text-align:center;">3ª Etapa</th>
+            <th style="text-align:center;">4ª Etapa</th>
+            <th style="text-align:center;">Média</th>
+            <th style="text-align:center;">Situação</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${boletim.map(d => {
+            const n1 = d.nota_etapa_1?.nota || '--';
+            const n2 = d.nota_etapa_2?.nota || '--';
+            const n3 = d.nota_etapa_3?.nota || '--';
+            const n4 = d.nota_etapa_4?.nota || '--';
+            const media = d.media_disciplina || d.media_final_disciplina || '--';
+            const n1n = parseFloat(n1) || 0, n2n = parseFloat(n2) || 0;
+            const n3n = parseFloat(n3) || 0, n4n = parseFloat(n4) || 0;
+            const cls = i => i >= 60 ? 'nota-aprovado' : i >= 40 ? 'nota-recuperacao' : 'nota-reprovado';
+            let sitCls = 'tag-cursando';
+            if (d.situacao === 'Aprovado') sitCls = 'tag-aprovado';
+            else if (d.situacao === 'Reprovado') sitCls = 'tag-reprovado';
+            return `
+              <tr>
+                <td>
+                  <div class="disciplina-info">
+                    <h4>${d.disciplina || 'Disciplina'}</h4>
+                    <p>Faltas: ${d.numero_faltas || 0} | Freq: ${d.percentual_carga_horaria_frequentada || 0}%</p>
+                  </div>
+                </td>
+                <td style="text-align:center;"><span class="nota-badge ${cls(n1n)}">${n1}</span></td>
+                <td style="text-align:center;"><span class="nota-badge ${cls(n2n)}">${n2}</span></td>
+                <td style="text-align:center;"><span class="nota-badge ${cls(n3n)}">${n3}</span></td>
+                <td style="text-align:center;"><span class="nota-badge ${cls(n4n)}">${n4}</span></td>
+                <td style="text-align:center;font-weight:700;font-size:1.1rem;">${media}</td>
+                <td style="text-align:center;"><span class="situacao-badge ${sitCls}">${d.situacao || 'Cursando'}</span></td>
+              </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
 }
 
 function preencherHorarios(data) {
   const turmas = safeArray(data.turmas);
-  const container = document.getElementById("horarios-content");
+  const container = document.getElementById('horarios-content');
   if (!container) return;
 
   const horariosParseados = [];
-  turmas.forEach((turma) => {
-    if (turma.horarios_de_aula) {
-      const codigos = turma.horarios_de_aula.split(" / ");
-      codigos.forEach((cod) => {
-        const parsed = parseHorario(cod.trim());
-        if (parsed) {
+  turmas.forEach(t => {
+    if (t.horarios_de_aula) {
+      t.horarios_de_aula.split(' / ').forEach(cod => {
+        const p = parseHorario(cod.trim());
+        if (p) {
           horariosParseados.push({
-            ...parsed,
-            disciplina: turma.descricao,
-            sigla: turma.sigla,
-            local: turma.locais_de_aula?.[0] || "Local não definido",
+            ...p,
+            disciplina: t.descricao,
+            sigla: t.sigla,
+            local: t.locais_de_aula?.[0] || 'Local não definido',
           });
         }
       });
@@ -1760,63 +1372,46 @@ function preencherHorarios(data) {
     return;
   }
 
-  const diasSemana = {
-    2: "Segunda-feira",
-    3: "Terça-feira",
-    4: "Quarta-feira",
-    5: "Quinta-feira",
-    6: "Sexta-feira",
-  };
+  const diasSemana = { 2: 'Segunda-feira', 3: 'Terça-feira', 4: 'Quarta-feira', 5: 'Quinta-feira', 6: 'Sexta-feira' };
+  let html = '<div>';
 
-  let html = "<div>";
-
-  [2, 3, 4, 5, 6].forEach((dia) => {
-    const aulasDia = horariosParseados.filter((h) => h.dia === dia);
-
+  [2, 3, 4, 5, 6].forEach(dia => {
+    const aulasDia = horariosParseados.filter(h => h.dia === dia);
     if (aulasDia.length > 0) {
-      html += `<div class="dia-card">`;
-      html += `<div class="dia-header"><i class="fas fa-calendar-day"></i> ${diasSemana[dia]}</div>`;
+      html += `<div class="dia-card"><div class="dia-header"><i class="fas fa-calendar-day"></i> ${diasSemana[dia]}</div>`;
 
       const ordemTurno = { M: 1, V: 2, N: 3 };
       aulasDia.sort((a, b) => {
-        if (ordemTurno[a.turno] !== ordemTurno[b.turno]) {
-          return ordemTurno[a.turno] - ordemTurno[b.turno];
-        }
+        if (ordemTurno[a.turno] !== ordemTurno[b.turno]) return ordemTurno[a.turno] - ordemTurno[b.turno];
         return a.horas[0] - b.horas[0];
       });
 
-      aulasDia.forEach((aula) => {
-        const tagClass =
-          { M: "tag-manha", V: "tag-tarde", N: "tag-noite" }[aula.turno] ||
-          "tag-manha";
-
+      aulasDia.forEach(aula => {
+        const tagClass = { M: 'tag-manha', V: 'tag-tarde', N: 'tag-noite' }[aula.turno] || 'tag-manha';
         html += `
-                    <div class="aula-card">
-                        <div class="aula-info">
-                            <h4>${aula.disciplina}</h4>
-                            <p><i class="fas fa-map-marker-alt"></i> ${aula.local.split(" - ")[0]}</p>
-                        </div>
-                        <div style="text-align: right;">
-                            <span class="aula-tag ${tagClass}">${aula.turnoNome}</span>
-                            <div style="margin-top: 6px; font-size: 0.85rem; color: var(--ios-text-secondary); font-weight: 600;">
-                                ${aula.horasStr} aula
-                            </div>
-                        </div>
-                    </div>
-                `;
+          <div class="aula-card">
+            <div class="aula-info">
+              <h4>${aula.disciplina}</h4>
+              <p><i class="fas fa-map-marker-alt"></i> ${aula.local.split(' - ')[0]}</p>
+            </div>
+            <div style="text-align:right;">
+              <span class="aula-tag ${tagClass}">${aula.turnoNome}</span>
+              <div style="margin-top:6px;font-size:.85rem;color:var(--ios-text-secondary);font-weight:600;">${aula.horasStr} aula</div>
+            </div>
+          </div>`;
       });
 
-      html += "</div>";
+      html += '</div>';
     }
   });
 
-  html += "</div>";
+  html += '</div>';
   container.innerHTML = html;
 }
 
 function preencherTurmas(data) {
   const turmas = safeArray(data.turmas);
-  const container = document.getElementById("turmas-content");
+  const container = document.getElementById('turmas-content');
   if (!container) return;
 
   if (turmas.length === 0) {
@@ -1824,244 +1419,170 @@ function preencherTurmas(data) {
     return;
   }
 
-  container.innerHTML = turmas
-    .map((t) => {
-      const horarios = t.horarios_de_aula
-        ? t.horarios_de_aula.split(" / ")
-        : [];
-      const horariosHtml = horarios
-        .map((h) => {
-          const parsed = parseHorario(h.trim());
-          if (parsed) {
-            return `<span style="background: rgba(48, 209, 88, 0.15); color: var(--ios-accent-green); padding: 4px 12px; border-radius: 8px; font-size: 0.75rem; margin-right: 6px; border: 1px solid rgba(48, 209, 88, 0.3); font-weight: 600;">${parsed.diaNome} - ${parsed.turnoNome}</span>`;
-          }
-          return "";
-        })
-        .join("");
+  container.innerHTML = turmas.map(t => {
+    const horariosHtml = t.horarios_de_aula
+      ? t.horarios_de_aula.split(' / ').map(h => {
+          const p = parseHorario(h.trim());
+          return p
+            ? `<span style="background:rgba(48,209,88,.15);color:var(--ios-accent-green);padding:4px 12px;border-radius:8px;font-size:.75rem;margin-right:6px;border:1px solid rgba(48,209,88,.3);font-weight:600;">${p.diaNome} - ${p.turnoNome}</span>`
+            : '';
+        }).join('')
+      : '';
 
-      return `
-            <div class="turma-item">
-                <span class="turma-badge">${t.sigla || "---"}</span>
-                <div class="turma-nome">${t.descricao || "Disciplina"}</div>
-                ${t.observacao ? `<div style="font-size: 0.9rem; color: var(--ios-accent-orange); margin-bottom: 12px;"><i class="fas fa-info-circle"></i> ${t.observacao}</div>` : ""}
-                <div style="margin-bottom: 12px;">${horariosHtml}</div>
-                <div class="turma-meta">
-                    <span><i class="fas fa-map-marker-alt"></i> ${t.locais_de_aula?.[0]?.split(" - ")[0] || "Local não definido"}</span>
-                </div>
-            </div>
-        `;
-    })
-    .join("");
+    return `
+      <div class="turma-item">
+        <span class="turma-badge">${t.sigla || '---'}</span>
+        <div class="turma-nome">${t.descricao || 'Disciplina'}</div>
+        ${t.observacao ? `<div style="font-size:.9rem;color:var(--ios-accent-orange);margin-bottom:12px;"><i class="fas fa-info-circle"></i> ${t.observacao}</div>` : ''}
+        <div style="margin-bottom:12px;">${horariosHtml}</div>
+        <div class="turma-meta">
+          <span><i class="fas fa-map-marker-alt"></i> ${t.locais_de_aula?.[0]?.split(' - ')[0] || 'Local não definido'}</span>
+        </div>
+      </div>`;
+  }).join('');
 }
 
 function preencherAvaliacoes(data) {
-    // Próximas avaliações
-    const containerProximas = document.getElementById("avaliacoes-content");
-    if (containerProximas) {
-        console.log("DEBUG - Avaliações recebidas:", data.avaliacoes);
-        
-        let proximas = [];
-        if (data.avaliacoes && data.avaliacoes.proximas) {
-            proximas = safeArray(data.avaliacoes.proximas);
-        }
-        
-        console.log("DEBUG - Próximas processadas:", proximas);
+  // Próximas
+  const containerProximas = document.getElementById('avaliacoes-content');
+  if (containerProximas) {
+    const proximas = data.avaliacoes ? safeArray(data.avaliacoes.proximas) : [];
 
-        if (proximas.length === 0) {
-            containerProximas.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-calendar-check"></i>
-                    <p>Nenhuma avaliação agendada</p>
-                    <small>As avaliações aparecerão aqui quando forem marcadas</small>
-                </div>
-            `;
-        } else {
-            containerProximas.innerHTML = proximas.map(av => `
-                <div class="timeline-item" style="margin-bottom: 16px; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid var(--glass-border);">
-                    <div class="timeline-date" style="color: var(--ios-accent-green); font-weight: 600; margin-bottom: 8px;">
-                        <i class="fas fa-clock"></i> ${formatarData(av.data)} ${av.hora_inicio ? `às ${av.hora_inicio}` : ''}
-                    </div>
-                    <div class="timeline-title" style="font-size: 1.1rem; font-weight: 600; margin-bottom: 4px;">
-                        ${av.descricao || av.tipo || "Avaliação"}
-                    </div>
-                    <div class="timeline-desc" style="color: var(--ios-text-secondary);">
-                        ${av.componente_curricular || av.diario || "Disciplina não informada"}
-                    </div>
-                    ${av.nota_maxima ? `<div style="margin-top: 8px; font-size: 0.9rem; color: var(--ios-accent-orange);"><i class="fas fa-star"></i> Valor máximo: ${av.nota_maxima}</div>` : ''}
-                </div>
-            `).join("");
-        }
+    if (proximas.length === 0) {
+      containerProximas.innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-calendar-check"></i>
+          <p>Nenhuma avaliação agendada</p>
+          <small>As avaliações aparecerão aqui quando forem marcadas</small>
+        </div>`;
+    } else {
+      containerProximas.innerHTML = proximas.map(av => `
+        <div class="timeline-item" style="margin-bottom:16px;padding:20px;background:rgba(255,255,255,.03);border-radius:16px;border:1px solid var(--glass-border);">
+          <div class="timeline-date" style="color:var(--ios-accent-green);font-weight:600;margin-bottom:8px;">
+            <i class="fas fa-clock"></i> ${formatarData(av.data)} ${av.hora_inicio ? `às ${av.hora_inicio}` : ''}
+          </div>
+          <div class="timeline-title" style="font-size:1.1rem;font-weight:600;margin-bottom:4px;">
+            ${av.descricao || av.tipo || 'Avaliação'}
+          </div>
+          <div class="timeline-desc" style="color:var(--ios-text-secondary);">
+            ${av.componente_curricular || av.diario || 'Disciplina não informada'}
+          </div>
+          ${av.nota_maxima ? `<div style="margin-top:8px;font-size:.9rem;color:var(--ios-accent-orange);"><i class="fas fa-star"></i> Valor máximo: ${av.nota_maxima}</div>` : ''}
+        </div>`).join('');
     }
+  }
 
-    // Histórico de avaliações - ORDENADO POR ETAPA
-    const containerHistorico = document.getElementById("avaliacoes-historico-content");
-    if (containerHistorico && data.avaliacoes && data.avaliacoes.historico) {
-        let historico = safeArray(data.avaliacoes.historico);
-        
-        // 🔥 ORDENAÇÃO: Primeiro por Etapa (1→4), depois por Disciplina
-        historico.sort((a, b) => {
-            // Ordena por etapa primeiro
-            if (a.etapa !== b.etapa) {
-                return a.etapa - b.etapa;
-            }
-            // Se mesma etapa, ordena por disciplina alfabeticamente
-            return (a.disciplina || "").localeCompare(b.disciplina || "");
-        });
-        
-        // Agrupa por Etapa para visualização melhor
-        const porEtapa = {};
-        historico.forEach(av => {
-            if (!porEtapa[av.etapa]) porEtapa[av.etapa] = [];
-            porEtapa[av.etapa].push(av);
-        });
+  // Histórico
+  const containerHistorico = document.getElementById('avaliacoes-historico-content');
+  if (containerHistorico && data.avaliacoes?.historico) {
+    const historico = safeArray(data.avaliacoes.historico);
 
-        if (historico.length === 0) {
-            containerHistorico.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-history"></i>
-                    <p>Nenhuma avaliação no histórico</p>
-                </div>
-            `;
-        } else {
-            // Renderiza agrupado por etapa
-            let html = '';
-            
-            // Ordem das etapas: 1, 2, 3, 4
-            [1, 2, 3, 4].forEach(etapa => {
-                if (porEtapa[etapa]) {
-                    html += `
-                        <div style="margin-bottom: 24px;">
-                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--glass-border);">
-                                <span style="background: var(--gradient-primary); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 700;">
-                                    ${etapa}ª Etapa
-                                </span>
-                                <span style="color: var(--ios-text-secondary); font-size: 0.9rem;">
-                                    ${porEtapa[etapa].length} avaliação(ões)
-                                </span>
-                            </div>
-                            <div style="display: flex; flex-direction: column; gap: 10px;">
-                    `;
-                    
-                    html += porEtapa[etapa].map(av => `
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid var(--glass-border); transition: all 0.2s;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 600; font-size: 1rem; margin-bottom: 4px;">${av.disciplina}</div>
-                                <div style="font-size: 0.8rem; color: var(--ios-text-secondary);">
-                                    ${av.codigo_diario || ''}
-                                </div>
-                            </div>
-                            <div style="text-align: right; margin-left: 16px;">
-                                <span class="nota-badge ${parseFloat(av.nota) >= 60 ? 'nota-aprovado' : parseFloat(av.nota) >= 40 ? 'nota-recuperacao' : 'nota-reprovado'}" style="font-size: 1.1rem; padding: 8px 16px;">
-                                    ${av.nota !== null && av.nota !== undefined ? av.nota : '-'}
-                                </span>
-                            </div>
-                        </div>
-                    `).join('');
-                    
-                    html += `</div></div>`;
-                }
-            });
-            
-            containerHistorico.innerHTML = html;
-        }
-    }
-}
-
-function formatarData(dataStr) {
-  if (!dataStr) return "Data não definida";
-
-  try {
-    const [ano, mes, dia] = dataStr.split("T")[0].split("-");
-    const data = new Date(ano, mes - 1, dia);
-
-    return data.toLocaleDateString("pt-BR", {
-      weekday: "long",
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
+    historico.sort((a, b) => {
+      if (a.etapa !== b.etapa) return a.etapa - b.etapa;
+      return (a.disciplina || '').localeCompare(b.disciplina || '');
     });
-  } catch (e) {
-    return dataStr;
+
+    const porEtapa = {};
+    historico.forEach(av => {
+      if (!porEtapa[av.etapa]) porEtapa[av.etapa] = [];
+      porEtapa[av.etapa].push(av);
+    });
+
+    if (historico.length === 0) {
+      containerHistorico.innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-history"></i>
+          <p>Nenhuma avaliação no histórico</p>
+        </div>`;
+    } else {
+      let html = '';
+      [1, 2, 3, 4].forEach(etapa => {
+        if (porEtapa[etapa]) {
+          html += `
+            <div style="margin-bottom:24px;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--glass-border);">
+                <span style="background:var(--gradient-primary);padding:6px 14px;border-radius:20px;font-size:.85rem;font-weight:700;">
+                  ${etapa}ª Etapa
+                </span>
+                <span style="color:var(--ios-text-secondary);font-size:.9rem;">
+                  ${porEtapa[etapa].length} avaliação(ões)
+                </span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                ${porEtapa[etapa].map(av => `
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:16px;background:rgba(255,255,255,.03);border-radius:12px;border:1px solid var(--glass-border);">
+                    <div style="flex:1;">
+                      <div style="font-weight:600;font-size:1rem;margin-bottom:4px;">${av.disciplina}</div>
+                      <div style="font-size:.8rem;color:var(--ios-text-secondary);">${av.codigo_diario || ''}</div>
+                    </div>
+                    <div style="text-align:right;margin-left:16px;">
+                      <span class="nota-badge ${parseFloat(av.nota) >= 60 ? 'nota-aprovado' : parseFloat(av.nota) >= 40 ? 'nota-recuperacao' : 'nota-reprovado'}" style="font-size:1.1rem;padding:8px 16px;">
+                        ${av.nota !== null && av.nota !== undefined ? av.nota : '-'}
+                      </span>
+                    </div>
+                  </div>`).join('')}
+              </div>
+            </div>`;
+        }
+      });
+      containerHistorico.innerHTML = html;
+    }
   }
 }
 
 function mudarPeriodoBoletim() {}
 
-
-// ==========================================
-// NOTIFICAÇÕES FIREBASE
-// ==========================================
-
-// Toast simples (se não existir)
+// ============================================================================
+// NOTIFICAÇÕES FCM
+// ============================================================================
 function showToast(message, duration = 3000) {
-    const existing = document.querySelector('.toast');
-    if (existing) existing.remove();
-    
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.innerHTML = `<i class="fas fa-info-circle"></i><span>${message}</span>`;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => toast.classList.add('show'), 100);
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 300);
-    }, duration);
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerHTML = `<i class="fas fa-info-circle"></i><span>${message}</span>`;
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.classList.add('show'), 100);
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
 }
 
 async function initNotifications() {
   try {
-    console.log('🔔 Iniciando Firebase...');
-    
-    const { messaging, getToken, onMessage } = await import('/assets/js/firebase-init.js');
-    
+    const { messaging, getToken, onMessage } = await import('./firebase-init.js');
+
     const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-      showToast('⚠️ Permissão negada');
-      return;
-    }
+    if (permission !== 'granted') { showToast('⚠️ Permissão negada'); return; }
 
-    // COLE SUA VAPID KEY AQUI! (da seção Web Push certificates no Firebase)
-    const vapidKey = 'BOamnGvNvE8HipXDCIasCWMlIzI1sWS1ONqG8ZXp0RUwsyJuxT1zjSB2vKaLHwVP45Bhl5SWoJKlraRNTvbAH_o'; // ← SUBSTITUA PELA SUA CHAVE!
-    
-    console.log('⏳ Obtendo token com VAPID:', vapidKey.substring(0, 10) + '...');
-
+    const vapidKey = 'BOamnGvNvE8HipXDCIasCWMlIzI1sWS1ONqG8ZXp0RUwsyJuxT1zjSB2vKaLHwVP45Bhl5SWoJKlraRNTvbAH_o';
     const token = await getToken(messaging, { vapidKey });
+    if (!token) { showToast('❌ Erro ao obter token'); return; }
 
-    if (!token) {
-      showToast('❌ Erro ao obter token');
-      return;
-    }
-
-    console.log('✅ FCM Token:', token.substring(0, 30) + '...');
-
-    // Enviar para backend
     const suapToken = localStorage.getItem('suap_token');
-    const response = await fetch(`${API_URL}/notifications/subscribe`, {
+    const response = await fetch(cfg.api.notifications('subscribe'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${suapToken}`
+        'Authorization': `Bearer ${suapToken}`,
       },
-      body: JSON.stringify({ fcmToken: token, token: suapToken })
+      body: JSON.stringify({ fcmToken: token, token: suapToken }),
     });
 
-    if (!response.ok) {
-      throw new Error('Erro ao registrar no servidor');
-    }
+    if (!response.ok) throw new Error('Erro ao registrar no servidor');
 
     showToast('🔔 Notificações ativadas!');
     updateNotificationUI(true);
 
-    // Listener para mensagens em foreground
     onMessage(messaging, (payload) => {
-      console.log('📨 Foreground:', payload);
       new Notification(payload.notification.title, {
         body: payload.notification.body,
         icon: payload.notification.icon || '/assets/icons/SIMPLIF - Icon Sem Fundo 192x192.png',
       });
     });
-
   } catch (err) {
     console.error('❌ Erro Firebase:', err);
     showToast('❌ Erro: ' + err.message);
@@ -2070,39 +1591,29 @@ async function initNotifications() {
 
 async function checkNotificationStatus() {
   try {
-    const { messaging, getToken } = await import('/assets/js/firebase-init.js');
-    const permission = Notification.permission;
-    if (permission !== 'granted') {
-      updateNotificationUI(false);
-      return;
-    }
-
+    const { messaging, getToken } = await import('./firebase-init.js');
+    if (Notification.permission !== 'granted') { updateNotificationUI(false); return; }
     const token = await getToken(messaging);
     updateNotificationUI(!!token);
-    
-  } catch (err) {
+  } catch {
     updateNotificationUI(false);
   }
 }
 
 async function unsubscribeNotifications() {
   try {
-    const { messaging } = await import('/assets/js/firebase-init.js');
+    const { messaging } = await import('./firebase-init.js');
     await messaging.deleteToken();
-    
+
     const token = localStorage.getItem('suap_token');
-    await fetch(`${API_URL}/notifications/unsubscribe`, {
+    await fetch(cfg.api.notifications('unsubscribe'), {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json', 
-        'Authorization': `Bearer ${token}` 
-      },
-      body: JSON.stringify({ token })
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ token }),
     });
 
     showToast('🔕 Notificações desativadas');
     updateNotificationUI(false);
-    
   } catch (err) {
     console.error('Erro:', err);
   }
@@ -2111,7 +1622,6 @@ async function unsubscribeNotifications() {
 function updateNotificationUI(isActive) {
   const btn = document.getElementById('notification-btn');
   if (!btn) return;
-  
   if (isActive) {
     btn.innerHTML = '<i class="fas fa-bell"></i><span>Notificações Ativas</span>';
     btn.classList.add('active');
@@ -2123,57 +1633,41 @@ function updateNotificationUI(isActive) {
   }
 }
 
-// Verifica se a tela é menor ou igual a 1024px (celulares e tablets)
+// Bloqueio de long-press / drag em telas pequenas
 if (window.innerWidth <= 1024) {
-    
-    // 1. Desativa o menu de contexto (clique longo no celular)
-    window.addEventListener('contextmenu', function (e) {
-        e.preventDefault();
-    }, false);
-
-    // 2. Proteção para imagens
-    // Bloqueia mousedown (PC simulando mobile) e dragstart (arraste nativo)
-    document.querySelectorAll('img').forEach(img => {
-        // Evita que a imagem seja "puxada"
-        img.addEventListener('dragstart', e => e.preventDefault());
-        // Evita o menu ao segurar em navegadores que não respeitam o contextmenu
-        img.addEventListener('mousedown', e => e.preventDefault());
-    });
+  window.addEventListener('contextmenu', e => e.preventDefault(), false);
+  document.querySelectorAll('img').forEach(img => {
+    img.addEventListener('dragstart', e => e.preventDefault());
+    img.addEventListener('mousedown', e => e.preventDefault());
+  });
 }
 
+// ============================================================================
+// BOOT
+// ============================================================================
+document.addEventListener('DOMContentLoaded', async () => {
+  console.log('🚀 Inicializando aplicação...');
 
-// ========== INICIALIZAÇÃO ==========
-document.addEventListener("DOMContentLoaded", async function () {
-  console.log("🚀 Inicializando aplicação...");
+  // Mapa e dados do SUAP são independentes → roda em paralelo
+  await Promise.all([
+    carregarDadosMapa(),
+    carregarDados(),
+  ]);
 
-  // Carrega dados acadêmicos primeiro (seus dados do aluno)
-  carregarDados();
-
-  // Carrega dados do mapa (salas e blocos) e depois inicializa a busca
-  await carregarDadosMapa();
   initializeFuse();
-
-  // Verifica status das notificações
   setTimeout(checkNotificationStatus, 1000);
 
-  // Registra funções globais
-  window.performSmartSearch = performSmartSearch;
-  window.handleSearchInput = handleSearchInput;
-  window.selectRoom = selectRoom;
-  window.selectBuilding = selectBuilding;
-  window.zoomMap = zoomMap;
-  window.resetMap = resetMap;
-  window.showSection = showSection;
-  window.toggleSidebar = toggleSidebar;
-  window.closeSidebar = closeSidebar;
-  window.logout = logout;
-  window.trocarAno = trocarAno;
-  window.initNotifications = initNotifications;
-  window.unsubscribeNotifications = unsubscribeNotifications;
-  window.clearSearch = clearSearch;
-  window.closeResultPanel = closeResultPanel;
-  window.filterByCategory = filterByCategory;
-  window.toggleSidebarDesktop = toggleSidebarDesktop; // nova função
+  // Expõe funções usadas em `onclick=` no HTML
+  Object.assign(window, {
+    performSmartSearch, handleSearchInput, selectRoom, selectBuilding,
+    zoomMap, resetMap, showSection, toggleSidebar, closeSidebar, logout,
+    trocarAno, initNotifications, unsubscribeNotifications,
+    clearSearch, closeResultPanel, filterByCategory,
+    toggleSidebarDesktop,
+    openThemePicker, closeThemePicker, selectTheme, applyTheme,
+    openSpotlight, closeSpotlight, updateSpotlightSearch, executeSpotlightItem,
+    handleSpotlightKeydown,
+  });
 
-  console.log("✅ Sistema pronto!");
+  console.log('✅ Sistema pronto!');
 });
