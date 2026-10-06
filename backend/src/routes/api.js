@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
+const admin = require("firebase-admin");
 const firestore = require("../services/firestore");
 const { identificarCampus } = require("../services/campus");
 
@@ -57,20 +58,68 @@ router.get("/me", verificarToken, async (req, res) => {
       const ano_ingresso = Number(alunoCompleto?.ano_ingresso || alunoCompleto?.ingresso)
         || Number(matriculaNormalizada.slice(0, 4));
       const ano_atual = Number(alunoCompleto?.ano_atual || alunoCompleto?.ano_cursando);
-      await firestore.sincronizarUsuarioWeb(`suap_${matriculaNormalizada}`, {
-        nome: alunoCompleto?.nome_usual || alunoCompleto?.nome || alunoCompleto?.nome_aluno,
+      const uid = `suap_${matriculaNormalizada}`;
+      const userRef = admin.firestore().collection('usuarios').doc(uid);
+      const snap = await userRef.get();
+      const now = admin.firestore.FieldValue.serverTimestamp();
+      const update = {
         matricula: matriculaNormalizada,
+        campus_id: identificarCampus(alunoCompleto),
+        suap_token: req.token,
+        plataforma_ultima: 'web',
+      };
+
+      const dadosPerfil = {
+        nome: alunoCompleto?.nome_usual || alunoCompleto?.nome || alunoCompleto?.nome_aluno,
         email_academico: alunoCompleto?.email_academico || alunoCompleto?.email,
         foto_url: alunoCompleto?.foto,
         cpf: alunoCompleto?.cpf,
         data_nascimento: alunoCompleto?.data_nascimento,
-        campus_id: identificarCampus(alunoCompleto),
         curso: alunoCompleto?.curso,
-        ano_ingresso: Number.isInteger(ano_ingresso) && ano_ingresso > 0 ? ano_ingresso : null,
-        ano_atual: Number.isInteger(ano_atual) && ano_atual > 0 ? ano_atual : null,
-        suap_token: req.token,
-      });
-      console.log(`[me web] Perfil sincronizado no Firestore: suap_${matriculaNormalizada}`);
+      };
+      for (const [campo, valor] of Object.entries(dadosPerfil)) {
+        if (typeof valor === 'string' && valor.trim()) {
+          update[campo] = valor.trim();
+        }
+      }
+      if (Number.isInteger(ano_ingresso) && ano_ingresso > 0) {
+        update.ano_ingresso = ano_ingresso;
+      }
+      if (Number.isInteger(ano_atual) && ano_atual > 0) {
+        update.ano_atual = ano_atual;
+      }
+
+      if (!snap.exists) {
+        Object.assign(update, {
+          nome: update.nome || 'Usuário',
+          email_academico: update.email_academico || null,
+          foto_url: update.foto_url || null,
+          cpf: update.cpf || null,
+          data_nascimento: update.data_nascimento || null,
+          role: 'user',
+          campus_admin: null,
+          refresh_token: null,
+          criado_em: now,
+          ultimo_login: now,
+          ultimo_acesso: now,
+          plataforma_origem: 'web',
+          total_acessos: 1,
+          preferencias: {
+            tema: 'dark',
+            ordem_telas: [],
+            notificacoes: true,
+          },
+        });
+      } else {
+        const ultimoAcesso = snap.data()?.ultimo_acesso?.toDate?.()?.getTime?.() || 0;
+        if (Date.now() - ultimoAcesso > 30 * 60 * 1000) {
+          update.ultimo_acesso = now;
+          update.total_acessos = admin.firestore.FieldValue.increment(1);
+        }
+      }
+
+      await userRef.set(update, { merge: true });
+      console.log(`[me web] Dados pessoais e acadêmicos gravados: ${uid}`);
     } else {
       console.error('[me web] SUAP não retornou matrícula; usuário não sincronizado no Firestore');
     }
