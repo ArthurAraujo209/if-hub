@@ -100,8 +100,10 @@ module.exports = {
   },
 
   async atualizarRoleUsuario(uid, role, campus_admin = null) {
-    const update = { role };
-    if (campus_admin) update.campus_admin = campus_admin;
+    const update = {
+      role,
+      campus_admin: role === 'admin_campus' ? campus_admin : null,
+    };
     await db().collection('usuarios').doc(uid).update(update);
   },
 

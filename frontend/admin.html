@@ -115,7 +115,7 @@
       margin-bottom: -1px;
     }
 
-    main { padding: 24px; max-width: 1000px; margin: 0 auto; }
+    main { padding: 24px; max-width: 1440px; margin: 0 auto; }
 
     .secao { display: none; }
     .secao.ativo { display: block; }
@@ -254,6 +254,102 @@
       min-width: 200px;
     }
 
+    .users-heading, .users-toolbar, .users-result-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .users-heading { margin-bottom: 20px; }
+    .users-heading h2 { margin-bottom: 5px; }
+    .users-heading p, .users-result-line { color: var(--text2); font-size: 13px; }
+    .users-toolbar { align-items: flex-start; margin-bottom: 18px; }
+    .users-toolbar .search-filter { flex: 1; margin: 0; }
+    .users-toolbar .search-filter input, .users-toolbar .search-filter select { margin-bottom: 0; }
+    .users-toolbar .search-filter input { flex: 2; }
+    .users-refresh { white-space: nowrap; }
+    .user-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px; }
+    .user-kpi, .analytics-card {
+      background: linear-gradient(145deg, rgba(255,255,255,.065), rgba(255,255,255,.025));
+      border: 1px solid var(--border); border-radius: 14px; padding: 18px;
+    }
+    .user-kpi { min-height: 132px; }
+    .user-kpi > span, .user-kpi > small { display: block; color: var(--text2); font-size: 12px; }
+    .user-kpi > strong { display: block; font-size: 30px; margin: 11px 0 7px; letter-spacing: -.04em; }
+    .kpi-percent { display: inline-block; color: var(--success); font-size: 13px; margin-left: 8px; letter-spacing: 0; }
+    .analytics-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 22px; }
+    .analytics-card h3 { font-size: 14px; margin-bottom: 18px; }
+    .analytics-bars, .activity-bars { display: grid; gap: 13px; }
+    .analytics-bar-row { display: grid; grid-template-columns: minmax(100px, 1fr) minmax(60px, 2fr) 34px 38px; gap: 10px; align-items: center; }
+    .analytics-bar-label { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text2); }
+    .analytics-bar-track, .activity-track, .student-access-track { height: 8px; display: block; overflow: hidden; background: rgba(255,255,255,.08); border-radius: 99px; }
+    .analytics-bar-track > span, .activity-track > span, .student-access-track > span { height: 100%; display: block; border-radius: inherit; }
+    .analytics-bar-row strong { font-size: 12px; text-align: right; }
+    .analytics-bar-row small { color: var(--text2); font-size: 11px; text-align: right; }
+    .activity-item > div { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 7px; font-size: 12px; }
+    .activity-item > div span { color: var(--text2); }
+    .analytics-note { color: var(--text2); font-size: 11px; margin-top: 14px; }
+    .users-table-wrap { overflow: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
+    .users-table-wrap .tabela { min-width: 930px; }
+    .users-result-line { margin: 4px 0 10px; }
+    .student-modal {
+      position: fixed; inset: 0; z-index: 11000; display: none;
+      align-items: center; justify-content: center; padding: 24px;
+      background: rgba(0,0,0,.78); backdrop-filter: blur(12px);
+    }
+    .student-modal.open { display: flex; }
+    .student-modal-panel {
+      position: relative; width: min(980px, 100%); max-height: min(90vh, 900px);
+      overflow: auto; background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 26px; box-shadow: 0 30px 100px rgba(0,0,0,.5);
+    }
+    .student-modal-close { position: sticky; top: 0; float: right; z-index: 1; width: 38px; height: 38px; border: 1px solid var(--border); border-radius: 50%; background: var(--bg); color: var(--text); font-size: 20px; cursor: pointer; }
+    .student-detail { clear: both; }
+    .student-hero { display: flex; align-items: center; gap: 18px; padding: 4px 0 22px; }
+    .student-avatar { width: 72px; height: 72px; flex: 0 0 72px; font-size: 24px; }
+    .student-eyebrow { color: var(--accent); text-transform: uppercase; letter-spacing: .08em; font-size: 10px; font-weight: 700; }
+    .student-hero h2 { margin: 5px 0; font-size: 24px; }
+    .student-hero p { color: var(--text2); font-size: 13px; }
+    .student-stats { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+    .student-stats article { padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
+    .student-stats span, .student-stats small { display: block; color: var(--text2); font-size: 11px; }
+    .student-stats strong { display: block; font-size: 24px; margin: 8px 0 4px; }
+    .student-access-chart { margin: 18px 0 22px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; }
+    .student-access-chart > div:first-child { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 11px; font-size: 12px; }
+    .student-access-chart span { color: var(--text2); }
+    .student-access-track > span { background: linear-gradient(90deg, var(--accent), #8b5cf6); }
+    .detail-columns { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+    .detail-section { border: 1px solid var(--border); border-radius: 12px; padding: 16px; background: rgba(255,255,255,.025); }
+    .detail-section h3 { font-size: 13px; margin-bottom: 12px; }
+    .detail-section h3 i { color: var(--accent); margin-right: 7px; }
+    .detail-section dl { display: grid; gap: 10px; }
+    .detail-section dl > div { display: grid; grid-template-columns: minmax(100px, .7fr) minmax(0, 1.3fr); gap: 10px; font-size: 12px; }
+    .detail-section dt { color: var(--text2); }
+    .detail-section dd { overflow-wrap: anywhere; text-align: right; }
+    .detail-section .mono { font-family: monospace; font-size: 10px; }
+    .role-editor { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: center; }
+    .role-editor select { margin: 0; }
+
+    @media (max-width: 900px) {
+      .user-kpis { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .users-toolbar { display: block; }
+      .users-toolbar .search-filter { margin-bottom: 12px; }
+    }
+    @media (max-width: 600px) {
+      main { padding: 16px; }
+      .analytics-grid, .detail-columns { grid-template-columns: 1fr; }
+      .student-modal { padding: 10px; }
+      .student-modal-panel { padding: 18px; max-height: 94vh; }
+      .student-stats { gap: 7px; }
+      .student-stats article { padding: 11px; }
+      .student-stats strong { font-size: 20px; }
+      .student-access-chart > div:first-child { display: grid; }
+      .users-heading { align-items: flex-start; }
+      .users-toolbar .search-filter { display: grid; }
+      .role-editor { grid-template-columns: 1fr; }
+    }
+
     /* ===== Toast ===== */
     #toast {
       position: fixed;
@@ -350,16 +446,42 @@
 
     <!-- ===== SEÇÃO: USUÁRIOS (apenas superadmin) ===== -->
     <section id="secao-usuarios" class="secao">
-      <h2>Gerenciar Usuários</h2>
-      
-      <div class="search-filter">
-        <input type="text" id="search-usuarios" placeholder="🔍 Buscar por nome ou matrícula..." onkeyup="filtrarUsuarios()">
-        <select id="filter-campus" onchange="filtrarUsuarios()">
-          <option value="">Todos os campus</option>
-        </select>
+      <div class="users-heading">
+        <div>
+          <h2>Visão geral dos usuários</h2>
+          <p>Atividade, distribuição e dados acadêmicos em um só lugar.</p>
+        </div>
+        <button class="btn btn-ghost users-refresh" onclick="carregarUsuariosFirestore()">
+          <i class="fas fa-sync-alt"></i> Atualizar
+        </button>
       </div>
-      
-      <div id="lista-usuarios">Carregando...</div>
+
+      <div id="usuarios-analytics"></div>
+      <div class="card">
+        <div class="users-toolbar">
+          <div class="search-filter">
+            <input type="search" id="search-usuarios" placeholder="Buscar nome, e-mail, curso ou matrícula..." oninput="filtrarUsuarios()">
+            <select id="filter-campus" onchange="filtrarUsuarios()"><option value="">Todos os campi</option></select>
+            <select id="filter-role" onchange="filtrarUsuarios()">
+              <option value="">Todos os perfis</option><option value="user">Aluno</option>
+              <option value="admin">Administrador</option><option value="admin_campus">Admin. de campus</option>
+            </select>
+            <select id="filter-plataforma" onchange="filtrarUsuarios()">
+              <option value="">Todas as plataformas</option><option value="web">Web</option><option value="app">App</option>
+            </select>
+            <select id="filter-atividade" onchange="filtrarUsuarios()">
+              <option value="">Qualquer atividade</option><option value="7">Ativos em 7 dias</option>
+              <option value="30">Ativos em 30 dias</option><option value="inativos">Sem acesso em 30 dias</option>
+            </select>
+          </div>
+          <select id="sort-usuarios" aria-label="Ordenar usuários" onchange="filtrarUsuarios()" style="max-width:210px;margin:0">
+            <option value="recentes">Mais recentes</option><option value="acessos">Mais acessos</option>
+            <option value="nome">Nome A–Z</option><option value="antigos">Cadastro mais antigo</option>
+          </select>
+        </div>
+        <div class="users-result-line"><span id="usuarios-contagem">Carregando...</span><span id="usuarios-atualizado"></span></div>
+        <div id="lista-usuarios">Carregando...</div>
+      </div>
     </section>
 
   </main>
@@ -367,10 +489,16 @@
 
 <!-- Toast de notificação -->
 <div id="toast"></div>
+<div id="modal-aluno" class="student-modal" role="dialog" aria-modal="true" aria-label="Detalhes do usuário" onclick="if(event.target===this)fecharDetalhesUsuario()">
+  <div class="student-modal-panel">
+    <button class="student-modal-close" onclick="fecharDetalhesUsuario()" aria-label="Fechar detalhes">&times;</button>
+    <div id="modal-aluno-conteudo"></div>
+  </div>
+</div>
 
 <script type="module">
   import { auth, db, onAuthStateChanged, signOut, doc, getDoc, getDocs, collection, onSnapshot } from './assets/js/firebase-init.js';
-  import { carregarUsuarios, buscaUsuarios, filtrarPorCampus, renderizarTabela, renderizarDetalhesUsuario, obterCampusUnicos } from './assets/js/admin-users.js';
+  import { carregarUsuarios, buscaUsuarios, filtrarPorCampus, renderizarTabela, renderizarDetalhesUsuario, renderizarPainelAnalitico, obterCampusUnicos } from './assets/js/admin-users.js';
 
   const API = 'https://if-hub-backend.onrender.com'; // ← ajuste se necessário
 
@@ -591,6 +719,9 @@
 
       // Carregar do Firestore usando admin-users.js
       todosUsuariosFirestore = await carregarUsuarios(true);
+      if (todosUsuariosFirestore.length === 0) {
+        document.getElementById('lista-usuarios').innerHTML = '<div style="padding:24px;color:var(--text2)">Nenhum usuário encontrado no banco.</div>';
+      }
 
       // Popular select de campus
       const campi = obterCampusUnicos(todosUsuariosFirestore);
@@ -600,21 +731,26 @@
           campi.map(c => `<option value="${c}">${c}</option>`).join('');
       }
 
+      document.getElementById('usuarios-analytics').innerHTML = renderizarPainelAnalitico(todosUsuariosFirestore);
       renderizarUsuariosFirestore(todosUsuariosFirestore);
+      document.getElementById('usuarios-atualizado').textContent = `Atualizado às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
       toast(`✅ ${todosUsuariosFirestore.length} usuários carregados`);
 
     } catch (err) {
       console.error('Erro ao carregar usuários:', err);
       toast('❌ Erro ao carregar usuários', 'var(--danger)');
+      document.getElementById('usuarios-analytics').innerHTML = '';
       document.getElementById('lista-usuarios').innerHTML = '<p style="color: var(--danger);">Erro ao carregar usuários do Firestore</p>';
     }
   };
 
   window.filtrarUsuariosFirestore = function() {
-    if (!todosUsuariosFirestore.length) return;
-
     const searchTerm = (document.getElementById('search-usuarios')?.value || '').toLowerCase();
     const campusFilter = document.getElementById('filter-campus')?.value || '';
+    const roleFilter = document.getElementById('filter-role')?.value || '';
+    const platformFilter = document.getElementById('filter-plataforma')?.value || '';
+    const activityFilter = document.getElementById('filter-atividade')?.value || '';
+    const sortOrder = document.getElementById('sort-usuarios')?.value || 'recentes';
 
     let filtrados = todosUsuariosFirestore;
 
@@ -625,8 +761,27 @@
     if (campusFilter) {
       filtrados = filtrarPorCampus(campusFilter, filtrados);
     }
+    if (roleFilter) filtrados = filtrados.filter(u => u.role === roleFilter);
+    if (platformFilter) filtrados = filtrados.filter(u => (u.plataforma_ultima || u.plataforma_origem) === platformFilter);
+    if (activityFilter) {
+      const cutoff = Date.now() - Number(activityFilter) * 86400000;
+      filtrados = filtrados.filter(u => {
+        const acesso = u.ultimo_acesso || u.ultimo_login;
+        const ativo = acesso && acesso.getTime() >= cutoff;
+        return activityFilter === 'inativos' ? !ativo : ativo;
+      });
+    }
+
+    filtrados = [...filtrados].sort((a, b) => {
+      if (sortOrder === 'nome') return a.nome.localeCompare(b.nome, 'pt-BR');
+      if (sortOrder === 'acessos') return b.total_acessos - a.total_acessos;
+      if (sortOrder === 'antigos') return (a.criado_em?.getTime() || 0) - (b.criado_em?.getTime() || 0);
+      return (b.ultimo_acesso?.getTime() || b.ultimo_login?.getTime() || 0)
+        - (a.ultimo_acesso?.getTime() || a.ultimo_login?.getTime() || 0);
+    });
 
     renderizarUsuariosFirestore(filtrados);
+    document.getElementById('usuarios-contagem').textContent = `${filtrados.length} de ${todosUsuariosFirestore.length} usuários`;
   };
 
   // Expor no window
@@ -634,45 +789,75 @@
 
   function renderizarUsuariosFirestore(usuarios) {
     const container = document.getElementById('lista-usuarios');
-    container.innerHTML = `
-      <div style="overflow-x: auto;">
-        ${renderizarTabela(usuarios)}
-      </div>
-    `;
+    container.innerHTML = `<div class="users-table-wrap">${renderizarTabela(usuarios)}</div>`;
+    document.getElementById('usuarios-contagem').textContent = `${usuarios.length} de ${todosUsuariosFirestore.length} usuários`;
   }
 
   window.verDetalhesUsuario = function(uid) {
+    uid = decodeURIComponent(uid);
     const usuario = todosUsuariosFirestore.find(u => u.uid === uid);
     if (!usuario) return;
 
-    const html = renderizarDetalhesUsuario(usuario);
-    const modal = document.createElement('div');
-    modal.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-      padding: 20px;
-    `;
-    modal.innerHTML = `
-      <div style="position: relative; max-height: 90vh; overflow-y: auto;">
-        ${html}
-        <div style="display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end;">
-          <button class="btn btn-ghost" onclick="this.closest('[style*=fixed]').remove()">Fechar</button>
+    const campi = obterCampusUnicos(todosUsuariosFirestore);
+    const adminControls = adminUser.role === 'admin' ? `
+      <section class="detail-section" style="margin-top:14px">
+        <h3><i class="fas fa-user-shield"></i> Permissões administrativas</h3>
+        <div class="role-editor">
+          <select id="aluno-role">
+            <option value="user" ${usuario.role === 'user' ? 'selected' : ''}>Aluno</option>
+            <option value="admin_campus" ${usuario.role === 'admin_campus' ? 'selected' : ''}>Admin. de campus</option>
+            <option value="admin" ${usuario.role === 'admin' ? 'selected' : ''}>Administrador</option>
+          </select>
+          <select id="aluno-campus-admin">
+            <option value="">Selecione o campus administrado</option>
+            ${campi.map(c => `<option value="${escapeHtml(c)}" ${usuario.campus_admin === c ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('')}
+          </select>
+          <button class="btn btn-primary" onclick="salvarRoleUsuario('${encodeURIComponent(usuario.uid).replace(/'/g, '%27')}')">Salvar permissão</button>
         </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-    modal.onclick = (e) => {
-      if (e.target === modal) modal.remove();
-    };
+      </section>` : '';
+    document.getElementById('modal-aluno-conteudo').innerHTML =
+      renderizarDetalhesUsuario(usuario, todosUsuariosFirestore) + adminControls;
+    document.getElementById('modal-aluno').classList.add('open');
+    document.body.style.overflow = 'hidden';
   };
+
+  window.fecharDetalhesUsuario = function() {
+    document.getElementById('modal-aluno').classList.remove('open');
+    document.body.style.overflow = '';
+  };
+
+  window.salvarRoleUsuario = async function(encodedUid) {
+    const uid = decodeURIComponent(encodedUid);
+    const role = document.getElementById('aluno-role').value;
+    const campus_admin = document.getElementById('aluno-campus-admin').value || null;
+    if (role === 'admin_campus' && !campus_admin) {
+      toast('Selecione o campus que será administrado', 'var(--danger)');
+      return;
+    }
+
+    try {
+      if (uid === auth.currentUser.uid && role !== adminUser.role) {
+        toast('Não é possível alterar o próprio nível de acesso', 'var(--danger)');
+        return;
+      }
+      const res = await fetch(`${API}/admin/usuarios/${encodeURIComponent(uid)}/role`, {
+        method: 'PUT',
+        headers: await headers(),
+        body: JSON.stringify({ role, campus_admin }),
+      });
+      if (!res.ok) throw new Error((await res.json()).erro || 'Falha ao alterar perfil');
+      toast('Permissão atualizada');
+      await carregarUsuariosFirestore();
+      window.fecharDetalhesUsuario();
+    } catch (err) {
+      console.error('Erro ao atualizar permissões:', err);
+      toast(err.message || 'Erro ao atualizar permissões', 'var(--danger)');
+    }
+  };
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') window.fecharDetalhesUsuario();
+  });
 
   // ===================================================
   // Navegação entre seções

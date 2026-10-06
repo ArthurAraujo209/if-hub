@@ -167,6 +167,9 @@ router.put('/usuarios/:uid/role', async (req, res) => {
     if (!rolesValidas.includes(role)) {
       return res.status(400).json({ erro: `Role inválida. Use: ${rolesValidas.join(', ')}` });
     }
+    if (role === 'admin_campus' && (typeof campus_admin !== 'string' || !campus_admin.trim())) {
+      return res.status(400).json({ erro: 'campus_admin é obrigatório para admin_campus' });
+    }
 
     await firestore.atualizarRoleUsuario(req.params.uid, role, campus_admin);
     res.json({ ok: true, mensagem: 'Role atualizada com sucesso' });
