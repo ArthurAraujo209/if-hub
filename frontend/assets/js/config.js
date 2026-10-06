@@ -1,15 +1,11 @@
 // assets/js/config.js
-// Fonte única de configuração de ambiente.
-// Carregado como <script> simples (index.html, callback.html, dashboard.html).
-// Módulos ES leem via `window.IFHubConfig`.
-
 (() => {
   const isDev = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
-  const backendURL  = isDev ? 'http://localhost:3000'          : 'https://if-hub-backend.onrender.com';
-  const frontendURL = isDev ? 'http://localhost:5500'          : 'https://simplifrn.vercel.app';
+  const backendURL  = isDev ? 'http://localhost:3000' : 'https://if-hub-backend.onrender.com';
+  const frontendURL = isDev ? 'http://localhost:5500' : 'https://simplifrn.vercel.app';
 
-  window.IFHubConfig = {
+  const config = {
     isDev,
     backendURL,
     frontendURL,
@@ -25,6 +21,10 @@
       notifications:  (action) => `${backendURL}/api/notifications/${action}`,
     },
   };
+
+  // Compatibilidade: expõe os dois nomes
+  window.config = config;          // legado (index.html, callback.html)
+  window.IFHubConfig = config;     // novo padrão (módulos ESM)
 
   console.log(`🌍 [${isDev ? 'DEV' : 'PROD'}] backend=${backendURL}`);
 })();
