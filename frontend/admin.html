@@ -498,7 +498,7 @@
 
 <script type="module">
   import { auth, db, onAuthStateChanged, signOut, doc, getDoc, getDocs, collection, onSnapshot } from './assets/js/firebase-init.js';
-  import { carregarUsuarios, buscaUsuarios, filtrarPorCampus, renderizarTabela, renderizarDetalhesUsuario, renderizarPainelAnalitico, obterCampusUnicos } from './assets/js/admin-users.js';
+  import { carregarUsuarios, buscaUsuarios, filtrarPorCampus, renderizarTabela, renderizarDetalhesUsuario, renderizarPainelAnalitico, obterCampusUnicos, escapeHtml } from './assets/js/admin-users.js';
 
   const API = 'https://if-hub-backend.onrender.com'; // ← ajuste se necessário
 
