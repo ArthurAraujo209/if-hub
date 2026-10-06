@@ -4,66 +4,12 @@ const axios = require('axios');
 const querystring = require('querystring');
 const admin = require('firebase-admin');
 const firestore = require('../services/firestore');
+const { identificarCampus } = require('../services/campus');
 
 const SUAP_BASE_URL = process.env.SUAP_BASE_URL;
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI;
-
-// ===================================================
-// Função: identificar campus_id pelo dado do SUAP
-// ===================================================
-function identificarCampus(dadosSuap) {
-  const campusRaw =
-    dadosSuap?.campus ||
-    dadosSuap?.unidade_ensino ||
-    dadosSuap?.campus_sigla ||
-    '';
-
-  let campusExtraido = campusRaw;
-  if (!campusExtraido && dadosSuap?.curso) {
-    const match = dadosSuap.curso.match(/\(CAMPUS ([^)]+)\)/i);
-    if (match) {
-      campusExtraido = match[1];
-    }
-  }
-
-  console.log('📍 Campo campus recebido do SUAP:', campusRaw);
-  console.log('📍 Campus extraído do curso:', campusExtraido);
-
-  const mapeamento = {
-    'santa cruz':    'santa-cruz',
-    'zona norte':    'zona-norte',
-    'natal central': 'natal-central',
-    'mossoró':       'mossoro',
-    'mossoro':       'mossoro',
-    'apodi':         'apodi',
-    'caicó':         'caico',
-    'caico':         'caico',
-    'ipanguaçu':     'ipanguacu',
-    'ipanguacu':     'ipanguacu',
-    'joão câmara':   'joao-camara',
-    'joao camara':   'joao-camara',
-    'macau':         'macau',
-    'nova cruz':     'nova-cruz',
-    'parelhas':      'parelhas',
-    'pau dos ferros':'pau-dos-ferros',
-  };
-
-  const chave = campusExtraido
-    .toLowerCase()
-    .replace('campus ', '')
-    .trim();
-
-  const campus_id = mapeamento[chave];
-
-  if (!campus_id) {
-    console.warn(`⚠️  Campus não mapeado: "${campusExtraido}" (chave: "${chave}")`);
-    console.warn('   Adicione este campus no mapeamento em backend/src/routes/auth.js');
-  }
-
-  return campus_id || 'desconhecido';
-}
 
 function obterAno(dados, campos) {
   for (const campo of campos) {

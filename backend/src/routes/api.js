@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 const firestore = require("../services/firestore");
+const { identificarCampus } = require("../services/campus");
 
 const { SUAP_BASE_URL } = process.env;
 
@@ -52,35 +53,26 @@ router.get("/me", verificarToken, async (req, res) => {
     // Tracking de acesso (consistente com o app)
     const matricula = alunoCompleto?.identificacao || alunoCompleto?.matricula;
     if (matricula) {
+      const matriculaNormalizada = String(matricula);
       const ano_ingresso = Number(alunoCompleto?.ano_ingresso || alunoCompleto?.ingresso)
-        || Number(String(matricula).slice(0, 4));
+        || Number(matriculaNormalizada.slice(0, 4));
       const ano_atual = Number(alunoCompleto?.ano_atual || alunoCompleto?.ano_cursando);
-      await firestore.atualizarDadosAcademicos(`suap_${matricula}`, {
+      await firestore.sincronizarUsuarioWeb(`suap_${matriculaNormalizada}`, {
+        nome: alunoCompleto?.nome_usual || alunoCompleto?.nome || alunoCompleto?.nome_aluno,
+        matricula: matriculaNormalizada,
+        email_academico: alunoCompleto?.email_academico || alunoCompleto?.email,
+        foto_url: alunoCompleto?.foto,
+        cpf: alunoCompleto?.cpf,
+        data_nascimento: alunoCompleto?.data_nascimento,
+        campus_id: identificarCampus(alunoCompleto),
         curso: alunoCompleto?.curso,
         ano_ingresso: Number.isInteger(ano_ingresso) && ano_ingresso > 0 ? ano_ingresso : null,
         ano_atual: Number.isInteger(ano_atual) && ano_atual > 0 ? ano_atual : null,
+        suap_token: req.token,
       });
-
-      try {
-        const admin = require('firebase-admin');
-        const userRef = admin.firestore().collection('usuarios').doc(`suap_${matricula}`);
-        const snap = await userRef.get();
-        if (snap.exists) {
-          const data = snap.data();
-          const now = Date.now();
-          const ultimo = data?.ultimo_acesso?.toDate?.()?.getTime?.() ?? 0;
-          const shouldCount = now - ultimo > 30 * 60 * 1000;
-
-          const update = { plataforma_ultima: 'web' };
-          if (shouldCount) {
-            update.ultimo_acesso = admin.firestore.FieldValue.serverTimestamp();
-            update.total_acessos = admin.firestore.FieldValue.increment(1);
-          }
-          await userRef.set(update, { merge: true });
-        }
-      } catch (err) {
-        console.warn('[me web] tracking falhou:', err.message);
-      }
+      console.log(`[me web] Perfil sincronizado no Firestore: suap_${matriculaNormalizada}`);
+    } else {
+      console.error('[me web] SUAP não retornou matrícula; usuário não sincronizado no Firestore');
     }
 
     res.json(response);
