@@ -4,7 +4,14 @@ const session = require('express-session');
 const NodeCache = require('node-cache');
 
 // ===== AMBIENTE =====
-if (process.env.NODE_ENV !== 'production') {
+const isRender = process.env.RENDER === 'true' || Boolean(process.env.RENDER_SERVICE_ID);
+const isProd = process.env.NODE_ENV === 'production' || isRender;
+
+if (isRender && !process.env.NODE_ENV) {
+  process.env.NODE_ENV = 'production';
+}
+
+if (!isProd) {
   const fs = require('fs');
   const path = require('path');
   const dotenv = require('dotenv');
@@ -27,7 +34,6 @@ const adminRoutes = require('./src/routes/admin');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const cache = new NodeCache({ stdTTL: 300 });
-const isProd = process.env.NODE_ENV === 'production';
 
 // ===== MIDDLEWARES =====
 app.use(cors({
@@ -133,6 +139,6 @@ app.use('/admin', adminRoutes);
 iniciarCron();
 
 app.listen(PORT, () => {
-  console.log(`✅ Backend rodando em http://localhost:${PORT}`);
-  console.log(`📡 Frontend: ${req?.frontendURL || process.env.FRONTEND_URL || '(não definido)'}`);
+  console.log(`✅ Backend rodando na porta ${PORT}`);
+  console.log(`📡 Frontend: ${process.env.FRONTEND_URL || 'https://simplifrn.vercel.app'}`);
 });
