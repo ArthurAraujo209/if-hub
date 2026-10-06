@@ -94,6 +94,27 @@ module.exports = {
     return atualizado.data();
   },
 
+  async atualizarDadosAcademicos(uid, dados) {
+    const update = {};
+    const curso = typeof dados.curso === 'string' ? dados.curso.trim() : '';
+    if (curso) {
+      update.curso = curso;
+    }
+
+    for (const campo of ['ano_ingresso', 'ano_atual']) {
+      if (Number.isInteger(dados[campo]) && dados[campo] > 0) {
+        update[campo] = dados[campo];
+      }
+    }
+
+    if (Object.keys(update).length === 0) {
+      console.warn(`⚠️ Nenhum dado acadêmico válido para sincronizar: ${uid}`);
+      return;
+    }
+
+    await db().collection('usuarios').doc(uid).set(update, { merge: true });
+  },
+
   async buscarTodosUsuarios() {
     const snap = await db().collection('usuarios').get();
     return snap.docs.map(d => ({ uid: d.id, ...d.data() }));

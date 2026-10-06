@@ -23,10 +23,6 @@ const verificarToken = (req, res, next) => {
 // DADOS DO ALUNO
 // ===============================
 router.get("/me", verificarToken, async (req, res) => {
-  const cacheKey = `me_${req.token}`;
-  const cached = req.cache.get(cacheKey);
-  if (cached) return res.json(cached);
-
   try {
     const headers = {
       Authorization: `Bearer ${req.token}`,
@@ -56,6 +52,15 @@ router.get("/me", verificarToken, async (req, res) => {
     // Tracking de acesso (consistente com o app)
     const matricula = alunoCompleto?.identificacao || alunoCompleto?.matricula;
     if (matricula) {
+      const ano_ingresso = Number(alunoCompleto?.ano_ingresso || alunoCompleto?.ingresso)
+        || Number(String(matricula).slice(0, 4));
+      const ano_atual = Number(alunoCompleto?.ano_atual || alunoCompleto?.ano_cursando);
+      await firestore.atualizarDadosAcademicos(`suap_${matricula}`, {
+        curso: alunoCompleto?.curso,
+        ano_ingresso: Number.isInteger(ano_ingresso) && ano_ingresso > 0 ? ano_ingresso : null,
+        ano_atual: Number.isInteger(ano_atual) && ano_atual > 0 ? ano_atual : null,
+      });
+
       try {
         const admin = require('firebase-admin');
         const userRef = admin.firestore().collection('usuarios').doc(`suap_${matricula}`);
@@ -78,7 +83,6 @@ router.get("/me", verificarToken, async (req, res) => {
       }
     }
 
-    req.cache.set(cacheKey, response);
     res.json(response);
   } catch (err) {
     console.error("Erro /me:", err.response?.data || err.message);
