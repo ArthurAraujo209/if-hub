@@ -1002,22 +1002,27 @@ async function fetchComRefresh(url, options = {}) {
 //    nunca existe (o SUAP retorna `campus`, não `campus_id`).
 
 async function carregarDadosAluno() {
-  const token = localStorage.getItem('suap_token');
-  if (!token) { window.location.href = '/index.html'; return; }
-
   try {
+    console.log('[perfil] Sincronizando dados pessoais e acadêmicos com o backend...');
     const response = await fetchComRefresh(cfg.api.me());
     if (!response || response.status === 401) {
       localStorage.removeItem('suap_token');
       window.location.href = '/index.html';
       return;
     }
+    if (!response.ok) {
+      const detalhe = await response.text();
+      throw new Error(`Falha ao sincronizar perfil (${response.status}): ${detalhe}`);
+    }
+
     const data = await response.json();
     dadosAluno = data.aluno;
+    console.log('[perfil] Backend confirmou a sincronização dos dados.');
     preencherSidebar({ aluno: dadosAluno });
     preencherPerfil({ aluno: dadosAluno });
   } catch (error) {
     console.error('Erro ao carregar dados do aluno:', error);
+    showAlert('Não foi possível sincronizar seus dados pessoais. Tente atualizar a página.');
   }
 }
 
@@ -1649,11 +1654,16 @@ if (window.innerWidth <= 1024) {
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('🚀 Inicializando aplicação...');
 
-  // Mapa e dados do SUAP são independentes → roda em paralelo
+  // O dashboard só sincroniza dados pessoais depois da confirmação da sessão Firebase.
   await Promise.all([
     carregarDadosMapa(),
-    carregarDados(),
+    window.IFHub?.firebaseUser
+      ? Promise.resolve()
+      : new Promise(resolve => {
+          window.addEventListener('ifhubPronto', resolve, { once: true });
+        }),
   ]);
+  await carregarDados();
 
   initializeFuse();
   setTimeout(checkNotificationStatus, 1000);
