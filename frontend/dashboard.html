@@ -20,6 +20,75 @@
           href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
           media="print" onload="this.media='all'" />
 
+    <style>
+        .play-store-promo[hidden] {
+            display: none !important;
+        }
+
+        .play-store-promo {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+        }
+
+        .play-store-promo__card {
+            width: min(100%, 420px);
+            padding: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 24px;
+            background: #12121a;
+            color: #fff;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+        }
+
+        .play-store-promo__card h2 {
+            margin: 0 0 10px;
+            font-size: 1.35rem;
+        }
+
+        .play-store-promo__card p {
+            margin: 0 0 22px;
+            color: rgba(255, 255, 255, 0.75);
+            line-height: 1.55;
+        }
+
+        .play-store-promo__actions {
+            display: grid;
+            gap: 10px;
+        }
+
+        .play-store-promo__actions a,
+        .play-store-promo__actions button {
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 16px;
+            border: 1px solid rgba(67, 233, 123, 0.45);
+            border-radius: 12px;
+            background: #43e97b;
+            color: #101510;
+            font: inherit;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .play-store-promo__actions button {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: transparent;
+            color: #fff;
+            font-weight: 500;
+        }
+    </style>
+
     <script src="./assets/js/fuse.min.js"></script>
     <link rel="stylesheet" href="assets/css/style.css" />
 
@@ -641,6 +710,91 @@
             statusEl.textContent = '';
     }
 }
+    </script>
+
+    <div class="play-store-promo" id="play-store-promo" role="dialog" aria-modal="true" aria-labelledby="play-store-promo-title" aria-describedby="play-store-promo-description" hidden>
+        <div class="play-store-promo__card">
+            <h2 id="play-store-promo-title">Conheça o app SimplIF para Android</h2>
+            <p id="play-store-promo-description">Instale pela Google Play para ter o SimplIF sempre à mão. Você também pode continuar usando pelo navegador.</p>
+            <div class="play-store-promo__actions">
+                <a href="https://play.google.com/store/apps/details?id=com.arthur.simplif" id="play-store-promo-install">Baixar na Google Play</a>
+                <button type="button" id="play-store-promo-continue">Continuar no Dashboard</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (() => {
+            const storeUrl = 'https://play.google.com/store/apps/details?id=com.arthur.simplif';
+            const storageKey = 'simplif-play-store-promo-v1';
+            const reminderInterval = 30 * 24 * 60 * 60 * 1000;
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            const launchedFromPlayStoreApp = [
+                'android-app://com.arthur.simplif',
+                'android-app://app.vercel.simplifrn.twa',
+            ].some(referrer => document.referrer.startsWith(referrer));
+
+            if (!isAndroid || launchedFromPlayStoreApp) return;
+
+            const modal = document.getElementById('play-store-promo');
+            const continueButton = document.getElementById('play-store-promo-continue');
+            const installLink = document.getElementById('play-store-promo-install');
+            let promoState;
+
+            try {
+                promoState = JSON.parse(localStorage.getItem(storageKey) || 'null');
+            } catch (error) {
+                console.warn('Não foi possível ler a preferência do convite da Play Store:', error);
+                promoState = null;
+            }
+
+            function savePromoState(state) {
+                try {
+                    localStorage.setItem(storageKey, JSON.stringify(state));
+                    return true;
+                } catch (error) {
+                    console.warn('Não foi possível salvar a preferência do convite da Play Store:', error);
+                    return false;
+                }
+            }
+
+            function dismissPromo() {
+                promoState = { ...promoState, lastDismissedAt: Date.now() };
+                savePromoState(promoState);
+                modal.hidden = true;
+            }
+
+            window.addEventListener('ifhubPronto', () => {
+                if (!promoState?.firstVisitHandled) {
+                    promoState = { firstVisitHandled: true, lastDismissedAt: 0 };
+                    if (savePromoState(promoState)) {
+                        window.location.assign(storeUrl);
+                    } else {
+                        modal.hidden = false;
+                        continueButton.focus();
+                    }
+                    return;
+                }
+
+                const lastDismissedAt = Number(promoState.lastDismissedAt) || 0;
+                if (Date.now() - lastDismissedAt >= reminderInterval) {
+                    modal.hidden = false;
+                    continueButton.focus();
+                }
+            }, { once: true });
+
+            continueButton.addEventListener('click', dismissPromo);
+            installLink.addEventListener('click', () => {
+                promoState = { ...promoState, lastDismissedAt: Date.now() };
+                savePromoState(promoState);
+            });
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) dismissPromo();
+            });
+            modal.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') dismissPromo();
+            });
+        })();
     </script>
 
 </body>
