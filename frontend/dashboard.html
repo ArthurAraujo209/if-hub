@@ -731,7 +731,7 @@
             const isAndroid = /Android/i.test(navigator.userAgent);
             const launchedFromPlayStoreApp = [
                 'android-app://com.arthur.simplif',
-                'android-app://app.vercel.simplifrn.twa',
+                
             ].some(referrer => document.referrer.startsWith(referrer));
 
             if (!isAndroid || launchedFromPlayStoreApp) return;
