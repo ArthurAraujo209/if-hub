@@ -4,9 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0a0a0f">
-    <link rel="shortcut icon" href="\assets\icons\Icone Preto sem fundo.svg" type="image/x-icon">
-    <title>SIMPLIF - Login</title>
+    <meta name="description" content="Acompanhe notas, IRA, horários, provas e informações do campus IFRN em um só lugar. Entre no SimplIF com a autenticação oficial do SUAP.">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <link rel="canonical" href="https://simplifrn.vercel.app/">
+    <link rel="shortcut icon" href="/assets/icons/Icone Preto sem fundo.svg" type="image/svg+xml">
     <link rel="manifest" href="/manifest.json">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="pt_BR">
+    <meta property="og:site_name" content="SimplIF">
+    <meta property="og:title" content="SimplIF | Portal acadêmico do IFRN">
+    <meta property="og:description" content="Notas, IRA, horários, provas e informações do campus IFRN em um só lugar.">
+    <meta property="og:url" content="https://simplifrn.vercel.app/">
+    <meta property="og:image" content="https://simplifrn.vercel.app/assets/icons/SIMPLIF%20-%20Icon%20512x512.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="SimplIF | Portal acadêmico do IFRN">
+    <meta name="twitter:description" content="Acompanhe sua vida acadêmica no IFRN com o SimplIF.">
+    <meta name="twitter:image" content="https://simplifrn.vercel.app/assets/icons/SIMPLIF%20-%20Icon%20512x512.png">
+    <title>SimplIF | Portal acadêmico do IFRN: notas, horários e provas</title>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "name": "SimplIF",
+          "alternateName": "SimplIFRN",
+          "url": "https://simplifrn.vercel.app/",
+          "inLanguage": "pt-BR",
+          "description": "Portal independente para acompanhar informações acadêmicas do IFRN."
+        },
+        {
+          "@type": "WebApplication",
+          "name": "SimplIF",
+          "url": "https://simplifrn.vercel.app/",
+          "applicationCategory": "EducationalApplication",
+          "operatingSystem": "Web, Android",
+          "inLanguage": "pt-BR",
+          "description": "Acompanhe notas, IRA, horários, provas e informações do campus IFRN em um só lugar.",
+          "installUrl": "https://play.google.com/store/apps/details?id=com.arthur.simplif",
+          "sameAs": "https://play.google.com/store/apps/details?id=com.arthur.simplif"
+        }
+      ]
+    }
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         * {
@@ -45,9 +86,9 @@
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             padding: 20px;
-            overflow: hidden;
+            overflow-x: hidden;
             position: relative;
         }
 
@@ -81,6 +122,7 @@
             text-align: center;
             max-width: 450px;
             width: 100%;
+            margin: clamp(24px, 6vh, 64px) auto;
             position: relative;
             overflow: hidden;
             transform: translateZ(0);
@@ -172,6 +214,34 @@
             line-height: 1.5;
         }
 
+        .section-title {
+            margin: 30px 0 12px;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .seo-copy,
+        .faq-item p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .faq {
+            text-align: left;
+        }
+
+        .faq-item {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .faq-item h3 {
+            margin-bottom: 5px;
+            font-size: 0.95rem;
+        }
+
         .features {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -226,6 +296,28 @@
                 inset 0 1px 0 var(--glass-highlight);
             position: relative;
             overflow: hidden;
+        }
+
+        .btn-store {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            margin-top: 12px;
+            padding: 15px;
+            border: 1px solid rgba(67, 233, 123, 0.45);
+            border-radius: 16px;
+            color: var(--success);
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .btn-store:hover {
+            background: rgba(67, 233, 123, 0.1);
+            transform: translateY(-2px);
         }
 
         .btn-login::before {
@@ -289,6 +381,18 @@
             text-shadow: 0 0 10px rgba(67, 233, 123, 0.5);
         }
 
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
         @media (max-width: 480px) {
             .login-container {
                 padding: 30px 20px;
@@ -304,51 +408,75 @@
             }
         }
     </style>
-    <meta name="google-site-verification" content="dalPHhUn9rNUIX7rpsNpYgcDz3sTgGHEILGbYUlrC_I" />
+    <meta name="google-site-verification" content="dalPHhUn9rNUIX7rpsNpYgcDz3sTgGHEILGbYUlrC_I">
 </head>
 <body>
 
-    <div class="login-container">
+    <main class="login-container">
         <div class="logo">
-            <img src="assets/icons/Icone Verde sem fundo.svg" style="width: 100%;" alt="IF HUB Logo">
+            <img src="assets/icons/Icone Verde sem fundo.svg" style="width: 100%;" alt="Logo do SimplIF">
         </div>
 
-        
-        <p class="subtitle">Acesse seus dados acadêmicos com estilo</p>
+        <h1>SimplIF: sua vida acadêmica no IFRN, mais simples</h1>
+        <p class="subtitle">Consulte suas informações acadêmicas em um só lugar. Entre com a autenticação oficial do SUAP, sem compartilhar sua senha com o SimplIF.</p>
 
+        <h2 class="section-title">Tudo o que você precisa para acompanhar sua rotina no IFRN</h2>
         <div class="features">
             <div class="feature">
                 <i class="fas fa-chart-line"></i>
-                <span>Acompanhe seu IRA</span>
+                <span>Consulte notas, boletim e IRA</span>
             </div>
             <div class="feature">
                 <i class="fas fa-calendar-check"></i>
-                <span>Agenda de provas</span>
+                <span>Organize provas e compromissos</span>
             </div>
             <div class="feature">
                 <i class="fas fa-clock"></i>
-                <span>Horários de aula</span>
+                <span>Confira horários e disciplinas</span>
             </div>
             <div class="feature">
                 <i class="fas fa-map-marked-alt"></i>
-                <span>Mapa do Campus</span>
+                <span>Encontre salas e explore o campus</span>
             </div>
         </div>
 
+        <p class="seo-copy">O SimplIF é um portal acadêmico independente para estudantes do Instituto Federal do Rio Grande do Norte. Acesse dados acadêmicos integrados ao SUAP/IFRN, acompanhe sua rotina de estudos e encontre informações úteis do campus pelo computador ou celular.</p>
+
         <button class="btn-login" onclick="login()">
             <i class="fas fa-sign-in-alt"></i>
-            <span>Entrar com SUAP</span>
+            <span>Acessar SimplIF com SUAP</span>
         </button>
+        <a class="btn-store" href="https://play.google.com/store/apps/details?id=com.arthur.simplif" target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-google-play" aria-hidden="true"></i>
+            <span>Baixar o app Android na Google Play</span>
+        </a>
+
+        <section class="faq" aria-labelledby="faq-title">
+            <h2 class="section-title" id="faq-title">Dúvidas frequentes sobre o SimplIF</h2>
+            <div class="faq-item">
+                <h3>O que é o SimplIF?</h3>
+                <p>É uma aplicação independente que reúne ferramentas e informações acadêmicas para estudantes do IFRN.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Como faço login?</h3>
+                <p>Use o botão acima para entrar pelo sistema oficial SUAP/IFRN. O SimplIF não solicita sua senha diretamente.</p>
+            </div>
+            <div class="faq-item">
+                <h3>O SimplIF substitui o SUAP?</h3>
+                <p>Não. O SUAP/IFRN continua sendo o sistema oficial; o SimplIF oferece uma forma complementar de consultar informações acadêmicas de uma forma mais simples para o dia a dia.</p>
+            </div>
+        </section>
 
         <div class="footer">
-            <p>Sistema integrado ao SUAP IFRN</p>
+            <p>Aplicação independente integrada ao SUAP/IFRN</p>
             <p style="margin-top: 10px;">
                 <a href="https://suap.ifrn.edu.br" target="_blank">
-                    <i class="fas fa-external-link-alt"></i> Acessar SUAP oficial
+                    <i class="fas fa-external-link-alt" aria-hidden="true"></i> Acessar SUAP oficial
                 </a>
             </p>
+            <p style="margin-top: 10px;"><a href="/privacy.html">Política de Privacidade</a></p>
         </div>
-    </div>
+    </main>
 
     <script src="/assets/js/config.js"></script>
     <script>
@@ -368,4 +496,5 @@
         });
     }
 </script>
+</body>
 </html>
