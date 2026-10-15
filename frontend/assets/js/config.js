@@ -17,6 +17,7 @@
       me:             () => `${backendURL}/api/me`,
       dashboard:      (ano) => `${backendURL}/api/dashboard/${ano}`,
       boletimAnual:   (ano) => `${backendURL}/api/boletim-anual/${ano}`,
+      materiais:      (ano) => `${backendURL}/api/materiais/${ano}`,
       campusFeatures: (id)  => `${backendURL}/api/campus/features/${id}`,
       notifications:  (action) => `${backendURL}/api/notifications/${action}`,
     },

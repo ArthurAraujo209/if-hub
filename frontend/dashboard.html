@@ -177,6 +177,7 @@
             <li class="nav-item"><a class="nav-link" onclick="showSection('boletim'); return false;"><i><img src="./assets/icons/Icone Verde sem fundo.svg" alt="" style="width: 32px;"></i><span>Boletim</span></a></li>
             <li class="nav-item"><a class="nav-link" onclick="showSection('horarios'); return false;"><i><img src="./assets/icons/Icone Verde sem fundo.svg" alt="" style="width: 32px;"></i><span>Horários</span></a></li>
             <li class="nav-item"><a class="nav-link" onclick="showSection('turmas'); return false;"><i><img src="./assets/icons/Icone Verde sem fundo.svg" alt="" style="width: 32px;"></i><span>Turmas</span></a></li>
+            <li class="nav-item"><a class="nav-link" onclick="showSection('materiais'); return false;"><i class="fas fa-folder-open" style="width:32px;font-size:20px;color:var(--ios-accent-green);"></i><span>Materiais</span></a></li>
             <li class="nav-item"><a class="nav-link" onclick="showSection('mapa'); return false;"><i><img src="./assets/icons/Icone Verde sem fundo.svg" alt="" style="width: 32px;"></i><span>Mapa do Campus</span></a></li>
             <li class="nav-item"><a class="nav-link" onclick="showSection('avaliacoes'); return false;"><i><img src="./assets/icons/Icone Verde sem fundo.svg" alt="" style="width: 32px;"></i><span>Avaliações</span></a></li>
             <li class="nav-item"><a class="nav-link" onclick="showSection('periodos'); return false;"><i><img src="./assets/icons/Icone Verde sem fundo.svg" alt="" style="width: 32px;"></i><span>Periodos</span></a></li>
@@ -334,6 +335,20 @@
             <div class="ios-panel">
                 <div class="panel-header"><div class="panel-title"><i class="fas fa-users"></i> Minhas Turmas</div></div>
                 <div id="turmas-content"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Carregando turmas...</p></div></div>
+            </div>
+        </section>
+
+        <!-- MATERIAIS SECTION -->
+        <section id="materiais-section" class="content-section">
+            <div class="ios-panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="fas fa-folder-open"></i> Materiais de Aula</div>
+                    <span class="materiais-resumo" id="materiais-resumo"></span>
+                </div>
+                <div class="materiais-toolbar">
+                    <input type="search" class="ios-input" id="materiais-busca" placeholder="Buscar material ou disciplina..." oninput="filtrarMateriais()" autocomplete="off" />
+                </div>
+                <div id="materiais-content"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Carregando materiais...</p></div></div>
             </div>
         </section>
 

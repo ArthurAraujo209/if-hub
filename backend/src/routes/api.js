@@ -359,6 +359,156 @@ router.get("/boletim-anual/:ano", verificarToken, async (req, res) => {
 });
 
 // ===============================
+// MATERIAIS DE AULA (por disciplina)
+// ===============================
+
+// Aceita só http(s); caminhos relativos do SUAP viram absolutos.
+// Evita `javascript:` e afins, já que a URL é preenchida pelo professor.
+function normalizarUrlMaterial(url) {
+  if (typeof url !== "string") return null;
+  const limpa = url.trim();
+  if (!limpa) return null;
+  try {
+    const absoluta = new URL(limpa, SUAP_BASE_URL).href;
+    return /^https?:\/\//i.test(absoluta) ? absoluta : null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizarMaterial(m) {
+  const url = normalizarUrlMaterial(m?.url);
+  if (!url) return null;
+  return {
+    descricao: String(m.descricao || "").trim() || "Material sem título",
+    data: m.data_vinculacao || m.data || null,
+    url,
+  };
+}
+
+// Busca todas as páginas de um endpoint paginado do SUAP (limite de segurança)
+async function buscarTodasPaginas(url, headers, maxPaginas = 5) {
+  const resultados = [];
+  for (let page = 1; page <= maxPaginas; page++) {
+    const { data } = await axios.get(url, { headers, params: { page } });
+    resultados.push(...(data?.results || []));
+    if (!data?.next) break;
+  }
+  return resultados;
+}
+
+async function buscarMateriaisDaTurma(id, headers) {
+  // 1) Turma virtual do aluno: já traz `materiais_de_aula` (url, descricao, data_vinculacao)
+  try {
+    const { data } = await axios.get(
+      `${SUAP_BASE_URL}/api/ensino/minha-turma-virtual/${id}/`,
+      { headers }
+    );
+    if (Array.isArray(data?.materiais_de_aula)) {
+      return {
+        professores: (data.professores || []).map((p) => p.nome_usual || p.nome).filter(Boolean),
+        materiais: data.materiais_de_aula,
+      };
+    }
+  } catch (err) {
+    if (err.response?.status === 401) throw err;
+  }
+
+  // 2) Fallback: endpoint de materiais do diário
+  const materiais = await buscarTodasPaginas(
+    `${SUAP_BASE_URL}/api/ensino/diarios/${id}/materiais/`,
+    headers
+  );
+  return { professores: [], materiais };
+}
+
+router.get("/materiais/:ano?", verificarToken, async (req, res) => {
+  const cacheKey = `materiais_${req.token}_${req.params.ano || "auto"}`;
+  const cached = req.cache.get(cacheKey);
+  if (cached) return res.json(cached);
+
+  try {
+    const headers = {
+      Authorization: `Bearer ${req.token}`,
+      Accept: "application/json",
+    };
+
+    const periodosRes = await axios.get(
+      `${SUAP_BASE_URL}/api/ensino/meus-periodos-letivos/`,
+      { headers }
+    );
+    const periodos = periodosRes.data?.results || [];
+
+    let ano = parseInt(req.params.ano);
+    if (!ano || isNaN(ano)) {
+      ano = Math.max(...periodos.map((p) => p.ano_letivo), new Date().getFullYear());
+    }
+
+    // Todos os períodos do ano (um diário semestral pode estar só no 1º ou no 2º)
+    const periodosDoAno = periodos.filter((p) => p.ano_letivo === ano);
+    const numerosPeriodo = periodosDoAno.length
+      ? [...new Set(periodosDoAno.map((p) => p.periodo_letivo))]
+      : [1];
+
+    const turmasPorPeriodo = await Promise.all(
+      numerosPeriodo.map((periodo) =>
+        buscarTodasPaginas(
+          `${SUAP_BASE_URL}/api/ensino/minhas-turmas-virtuais/${ano}/${periodo}/`,
+          headers
+        ).catch((err) => {
+          if (err.response?.status === 401) throw err;
+          return [];
+        })
+      )
+    );
+
+    const turmas = new Map();
+    turmasPorPeriodo.flat().forEach((t) => {
+      if (t?.id != null && !turmas.has(String(t.id))) turmas.set(String(t.id), t);
+    });
+
+    const disciplinas = await Promise.all(
+      [...turmas.values()].map(async (t) => {
+        const base = {
+          id: String(t.id),
+          sigla: t.sigla || "",
+          descricao: t.descricao || t.sigla || "Disciplina",
+        };
+        try {
+          const { professores, materiais } = await buscarMateriaisDaTurma(t.id, headers);
+          const lista = materiais
+            .map(normalizarMaterial)
+            .filter(Boolean)
+            .sort((a, b) => String(b.data || "").localeCompare(String(a.data || "")));
+          return { ...base, professores, materiais: lista };
+        } catch (err) {
+          if (err.response?.status === 401) throw err;
+          console.error(`Erro materiais diário ${t.id}:`, err.response?.status, err.message);
+          return { ...base, professores: [], materiais: [], erro: true };
+        }
+      })
+    );
+
+    disciplinas.sort((a, b) => a.descricao.localeCompare(b.descricao, "pt-BR"));
+
+    const response = {
+      ano,
+      total: disciplinas.reduce((soma, d) => soma + d.materiais.length, 0),
+      disciplinas,
+    };
+
+    req.cache.set(cacheKey, response);
+    res.json(response);
+  } catch (err) {
+    console.error("Erro materiais:", err.response?.data || err.message);
+    if (err.response?.status === 401) {
+      return res.status(401).json({ erro: "Token inválido ou expirado" });
+    }
+    res.status(500).json({ erro: "Erro ao buscar materiais de aula" });
+  }
+});
+
+// ===============================
 // FEATURES DO CAMPUS DO USUÁRIO
 // ===============================
 router.get("/campus/features/:campus_id", verificarToken, async (req, res) => {

@@ -18,6 +18,7 @@ Link na Web: https://simplifrn.vercel.app
 
 - 📊 Dashboard do aluno
 - 📅 Visualização de informações acadêmicas
+- 📚 Materiais de aula do SUAP agrupados por disciplina
 - 🏫 Database de salas do campus
 - 🔎 Consulta de dados organizados por ano
 - ⚡ Interface rápida e otimizada

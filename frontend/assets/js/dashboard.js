@@ -8,6 +8,7 @@ const DATA_URL = './assets/data/salas.json';
 let dadosGlobais = null;
 let dadosAluno = null;
 let anoAtual = new Date().getFullYear();
+let materiaisEstado = { ano: null, dados: null, carregando: false };
 
 let roomsDatabase = [];
 let buildingData = {};
@@ -544,6 +545,7 @@ function showSection(sectionName, event) {
     boletim:    '<i class="fas fa-file-alt"></i> Boletim',
     horarios:   '<i class="fas fa-clock"></i> Horários',
     turmas:     '<i class="fas fa-users"></i> Turmas',
+    materiais:  '<i class="fas fa-folder-open"></i> Materiais',
     mapa:       '<i class="fas fa-map-marked-alt"></i> Mapa do Campus',
     avaliacoes: '<i class="fas fa-clipboard-list"></i> Avaliações',
     periodos:   '<i class="fas fa-calendar-alt"></i> Períodos',
@@ -552,6 +554,9 @@ function showSection(sectionName, event) {
   };
   const pageTitle = document.getElementById('page-title');
   if (pageTitle) pageTitle.innerHTML = titles[sectionName] || titles.dashboard;
+
+  // Materiais são buscados sob demanda (várias chamadas ao SUAP) para não pesar o boot
+  if (sectionName === 'materiais') carregarMateriais();
 
   if (window.innerWidth <= 1024) closeSidebar();
 }
@@ -722,6 +727,7 @@ function buildSpotlightIndex() {
     { id: 'boletim',    type: 'section', title: 'Boletim',         subtitle: 'Notas e médias',      icon: 'file-alt',        tags: ['boletim', 'notas', 'media'] },
     { id: 'horarios',   type: 'section', title: 'Horários',        subtitle: 'Aulas e cronograma',  icon: 'clock',           tags: ['horários', 'aulas', 'cronograma'] },
     { id: 'turmas',     type: 'section', title: 'Turmas',          subtitle: 'Disciplinas',         icon: 'users',           tags: ['turmas', 'disciplinas'] },
+    { id: 'materiais',  type: 'section', title: 'Materiais',       subtitle: 'Materiais de aula por disciplina', icon: 'folder-open', tags: ['materiais', 'slides', 'apostila', 'pdf'] },
     { id: 'mapa',       type: 'section', title: 'Mapa do Campus',  subtitle: 'Localize salas',      icon: 'map-marked-alt',  tags: ['mapa', 'campus', 'salas', 'blocos'] },
     { id: 'avaliacoes', type: 'section', title: 'Avaliações',      subtitle: 'Provas e trabalhos',  icon: 'clipboard-list',  tags: ['avaliações', 'provas'] },
     { id: 'periodos',   type: 'section', title: 'Períodos',        subtitle: 'Cronograma',          icon: 'calendar-alt',    tags: ['períodos', 'ano'] },
@@ -819,6 +825,20 @@ function buildSpotlightIndex() {
     });
   }
 
+  // Materiais de aula (só existem no índice depois que a seção foi aberta uma vez)
+  safeArray(materiaisEstado.dados?.disciplinas).forEach(disc => {
+    safeArray(disc.materiais).forEach((m, i) => {
+      if (!urlMaterialSegura(m.url)) return;
+      items.push({
+        id: `material_${disc.id}_${i}`, type: 'material',
+        title: m.descricao,
+        subtitle: disc.descricao,
+        icon: tipoMaterial(m.url).icon, action: 'material', data: m.url,
+        tags: [m.descricao, disc.descricao, disc.sigla || '', 'material'],
+      });
+    });
+  });
+
   spotlightIndex = items;
   spotlightFuse = new Fuse(spotlightIndex, {
     includeScore: true, threshold: 0.35, ignoreLocation: true,
@@ -900,6 +920,7 @@ function executeSpotlightItem(index) {
     case 'disciplina': showSection('boletim');                                    break;
     case 'avaliacao':  showSection('avaliacoes');                                 break;
     case 'turma':      showSection('turmas');                                     break;
+    case 'material':   if (urlMaterialSegura(selected.data)) window.open(selected.data, '_blank', 'noopener,noreferrer'); break;
     case 'horario':    showSection('horarios');                                   break;
     case 'periodo':    showSection('periodos');                                   break;
     default: if (selected.action) showSection(selected.action);
@@ -953,9 +974,11 @@ function esconderLoading() {
 
 async function trocarAno(novoAno) {
   anoAtual = parseInt(novoAno);
+  materiaisEstado = { ano: null, dados: null, carregando: false };
   mostrarLoading();
   await carregarDadosAno(anoAtual);
   esconderLoading();
+  if (document.getElementById('materiais-section')?.classList.contains('active')) carregarMateriais();
 }
 
 // Fetch com renovação automática de token SUAP (401)
@@ -1539,6 +1562,184 @@ function preencherAvaliacoes(data) {
 function mudarPeriodoBoletim() {}
 
 // ============================================================================
+// MATERIAIS DE AULA
+// ============================================================================
+const MATERIAL_TIPOS = {
+  pdf:    { icon: 'file-pdf',        cor: 'var(--ios-accent-red)',    nome: 'PDF' },
+  doc:    { icon: 'file-word',       cor: 'var(--ios-accent-blue)',   nome: 'Documento' },
+  slide:  { icon: 'file-powerpoint', cor: 'var(--ios-accent-orange)', nome: 'Slides' },
+  planilha: { icon: 'file-excel',    cor: 'var(--ios-accent-green)',  nome: 'Planilha' },
+  zip:    { icon: 'file-zipper',     cor: 'var(--ios-accent-yellow)', nome: 'Arquivo compactado' },
+  imagem: { icon: 'file-image',      cor: 'var(--ios-accent-purple)', nome: 'Imagem' },
+  video:  { icon: 'circle-play',     cor: 'var(--ios-accent-red)',    nome: 'Vídeo' },
+  link:   { icon: 'link',            cor: 'var(--ios-accent-teal)',   nome: 'Link' },
+  arquivo:{ icon: 'file-lines',      cor: 'var(--ios-text-secondary)',nome: 'Arquivo' },
+};
+
+const MATERIAL_EXTENSOES = {
+  pdf: 'pdf', doc: 'doc', docx: 'doc', odt: 'doc', txt: 'doc', rtf: 'doc',
+  ppt: 'slide', pptx: 'slide', odp: 'slide',
+  xls: 'planilha', xlsx: 'planilha', csv: 'planilha', ods: 'planilha',
+  zip: 'zip', rar: 'zip', '7z': 'zip',
+  png: 'imagem', jpg: 'imagem', jpeg: 'imagem', gif: 'imagem', webp: 'imagem', svg: 'imagem',
+  mp4: 'video', mov: 'video', mkv: 'video', webm: 'video',
+};
+
+function urlMaterialSegura(url) {
+  return typeof url === 'string' && /^https?:\/\//i.test(url.trim());
+}
+
+function tipoMaterial(url) {
+  try {
+    const u = new URL(url);
+    if (/(^|\.)(youtube\.com|youtu\.be|vimeo\.com)$/i.test(u.hostname)) return MATERIAL_TIPOS.video;
+    const ext = u.pathname.split('.').pop().toLowerCase();
+    if (MATERIAL_EXTENSOES[ext]) return MATERIAL_TIPOS[MATERIAL_EXTENSOES[ext]];
+    // Arquivo hospedado no próprio SUAP sem extensão reconhecível
+    if (/\/media\//i.test(u.pathname)) return MATERIAL_TIPOS.arquivo;
+    return MATERIAL_TIPOS.link;
+  } catch {
+    return MATERIAL_TIPOS.link;
+  }
+}
+
+function escapeAttr(text) {
+  return escapeHtml(String(text ?? '')).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function normalizarTexto(texto) {
+  return String(texto || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
+function formatarDataCurta(dataStr) {
+  if (!dataStr) return '';
+  const [ano, mes, dia] = String(dataStr).split('T')[0].split('-');
+  return ano && mes && dia ? `${dia}/${mes}/${ano}` : '';
+}
+
+async function carregarMateriais(forcar = false) {
+  const container = document.getElementById('materiais-content');
+  if (!container) return;
+  if (materiaisEstado.carregando) return;
+  if (!forcar && materiaisEstado.dados && materiaisEstado.ano === anoAtual) return;
+
+  const ano = anoAtual;
+  materiaisEstado.carregando = true;
+  container.innerHTML = `<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Buscando materiais no SUAP...</p></div>`;
+
+  try {
+    const response = await fetchComRefresh(cfg.api.materiais(ano));
+    if (!response) return;
+    if (response.status === 401) {
+      localStorage.removeItem('suap_token');
+      window.location.href = '/index.html';
+      return;
+    }
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json();
+    if (ano !== anoAtual) return; // o aluno trocou o ano durante a busca
+
+    materiaisEstado.dados = data;
+    materiaisEstado.ano = ano;
+    renderMateriais();
+    buildSpotlightIndex();
+  } catch (error) {
+    console.error('Erro ao carregar materiais:', error);
+    container.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-exclamation-triangle"></i>
+        <p>Não foi possível carregar os materiais.</p>
+        <button class="ios-btn" style="margin-top:16px;" onclick="carregarMateriais(true)"><i class="fas fa-redo"></i> Tentar novamente</button>
+      </div>`;
+  } finally {
+    materiaisEstado.carregando = false;
+  }
+}
+
+function filtrarMateriais() {
+  renderMateriais();
+}
+
+function renderMateriais() {
+  const container = document.getElementById('materiais-content');
+  const resumo = document.getElementById('materiais-resumo');
+  const dados = materiaisEstado.dados;
+  if (!container || !dados) return;
+
+  const disciplinas = safeArray(dados.disciplinas);
+  const busca = normalizarTexto(document.getElementById('materiais-busca')?.value.trim());
+
+  if (resumo) {
+    const comMateriais = disciplinas.filter(d => d.materiais?.length).length;
+    resumo.textContent = dados.total
+      ? `${dados.total} ${dados.total === 1 ? 'material' : 'materiais'} em ${comMateriais} ${comMateriais === 1 ? 'disciplina' : 'disciplinas'}`
+      : '';
+  }
+
+  if (disciplinas.length === 0) {
+    container.innerHTML = `<div class="empty-state"><i class="fas fa-folder-open"></i><p>Nenhuma disciplina encontrada neste ano</p></div>`;
+    return;
+  }
+
+  let primeiroAberto = false;
+  const grupos = disciplinas.map(disc => {
+    const todos = safeArray(disc.materiais).filter(m => urlMaterialSegura(m.url));
+    const nomeCasa = busca && normalizarTexto(`${disc.descricao} ${disc.sigla}`).includes(busca);
+    const lista = busca && !nomeCasa
+      ? todos.filter(m => normalizarTexto(m.descricao).includes(busca))
+      : todos;
+
+    if (busca && lista.length === 0) return '';
+
+    const professores = safeArray(disc.professores).join(', ');
+    const aberto = busca ? lista.length > 0 : (!primeiroAberto && lista.length > 0);
+    if (aberto) primeiroAberto = true;
+
+    let corpo;
+    if (disc.erro) {
+      corpo = `<div class="material-vazio"><i class="fas fa-exclamation-circle"></i> Não foi possível carregar os materiais desta disciplina.</div>`;
+    } else if (lista.length === 0) {
+      corpo = `<div class="material-vazio"><i class="fas fa-inbox"></i> Nenhum material publicado ainda.</div>`;
+    } else {
+      corpo = lista.map(m => {
+        const tipo = tipoMaterial(m.url);
+        const data = formatarDataCurta(m.data);
+        return `
+          <a class="material-row" href="${escapeAttr(m.url)}" target="_blank" rel="noopener noreferrer">
+            <span class="material-icon" style="--material-cor:${tipo.cor};"><i class="fas fa-${tipo.icon}"></i></span>
+            <span class="material-info">
+              <strong>${escapeHtml(m.descricao)}</strong>
+              <small>${tipo.nome}${data ? ` • ${data}` : ''}</small>
+            </span>
+            <i class="fas fa-arrow-up-right-from-square material-go"></i>
+          </a>`;
+      }).join('');
+    }
+
+    return `
+      <details class="material-group" ${aberto ? 'open' : ''}>
+        <summary>
+          <span class="turma-badge">${escapeHtml(disc.sigla || '---')}</span>
+          <span class="material-group-title">
+            <span class="turma-nome">${escapeHtml(disc.descricao)}</span>
+            ${professores ? `<small><i class="fas fa-chalkboard-teacher"></i> ${escapeHtml(professores)}</small>` : ''}
+          </span>
+          <span class="material-count">${lista.length}</span>
+          <i class="fas fa-chevron-down material-chevron"></i>
+        </summary>
+        <div class="material-list">${corpo}</div>
+      </details>`;
+  }).join('');
+
+  container.innerHTML = grupos || `
+    <div class="empty-state">
+      <i class="fas fa-search"></i>
+      <p>Nenhum material encontrado para "${escapeHtml(document.getElementById('materiais-busca').value.trim())}"</p>
+    </div>`;
+}
+
+// ============================================================================
 // NOTIFICAÇÕES FCM
 // ============================================================================
 function showToast(message, duration = 3000) {
@@ -1674,7 +1875,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     zoomMap, resetMap, showSection, toggleSidebar, closeSidebar, logout,
     trocarAno, initNotifications, unsubscribeNotifications,
     clearSearch, closeResultPanel, filterByCategory,
-    toggleSidebarDesktop,
+    toggleSidebarDesktop, carregarMateriais, filtrarMateriais,
     openThemePicker, closeThemePicker, selectTheme, applyTheme,
     openSpotlight, closeSpotlight, updateSpotlightSearch, executeSpotlightItem,
     handleSpotlightKeydown,
